@@ -14,6 +14,8 @@ public sealed record FindUser(string Name) : IQuery<string>;
 
 public sealed record UserCreated(string Name) : IMessage;
 
+public sealed record ListUsers(string Filter) : IStreamQuery<string>;
+
 public sealed class NameValidator : AbstractValidator<CreateUser>
 {
     public NameValidator() => RuleFor(c => c.Name).NotEmpty();
@@ -37,6 +39,11 @@ public sealed class FindUserValidator : AbstractValidator<FindUser>
 public sealed class UserCreatedValidator : AbstractValidator<UserCreated>
 {
     public UserCreatedValidator() => RuleFor(m => m.Name).NotEmpty();
+}
+
+public sealed class ListUsersValidator : AbstractValidator<ListUsers>
+{
+    public ListUsersValidator() => RuleFor(q => q.Filter).NotEmpty();
 }
 
 // Logs its name and the token it received, after an optional delay, and always passes.

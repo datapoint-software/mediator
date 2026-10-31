@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
 using FluentValidation;
@@ -110,6 +111,49 @@ public sealed class ValidationBehaviorTests
     }
 
     [Fact]
+    public async Task StreamQuery_Invalid_ThrowsOnEnumerationWithoutCallingNext()
+    {
+        var behavior = CreateBehavior(s => s.AddScoped<IValidator<ListUsers>, ListUsersValidator>());
+
+        var results = behavior.HandleAsync(new ListUsers(""), NextStream, TestContext.Current.CancellationToken);
+        Assert.False(_nextCalled);
+
+        await Assert.ThrowsAsync<ValidationException>(async () =>
+        {
+            await foreach (var _ in results)
+            {
+            }
+        });
+
+        Assert.False(_nextCalled);
+    }
+
+    [Fact]
+    public async Task StreamQuery_Valid_ReturnsNextResults()
+    {
+        var behavior = CreateBehavior(s => s.AddScoped<IValidator<ListUsers>, ListUsersValidator>());
+        var results = new List<string>();
+
+        await foreach (var user in behavior.HandleAsync(new ListUsers("a"), NextStream, TestContext.Current.CancellationToken))
+        {
+            results.Add(user);
+        }
+
+        Assert.Equal(["Ana", "Rui"], results);
+    }
+
+    [Fact]
+    public void StreamQuery_NoValidators_ReturnsNextDirectly()
+    {
+        var behavior = CreateBehavior(_ => { });
+        var expected = NextStream(TestContext.Current.CancellationToken);
+
+        var results = behavior.HandleAsync(new ListUsers(""), _ => expected, TestContext.Current.CancellationToken);
+
+        Assert.Same(expected, results);
+    }
+
+    [Fact]
     public async Task Message_IsNotValidated()
     {
         // The message overload is a default interface method, so it is called through IBehavior, as the mediator does.
@@ -194,6 +238,14 @@ public sealed class ValidationBehaviorTests
     {
         _nextCalled = true;
         return default;
+    }
+
+    private async IAsyncEnumerable<string> NextStream([EnumeratorCancellation] CancellationToken ct)
+    {
+        _nextCalled = true;
+        await Task.Yield();
+        yield return "Ana";
+        yield return "Rui";
     }
 
     private Func<CancellationToken, ValueTask<TResult>> NextWithResult<TResult>(TResult result) => _ =>
