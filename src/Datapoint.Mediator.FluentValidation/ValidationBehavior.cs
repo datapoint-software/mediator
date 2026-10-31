@@ -22,6 +22,13 @@ namespace Datapoint.Mediator.FluentValidation;
 /// Validators must be registered for the exact command or query type; validators for a base class or interface are not
 /// used. Create the behaviour from the current scope, so that scoped validators are resolved from it.
 /// </para>
+/// <para>
+/// <b>Security:</b> each <see cref="ValidationFailure"/> in <see cref="ValidationException.Errors"/> carries the
+/// submitted value in <see cref="ValidationFailure.AttemptedValue"/>, which can contain passwords or personal data. Do not
+/// log the exception or its failures as they are, and do not return them to clients unchanged. When building an error
+/// response, such as ASP.NET Core <c>ProblemDetails</c>, include only <see cref="ValidationFailure.PropertyName"/> and
+/// <see cref="ValidationFailure.ErrorMessage"/>.
+/// </para>
 /// </remarks>
 public sealed class ValidationBehavior : IBehavior
 {
