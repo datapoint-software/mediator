@@ -1,0 +1,76 @@
+using System.Threading;
+using System.Threading.Tasks;
+using Datapoint.Mediator.Tests.Fakes;
+using Xunit;
+
+namespace Datapoint.Mediator.Tests;
+
+// The default IBehavior methods must pass straight through to next, with the same token.
+public sealed class BehaviorDefaultsTests
+{
+    private readonly IBehavior _behavior = new PassThroughBehavior();
+
+    [Fact]
+    public async Task Command_CallsNextWithSameToken()
+    {
+        using var cts = new CancellationTokenSource();
+        CancellationToken? received = null;
+
+        await _behavior.HandleAsync(new Ping(), ct =>
+        {
+            received = ct;
+            return default;
+        }, cts.Token);
+
+        Assert.Equal(cts.Token, received);
+    }
+
+    [Fact]
+    public async Task CommandWithResult_CallsNextWithSameTokenAndReturnsItsResult()
+    {
+        using var cts = new CancellationTokenSource();
+        CancellationToken? received = null;
+
+        var result = await _behavior.HandleAsync(new Add(1, 2), ct =>
+        {
+            received = ct;
+            return new ValueTask<int>(42);
+        }, cts.Token);
+
+        Assert.Equal(42, result);
+        Assert.Equal(cts.Token, received);
+    }
+
+    [Fact]
+    public async Task Query_CallsNextWithSameTokenAndReturnsItsResult()
+    {
+        using var cts = new CancellationTokenSource();
+        CancellationToken? received = null;
+
+        var result = await _behavior.HandleAsync(new Echo("value"), ct =>
+        {
+            received = ct;
+            return new ValueTask<string>("result");
+        }, cts.Token);
+
+        Assert.Equal("result", result);
+        Assert.Equal(cts.Token, received);
+    }
+
+    [Fact]
+    public async Task Message_CallsNextWithSameToken()
+    {
+        using var cts = new CancellationTokenSource();
+        CancellationToken? received = null;
+
+        await _behavior.HandleAsync(new Notified(), ct =>
+        {
+            received = ct;
+            return default;
+        }, cts.Token);
+
+        Assert.Equal(cts.Token, received);
+    }
+
+    private sealed class PassThroughBehavior : IBehavior;
+}
