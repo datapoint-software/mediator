@@ -22,3 +22,4 @@ public sealed class CreateUserHandler : ICommandHandler<CreateUser, Guid>
 | `IMessage` | Announces something that happened; handled by any number of `IMessageHandler`s. |
 | `IBehavior` | Wraps handling with cross-cutting concerns such as logging or validation. |
 | `IMediator` | Sends commands and queries, and publishes messages. |
+| `[Action("name")]`, `IActionCatalog`, `IActionDispatcher` | Name actions, list them, and dispatch them by name with JSON arguments, for hosts such as a CLI or an MCP server. |

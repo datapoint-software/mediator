@@ -42,6 +42,24 @@ services.AddMediator(options => options.AddHandlersFromAssemblyContaining<Create
 var id = await mediator.SendAsync(new CreateUser("Ana"), ct);
 ```
 
+## Actions: dispatch by name from an API, a CLI or an MCP server
+
+Name a command, query or stream query with `[Action]`, and any host can dispatch it from a name and JSON arguments:
+
+```csharp
+[Action("invoice.create", Description = "Creates an invoice for a customer.")]
+public sealed record CreateInvoice(string Customer, decimal Amount) : ICommand<Guid>;
+
+// In a host, with a scoped IActionDispatcher:
+var id = await dispatcher.DispatchAsync("invoice.create", arguments, ct: ct); // arguments: a JsonElement
+```
+
+- Every behaviour still runs, so actions dispatched by name are authorized and validated like any other.
+- `IActionCatalog` lists the available actions, with their names, descriptions, kinds and types, for building CLI commands, MCP tools or endpoints.
+- `[Action("invoice.purge", Exposed = false)]` keeps an action out of dispatch by name. An unknown and a hidden action fail the same way (`ActionNotFoundException`), so callers can't discover internal actions.
+- Invalid names, duplicate names and named messages fail at startup, in `AddMediator`. Messages can't be actions, because their handlers aren't authorized.
+- Invalid JSON throws `InvalidActionArgumentsException`, whose message never repeats the input.
+
 ## Behaviour order
 
 Behaviours run in the order they're registered, with the first one outermost. The recommended order is:

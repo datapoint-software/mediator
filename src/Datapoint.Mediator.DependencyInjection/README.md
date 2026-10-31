@@ -15,3 +15,4 @@ services.AddMediator(options =>
 - Behaviours run in the order they are added with `AddBehavior<T>()`.
 - Handlers and behaviours are scoped by default; change it with `options.DefaultLifetime` or per registration.
 - Registering a second handler for the same command or query throws when `AddMediator` runs, so the mistake is found at startup.
+- `IActionCatalog` (singleton) and `IActionDispatcher` (scoped) are registered too. The catalog lists the handled actions marked with `[Action]`, and invalid or duplicate action names also throw when `AddMediator` runs.
