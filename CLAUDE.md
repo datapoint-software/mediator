@@ -60,3 +60,17 @@ Assume the contributor is a junior developer. Your job is to help them reach sou
 - The current series is `4.0.0-alpha.N`. Release `4.0.0` once the package has been used in a real project. Versions `3.0.0` and below already exist on nuget.org and can never be reused.
 - To release: move the public API entries to `PublicAPI.Shipped.txt`, commit, then tag that commit on `main` and push the tag. The `Release` workflow builds, tests and publishes to nuget.org with Trusted Publishing, after approval in the `nuget` environment.
 - Never tag or push without the contributor asking. A published version is permanent.
+
+## Tests and coverage
+
+- New or changed behaviour comes with tests in the same change. Each test project tests one `src` project.
+- CI fails when line coverage, across all packages combined, is below 95%, and reports coverage to Codecov.
+- Don't write tests only to raise the percentage, such as for unused exception constructors or compiler-generated branches. Cover the situations that could hide a real bug.
+- To measure coverage locally, as CI does:
+
+  ```bash
+  dotnet tool restore
+  dotnet build Datapoint.Mediator.slnx -c Release
+  dotnet test Datapoint.Mediator.slnx -c Release --no-build --results-directory coverage/raw --coverlet --coverlet-output-format cobertura --coverlet-include "[Datapoint.Mediator*]*" --coverlet-exclude "[*.Tests.Fixtures]*"
+  dotnet reportgenerator -reports:"coverage/raw/*.cobertura.*.xml" -targetdir:coverage -reporttypes:"Html;TextSummary"
+  ```

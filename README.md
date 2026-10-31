@@ -1,6 +1,7 @@
 # Mediator
 
 [![CI](https://github.com/datapoint-software/mediator/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/datapoint-software/mediator/actions/workflows/ci.yml)
+[![Coverage](https://codecov.io/gh/datapoint-software/mediator/graph/badge.svg)](https://codecov.io/gh/datapoint-software/mediator)
 [![NuGet](https://img.shields.io/nuget/vpre/Datapoint.Mediator)](https://www.nuget.org/packages/Datapoint.Mediator)
 [![Downloads](https://img.shields.io/nuget/dt/Datapoint.Mediator)](https://www.nuget.org/packages/Datapoint.Mediator)
 [![License: MIT](https://img.shields.io/github/license/datapoint-software/mediator)](LICENSE)
