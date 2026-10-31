@@ -22,6 +22,8 @@ public sealed record GetPublicPrices : IQuery<PriceList>;
 - When an action has several authorizers, all of them must allow it.
 - Messages are not authorized, because they are published by the application itself.
 
+> **Security:** never publish a message built directly from user input, for example from an API endpoint or an MCP tool call, because its handlers run without any authorization check. Send a command instead, which is authorized, and publish the message from that command's handler.
+
 ## The current user, in each host
 
 Each host registers an `IPrincipalAccessor` as a scoped service:

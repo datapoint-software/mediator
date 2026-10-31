@@ -31,7 +31,9 @@ namespace Datapoint.Mediator.Authorization;
 /// </list>
 /// <para>
 /// The handler only runs when the action is allowed. A stream query is authorized when its results are first
-/// enumerated. Messages are not authorized, because they are published by the application itself.
+/// enumerated. Messages are not authorized, because they are published by the application itself. Never publish a
+/// message built directly from user input: send an authorized command instead, and publish the message from its
+/// handler.
 /// </para>
 /// <para>
 /// Register this behaviour before a validation behaviour, so that users who may not run an action cannot learn its
