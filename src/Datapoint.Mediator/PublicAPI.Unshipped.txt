@@ -1,0 +1,7 @@
+#nullable enable
+Datapoint.Mediator.Mediator
+Datapoint.Mediator.Mediator.Mediator(System.IServiceProvider! serviceProvider) -> void
+Datapoint.Mediator.Mediator.PublishAsync(Datapoint.Mediator.IMessage! message, System.Threading.CancellationToken ct = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask
+Datapoint.Mediator.Mediator.QueryAsync<TResult>(Datapoint.Mediator.IQuery<TResult>! query, System.Threading.CancellationToken ct = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<TResult>
+Datapoint.Mediator.Mediator.SendAsync(Datapoint.Mediator.ICommand! command, System.Threading.CancellationToken ct = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask
+Datapoint.Mediator.Mediator.SendAsync<TResult>(Datapoint.Mediator.ICommand<TResult>! command, System.Threading.CancellationToken ct = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<TResult>

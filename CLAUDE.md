@@ -47,3 +47,9 @@ Assume the contributor is a junior developer. Your job is to help them reach sou
 - Release from `main`. Do not create release branches per version or per target framework.
 - Adding a target framework is a minor bump. Dropping one is a breaking change, so it is a major bump.
 - The package currently targets `net10.0` only.
+
+### Public API
+
+- Each `src` project lists its public API in `PublicAPI.Shipped.txt` (released) and `PublicAPI.Unshipped.txt` (since the last release). The build fails when the public API and these files disagree.
+- When you change a public API, update `PublicAPI.Unshipped.txt` in the same commit, so the change is visible in review. A removed or changed line from `PublicAPI.Shipped.txt` is a breaking change.
+- On release, move the entries from `PublicAPI.Unshipped.txt` to `PublicAPI.Shipped.txt`.

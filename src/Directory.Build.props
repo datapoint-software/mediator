@@ -37,6 +37,18 @@
     <PackageReference Include="MinVer" PrivateAssets="all" />
   </ItemGroup>
 
+  <!--
+    Fails the build when the public API changes without PublicAPI.*.txt being updated.
+    RS0026 is disabled because overloads that each end in an optional CancellationToken are the .NET convention.
+  -->
+  <PropertyGroup>
+    <NoWarn>$(NoWarn);RS0026</NoWarn>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.CodeAnalysis.PublicApiAnalyzers" PrivateAssets="all" />
+  </ItemGroup>
+
   <!-- The repository URL is only known once Source Link has read the git remote. -->
   <Target Name="SetPackageProjectUrl" BeforeTargets="GenerateNuspec" DependsOnTargets="InitializeSourceControlInformation">
     <PropertyGroup>
