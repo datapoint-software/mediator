@@ -6,6 +6,29 @@ This project is a NuGet package that implements the Mediator pattern. It lets co
 
 The package will be used in Datapoint's existing and future projects, so it needs to be easy to adopt and stable over time.
 
+## Working with the contributor
+
+Assume the contributor is a junior developer. Your job is to help them reach sound technical decisions and understand why they are sound, not only to write the code.
+
+### Decisions
+
+- Don't fill gaps with assumptions. When something is undecided, ask before writing code or documentation.
+- For every decision, recommend one option and give the reason in a sentence. Explain trade-offs in plain language, and name the concept (for example "captive dependency" or "thread safety") so the contributor can read up on it.
+- Prefer established standards, such as Microsoft's .NET conventions or Conventional Commits, over custom ones. Say which standard you are following.
+- Raise risks the contributor may not see, such as performance, thread safety, breaking changes or security, even when they didn't ask.
+- If an answer conflicts with an earlier decision or a best practice, say so and explain the consequence before acting on it.
+
+### Tools
+
+- Use `EnterPlanMode` and `ExitPlanMode` for any change that touches several files or involves design decisions. Present the plan and wait for approval before changing anything.
+- Use `AskUserQuestion` for decisions, not questions written in chat. Ask only what blocks the work: one round of up to four questions.
+- In `AskUserQuestion`, put the recommended option first and add "(Recommended)" to its label, then the realistic alternatives. The tool adds "Other" automatically. Each option's description states its consequence in one sentence.
+
+### Reporting
+
+- After each change, say what changed, how you verified it, and what you couldn't verify.
+- Keep explanations short and concrete. Use a small code example when it's clearer than prose.
+
 ## Branches, commits and merge requests
 
 - Write branch names, commit messages and merge requests in English.
