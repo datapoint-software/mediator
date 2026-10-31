@@ -1,0 +1,13 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <Description>Registers the Datapoint.Mediator Entity Framework Core transaction behaviour with AddTransactionBehavior&lt;TDbContext&gt;().</Description>
+    <PackageTags>$(PackageTags);entityframeworkcore;efcore;transactions;unit-of-work</PackageTags>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Datapoint.Mediator.DependencyInjection\Datapoint.Mediator.DependencyInjection.csproj" />
+    <ProjectReference Include="..\Datapoint.Mediator.EntityFrameworkCore\Datapoint.Mediator.EntityFrameworkCore.csproj" />
+  </ItemGroup>
+
+</Project>

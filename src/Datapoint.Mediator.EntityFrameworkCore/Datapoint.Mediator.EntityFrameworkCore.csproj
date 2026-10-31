@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <Description>A Datapoint.Mediator behaviour that runs each command in an Entity Framework Core transaction and saves its changes once, at the end.</Description>
+    <PackageTags>$(PackageTags);entityframeworkcore;efcore;transactions;unit-of-work</PackageTags>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Datapoint.Mediator.Abstractions\Datapoint.Mediator.Abstractions.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.EntityFrameworkCore" />
+  </ItemGroup>
+
+</Project>
