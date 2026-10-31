@@ -59,11 +59,12 @@ jobs:
           use_oidc: true
           fail_ci_if_error: false
 
-      - name: Require 95% line coverage
+      # Branch coverage isn't gated, because some branches are only taken while a telemetry test is listening.
+      - name: Require 100% line coverage
         run: |
           coverage=$(jq '.summary.linecoverage' coverage/Summary.json)
-          if awk -v c="$coverage" 'BEGIN { exit !(c < 95) }'; then
-            echo "::error::Line coverage is $coverage%, below the required 95%."
+          if awk -v c="$coverage" 'BEGIN { exit !(c < 100) }'; then
+            echo "::error::Line coverage is $coverage%, below the required 100%. Add tests, or exclude code that can't be tested with [ExcludeFromCodeCoverage(Justification = ...)]."
             exit 1
           fi
           echo "Line coverage is $coverage%."

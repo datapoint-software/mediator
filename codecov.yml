@@ -1,11 +1,13 @@
+# CI enforces 100% line coverage. Codecov also counts partially covered branches, which vary with test timing,
+# so its checks are informational only.
 coverage:
   status:
     project:
       default:
-        target: 95%
+        informational: true
     patch:
       default:
-        target: 90%
+        informational: true
 
 ignore:
   - tests

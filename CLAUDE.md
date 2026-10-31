@@ -64,8 +64,8 @@ Assume the contributor is a junior developer. Your job is to help them reach sou
 ## Tests and coverage
 
 - New or changed behaviour comes with tests in the same change. Each test project tests one `src` project.
-- CI fails when line coverage, across all packages combined, is below 95%, and reports coverage to Codecov.
-- Don't write tests only to raise the percentage, such as for unused exception constructors or compiler-generated branches. Cover the situations that could hide a real bug.
+- CI fails when line coverage, across all packages combined, is below 100%, and reports coverage to Codecov. Branch coverage is reported but not gated, because some branches depend on test timing.
+- Prefer a test that checks a real situation. When code genuinely can't be tested, exclude it with `[ExcludeFromCodeCoverage(Justification = "...")]` and a comment explaining why, so the exclusion is visible in review. Never exclude code just to make CI pass.
 - To measure coverage locally, as CI does:
 
   ```bash
