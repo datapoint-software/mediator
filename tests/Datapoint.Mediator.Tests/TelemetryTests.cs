@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Diagnostics.Metrics;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
 using Datapoint.Mediator.Tests.Fakes;
@@ -128,6 +129,47 @@ public sealed class TelemetryTests : IDisposable
     }
 
     [Fact]
+    public async Task OtherOperations_Failure_RecordErrorType()
+    {
+        var provider = new FakeServiceProvider()
+            .Add<ICommandHandler<FailingResultCommand, int>>(new CommandHandler<FailingResultCommand, int>((_, _) => throw new InvalidOperationException()))
+            .Add<IQueryHandler<FailingQuery, int>>(new QueryHandler<FailingQuery, int>((_, _) => throw new InvalidOperationException()))
+            .AddAll<IMessageHandler<FailingMessage>>(new MessageHandler<FailingMessage>((_, _) => throw new InvalidOperationException()));
+        var mediator = new Mediator(provider);
+        var ct = TestContext.Current.CancellationToken;
+
+        await Assert.ThrowsAsync<InvalidOperationException>(async () => await mediator.SendAsync(new FailingResultCommand(), ct));
+        await Assert.ThrowsAsync<InvalidOperationException>(async () => await mediator.QueryAsync(new FailingQuery(), ct));
+        await Assert.ThrowsAsync<InvalidOperationException>(async () => await mediator.PublishAsync(new FailingMessage(), ct));
+
+        Assert.Equal(ActivityStatusCode.Error, Assert.Single(ActivitiesFor<FailingResultCommand>()).Status);
+        Assert.Equal(ActivityStatusCode.Error, Assert.Single(ActivitiesFor<FailingQuery>()).Status);
+        Assert.Equal(ActivityStatusCode.Error, Assert.Single(ActivitiesFor<FailingMessage>()).Status);
+    }
+
+    [Fact]
+    public async Task StreamAsync_FailureDuringEnumeration_RecordsErrorType()
+    {
+        var provider = new FakeServiceProvider().Add<IStreamQueryHandler<FailingStream, int>>(
+            new StreamQueryHandler<FailingStream, int>((_, ct) => FailAfterOne(ct)));
+
+        await Assert.ThrowsAsync<InvalidOperationException>(async () =>
+            await new Mediator(provider).StreamAsync(new FailingStream(), TestContext.Current.CancellationToken)
+                .ToListAsync(TestContext.Current.CancellationToken));
+
+        var activity = Assert.Single(ActivitiesFor<FailingStream>());
+        Assert.Equal(ActivityStatusCode.Error, activity.Status);
+        Assert.Equal(typeof(InvalidOperationException).FullName, activity.GetTagItem("error.type"));
+
+        static async IAsyncEnumerable<int> FailAfterOne([EnumeratorCancellation] CancellationToken ct)
+        {
+            await Task.Yield();
+            yield return 1;
+            throw new InvalidOperationException();
+        }
+    }
+
+    [Fact]
     public async Task StreamAsync_RecordsSpanCoveringEnumeration()
     {
         var provider = new FakeServiceProvider().Add<IStreamQueryHandler<TracedStream, int>>(
@@ -174,4 +216,12 @@ public sealed class TelemetryTests : IDisposable
     private sealed record TracedStream(int Count) : IStreamQuery<int>;
 
     private sealed record UnhandledStream : IStreamQuery<int>;
+
+    private sealed record FailingResultCommand : ICommand<int>;
+
+    private sealed record FailingQuery : IQuery<int>;
+
+    private sealed record FailingMessage : IMessage;
+
+    private sealed record FailingStream : IStreamQuery<int>;
 }
