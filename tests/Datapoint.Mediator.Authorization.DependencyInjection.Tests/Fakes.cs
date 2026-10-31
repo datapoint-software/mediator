@@ -6,7 +6,12 @@ using Datapoint.Mediator.Authorization;
 
 namespace Datapoint.Mediator.Authorization.DependencyInjection.Tests;
 
+[Action("invoice.approve")]
 public sealed record ApproveInvoice(decimal Amount) : ICommand;
+
+// Named, so it can be dispatched by name, but deliberately without an authorizer.
+[Action("invoice.void")]
+public sealed record VoidInvoice : ICommand;
 
 public sealed record ArchiveInvoice : ICommand;
 
@@ -20,6 +25,15 @@ public sealed class ApproveInvoiceHandler(Recorder recorder) : ICommandHandler<A
     public ValueTask HandleAsync(ApproveInvoice command, CancellationToken ct = default)
     {
         recorder.Log.Add($"approved {command.Amount}");
+        return default;
+    }
+}
+
+public sealed class VoidInvoiceHandler(Recorder recorder) : ICommandHandler<VoidInvoice>
+{
+    public ValueTask HandleAsync(VoidInvoice command, CancellationToken ct = default)
+    {
+        recorder.Log.Add("voided");
         return default;
     }
 }

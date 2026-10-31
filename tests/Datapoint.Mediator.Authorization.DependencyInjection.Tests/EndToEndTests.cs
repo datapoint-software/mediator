@@ -1,4 +1,5 @@
 using System.Security.Claims;
+using System.Text.Json;
 using System.Threading.Tasks;
 using Microsoft.Extensions.DependencyInjection;
 using Xunit;
@@ -43,12 +44,37 @@ public sealed class EndToEndTests
             async () => await mediator.SendAsync(new ApproveInvoice(500), TestContext.Current.CancellationToken));
     }
 
+    [Fact]
+    public async Task DispatchByName_AllowedAction_ReachesHandler()
+    {
+        await using var provider = BuildProvider(FinanceUser());
+        await using var scope = provider.CreateAsyncScope();
+        var dispatcher = scope.ServiceProvider.GetRequiredService<IActionDispatcher>();
+
+        await dispatcher.DispatchAsync("invoice.approve", JsonDocument.Parse("{ \"amount\": 500 }").RootElement, ct: TestContext.Current.CancellationToken);
+
+        Assert.Equal(["approved 500"], provider.GetRequiredService<Recorder>().Log);
+    }
+
+    [Fact]
+    public async Task DispatchByName_ActionWithoutAuthorizer_IsDenied()
+    {
+        await using var provider = BuildProvider(FinanceUser());
+        await using var scope = provider.CreateAsyncScope();
+        var dispatcher = scope.ServiceProvider.GetRequiredService<IActionDispatcher>();
+
+        await Assert.ThrowsAsync<AccessDeniedException>(
+            async () => await dispatcher.DispatchAsync("invoice.void", default, ct: TestContext.Current.CancellationToken));
+
+        Assert.Empty(provider.GetRequiredService<Recorder>().Log);
+    }
+
     private static ServiceProvider BuildProvider(ClaimsPrincipal? principal) =>
         new ServiceCollection()
             .AddSingleton<Recorder>()
             .AddScoped<IPrincipalAccessor>(_ => new FixedPrincipalAccessor(principal))
             .AddAuthorizersFromAssemblyContaining<EndToEndTests>()
-            .AddMediator(o => o.AddHandler<ApproveInvoiceHandler>().AddAuthorizationBehavior())
+            .AddMediator(o => o.AddHandler<ApproveInvoiceHandler>().AddHandler<VoidInvoiceHandler>().AddAuthorizationBehavior())
             .BuildServiceProvider(new ServiceProviderOptions { ValidateScopes = true, ValidateOnBuild = true });
 
     private static ClaimsPrincipal FinanceUser() =>
