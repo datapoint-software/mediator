@@ -1,0 +1,55 @@
+name: Release
+
+# Publishes to nuget.org when a version tag without a prefix is pushed, such as 4.0.0-alpha.1.
+on:
+  push:
+    tags:
+      - '[0-9]+.[0-9]+.[0-9]+*'
+
+permissions:
+  contents: read
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    # Configure this environment in GitHub to require approval before publishing.
+    environment: nuget
+    permissions:
+      contents: read
+      id-token: write # Trusted Publishing: exchanges a GitHub OIDC token for a short-lived nuget.org API key
+    steps:
+      - name: Check out
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0 # MinVer reads the version from git tags
+
+      - name: Set up .NET
+        uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6.0.0
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Restore
+        run: dotnet restore Datapoint.Mediator.slnx
+
+      - name: Build
+        run: dotnet build Datapoint.Mediator.slnx --configuration Release --no-restore
+
+      - name: Test
+        run: dotnet test Datapoint.Mediator.slnx --configuration Release --no-build
+
+      - name: Pack
+        run: dotnet pack Datapoint.Mediator.slnx --configuration Release --no-build --output artifacts
+
+      - name: Log in to nuget.org
+        id: login
+        uses: NuGet/login@8d196754b4036150537f80ac539e15c2f1028841 # v1.2.0
+        with:
+          user: ${{ vars.NUGET_USER }}
+
+      # Symbol packages (.snupkg) next to each .nupkg are pushed with it.
+      - name: Push packages
+        run: >-
+          dotnet nuget push "artifacts/*.nupkg"
+          --api-key "${{ steps.login.outputs.NUGET_API_KEY }}"
+          --source https://api.nuget.org/v3/index.json
+          --skip-duplicate
