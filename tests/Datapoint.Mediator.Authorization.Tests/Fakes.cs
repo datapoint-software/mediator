@@ -22,6 +22,9 @@ public sealed record GetPrices : IQuery<int>;
 [AllowAnonymousAccess]
 public record AnonymousBase : ICommand;
 
+[AllowAnonymousAccess]
+public sealed record ListPrices : IStreamQuery<int>;
+
 public sealed record DerivedFromAnonymous : AnonymousBase;
 
 public sealed class TestPrincipalAccessor(ClaimsPrincipal? principal) : IPrincipalAccessor
@@ -42,9 +45,17 @@ public sealed class TestAuthorizer<TAction>(string name, bool allow, List<string
     }
 }
 
+public sealed class DelegateServiceProvider(Func<Type, object?> getService) : IServiceProvider
+{
+    public object? GetService(Type serviceType) => getService(serviceType);
+}
+
 public static class Principals
 {
     public static ClaimsPrincipal SignedIn() => new(new ClaimsIdentity([new Claim(ClaimTypes.Name, "ana")], "test"));
+
+    // A principal with no identity at all.
+    public static ClaimsPrincipal WithoutIdentity() => new();
 
     // An identity without an authentication type is not authenticated.
     public static ClaimsPrincipal Anonymous() => new(new ClaimsIdentity());

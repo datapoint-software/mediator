@@ -68,6 +68,70 @@ public sealed class AuthorizationBehaviorTests
     }
 
     [Fact]
+    public async Task PrincipalWithoutIdentity_ThrowsAuthenticationRequired()
+    {
+        var behavior = CreateBehavior(Principals.WithoutIdentity(), s => s.AddAuthorizer<DeleteInvoice>("allow", true, _log));
+
+        await Assert.ThrowsAsync<AuthenticationRequiredException>(
+            async () => await behavior.HandleAsync(new DeleteInvoice(1), Next, TestContext.Current.CancellationToken));
+
+        Assert.False(_nextCalled);
+        Assert.Empty(_log);
+    }
+
+    [Fact]
+    public async Task AnonymousCommand_IsAllowedWithoutUserOrAccessor()
+    {
+        var behavior = new AuthorizationBehavior(new ServiceCollection().BuildServiceProvider());
+
+        await behavior.HandleAsync(new AnonymousBase(), Next, TestContext.Current.CancellationToken);
+
+        Assert.True(_nextCalled);
+    }
+
+    [Fact]
+    public async Task AnonymousStreamQuery_IsAllowedWithoutUserOrAccessor()
+    {
+        var behavior = new AuthorizationBehavior(new ServiceCollection().BuildServiceProvider());
+
+        var results = await behavior.HandleAsync(new ListPrices(), NextStream, TestContext.Current.CancellationToken)
+            .ToListAsync(TestContext.Current.CancellationToken);
+
+        Assert.Equal([1, 2], results);
+    }
+
+    [Fact]
+    public async Task NullAuthorizers_DenyAccess()
+    {
+        var behavior = new AuthorizationBehavior(new DelegateServiceProvider(type =>
+            type == typeof(IPrincipalAccessor) ? new TestPrincipalAccessor(Principals.SignedIn()) : null));
+
+        await Assert.ThrowsAsync<AccessDeniedException>(
+            async () => await behavior.HandleAsync(new DeleteInvoice(1), Next, TestContext.Current.CancellationToken));
+
+        Assert.False(_nextCalled);
+    }
+
+    [Fact]
+    public async Task NonArrayAuthorizers_AreUsed()
+    {
+        var authorizers = new List<IAuthorizer<DeleteInvoice>>
+        {
+            new TestAuthorizer<DeleteInvoice>("first", true, _log),
+            new TestAuthorizer<DeleteInvoice>("second", false, _log),
+        };
+        var behavior = new AuthorizationBehavior(new DelegateServiceProvider(type =>
+            type == typeof(IPrincipalAccessor) ? new TestPrincipalAccessor(Principals.SignedIn())
+            : type == typeof(IEnumerable<IAuthorizer<DeleteInvoice>>) ? authorizers
+            : null));
+
+        await Assert.ThrowsAsync<AccessDeniedException>(
+            async () => await behavior.HandleAsync(new DeleteInvoice(1), Next, TestContext.Current.CancellationToken));
+
+        Assert.Equal(["first", "second"], _log);
+    }
+
+    [Fact]
     public async Task NoAuthorizer_DeniesAccess()
     {
         var behavior = CreateBehavior(Principals.SignedIn(), _ => { });
