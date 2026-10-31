@@ -31,6 +31,17 @@ internal sealed class MessageDispatcher<TMessage> : MessageDispatcher
             return handlers.Length == 0 ? default : PublishAsync(handlers, typedMessage, ct);
         }
 
+        return InvokePipelineAsync(behaviors, handlers, message, typedMessage, ct);
+    }
+
+    // Kept separate from DispatchAsync, so the closures are only allocated when there are behaviours.
+    private static ValueTask InvokePipelineAsync(
+        IBehavior[] behaviors,
+        IMessageHandler<TMessage>[] handlers,
+        IMessage message,
+        TMessage typedMessage,
+        CancellationToken ct)
+    {
         // Built from the innermost behaviour outwards, so the first registered behaviour runs first.
         Func<CancellationToken, ValueTask> next = c => PublishAsync(handlers, typedMessage, c);
 

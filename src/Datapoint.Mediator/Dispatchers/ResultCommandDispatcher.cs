@@ -38,6 +38,17 @@ internal sealed class ResultCommandDispatcher<TCommand, TResult> : ResultCommand
             return handler.HandleAsync(typedCommand, ct);
         }
 
+        return InvokePipelineAsync(behaviors, handler, command, typedCommand, ct);
+    }
+
+    // Kept separate from DispatchAsync, so the closures are only allocated when there are behaviours.
+    private static ValueTask<TResult> InvokePipelineAsync(
+        IBehavior[] behaviors,
+        ICommandHandler<TCommand, TResult> handler,
+        ICommand<TResult> command,
+        TCommand typedCommand,
+        CancellationToken ct)
+    {
         // Built from the innermost behaviour outwards, so the first registered behaviour runs first.
         Func<CancellationToken, ValueTask<TResult>> next = c => handler.HandleAsync(typedCommand, c);
 

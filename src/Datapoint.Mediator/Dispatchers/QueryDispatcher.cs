@@ -38,6 +38,17 @@ internal sealed class QueryDispatcher<TQuery, TResult> : QueryDispatcher<TResult
             return handler.HandleAsync(typedQuery, ct);
         }
 
+        return InvokePipelineAsync(behaviors, handler, query, typedQuery, ct);
+    }
+
+    // Kept separate from DispatchAsync, so the closures are only allocated when there are behaviours.
+    private static ValueTask<TResult> InvokePipelineAsync(
+        IBehavior[] behaviors,
+        IQueryHandler<TQuery, TResult> handler,
+        IQuery<TResult> query,
+        TQuery typedQuery,
+        CancellationToken ct)
+    {
         // Built from the innermost behaviour outwards, so the first registered behaviour runs first.
         Func<CancellationToken, ValueTask<TResult>> next = c => handler.HandleAsync(typedQuery, c);
 
