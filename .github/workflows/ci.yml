@@ -27,7 +27,7 @@ jobs:
 
       - name: Restore
         run: |
-          dotnet restore Datapoint.Mediator.slnx
+          dotnet restore Datapoint.Mediator.slnx --locked-mode
           dotnet tool restore
 
       - name: Build
