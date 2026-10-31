@@ -9,7 +9,7 @@ public sealed record GenerateReport(string Title) : ICommand<string>;
 [Action("report.archive")]
 public sealed record ArchiveReport : ICommand;
 
-[Action("report.secret", Exposed = false)]
+[Action("report.secret", Hidden = true)]
 public sealed record SecretReport : ICommand;
 
 [Action("report.generate")]

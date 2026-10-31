@@ -13,7 +13,7 @@ public sealed class ActionCatalogTests
     }
 
     [Fact]
-    public void Actions_ListsExposedNamedActionsInNameOrder()
+    public void Actions_ListsVisibleNamedActionsInNameOrder()
     {
         var catalog = new ActionCatalog([typeof(ZetaQuery), typeof(Unnamed), typeof(AlphaCommand), typeof(Hidden), typeof(AlphaCommand)]);
 
@@ -118,7 +118,7 @@ public sealed class ActionCatalogTests
     [Action("number.stream")]
     private sealed record NumberStream : IStreamQuery<int>;
 
-    [Action("hidden.command", Exposed = false)]
+    [Action("hidden.command", Hidden = true)]
     private sealed record Hidden : ICommand;
 
     [Action("hidden.command")]

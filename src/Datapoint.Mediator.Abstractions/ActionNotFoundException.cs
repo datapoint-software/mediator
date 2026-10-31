@@ -3,10 +3,10 @@ using System;
 namespace Datapoint.Mediator;
 
 /// <summary>
-/// The exception thrown when no exposed action has the requested name.
+/// The exception thrown when no action that isn't hidden has the requested name.
 /// </summary>
 /// <remarks>
-/// The same exception is thrown whether the action doesn't exist or isn't exposed, so callers can't learn which
+/// The same exception is thrown whether the action doesn't exist or is hidden, so callers can't learn which
 /// internal actions exist. The message doesn't include the requested name, which comes from the caller's input.
 /// </remarks>
 public sealed class ActionNotFoundException : Exception

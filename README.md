@@ -56,7 +56,7 @@ var id = await dispatcher.DispatchAsync("invoice.create", arguments, ct: ct); //
 
 - Every behaviour still runs, so actions dispatched by name are authorized and validated like any other.
 - `IActionCatalog` lists the available actions, with their names, descriptions, kinds and types, for building CLI commands, MCP tools or endpoints.
-- `[Action("invoice.purge", Exposed = false)]` keeps an action out of dispatch by name. An unknown and a hidden action fail the same way (`ActionNotFoundException`), so callers can't discover internal actions.
+- `[Action("invoice.purge", Hidden = true)]` keeps an action out of the catalog and of dispatch by name, while it can still be sent through `IMediator`. An unknown and a hidden action fail the same way (`ActionNotFoundException`), so callers can't discover internal actions.
 - Invalid names, duplicate names and named messages fail at startup, in `AddMediator`. Messages can't be actions, because their handlers aren't authorized.
 - Invalid JSON throws `InvalidActionArgumentsException`, whose message never repeats the input.
 

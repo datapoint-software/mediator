@@ -10,7 +10,7 @@ namespace Datapoint.Mediator;
 
 /// <summary>
 /// The actions, among a set of command, query and stream query types, that are marked with
-/// <see cref="ActionAttribute"/> and exposed.
+/// <see cref="ActionAttribute"/> and not hidden.
 /// </summary>
 public sealed partial class ActionCatalog : IActionCatalog
 {
@@ -35,7 +35,7 @@ public sealed partial class ActionCatalog : IActionCatalog
         ArgumentNullException.ThrowIfNull(actionTypes);
 
         var named = new Dictionary<string, Type>(StringComparer.Ordinal);
-        var exposed = new List<ActionDescriptor>();
+        var visible = new List<ActionDescriptor>();
 
         foreach (var type in actionTypes.Distinct())
         {
@@ -68,14 +68,14 @@ public sealed partial class ActionCatalog : IActionCatalog
             named.Add(attribute.Name, type);
             var (kind, resultType) = GetKind(type);
 
-            if (attribute.Exposed)
+            if (!attribute.Hidden)
             {
-                exposed.Add(new ActionDescriptor(attribute.Name, attribute.Description, kind, type, resultType));
+                visible.Add(new ActionDescriptor(attribute.Name, attribute.Description, kind, type, resultType));
             }
         }
 
-        _actions = exposed.ToFrozenDictionary(action => action.Name, StringComparer.Ordinal);
-        Actions = [.. exposed.OrderBy(action => action.Name, StringComparer.Ordinal)];
+        _actions = visible.ToFrozenDictionary(action => action.Name, StringComparer.Ordinal);
+        Actions = [.. visible.OrderBy(action => action.Name, StringComparer.Ordinal)];
     }
 
     /// <inheritdoc/>

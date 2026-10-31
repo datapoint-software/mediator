@@ -35,7 +35,7 @@ public interface IActionDispatcher
     /// A task that completes with the action's result, or <see langword="null"/> for a command without a result. Await
     /// it only once.
     /// </returns>
-    /// <exception cref="ActionNotFoundException">No exposed action has that name.</exception>
+    /// <exception cref="ActionNotFoundException">No action that isn't hidden has that name.</exception>
     /// <exception cref="InvalidActionArgumentsException">The arguments don't match the action's type.</exception>
     /// <exception cref="System.InvalidOperationException">The action is a stream query.</exception>
     ValueTask<object?> DispatchAsync(
@@ -54,7 +54,7 @@ public interface IActionDispatcher
     /// <param name="options">The options to deserialize the arguments with, or <see langword="null"/>.</param>
     /// <param name="ct">A token to cancel the enumeration.</param>
     /// <returns>The query's results, produced as they are enumerated.</returns>
-    /// <exception cref="ActionNotFoundException">No exposed action has that name.</exception>
+    /// <exception cref="ActionNotFoundException">No action that isn't hidden has that name.</exception>
     /// <exception cref="InvalidActionArgumentsException">The arguments don't match the action's type.</exception>
     /// <exception cref="System.InvalidOperationException">The action is not a stream query.</exception>
     IAsyncEnumerable<object?> StreamAsync(

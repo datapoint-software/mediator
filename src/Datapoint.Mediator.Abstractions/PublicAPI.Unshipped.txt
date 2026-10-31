@@ -3,8 +3,8 @@ Datapoint.Mediator.ActionAttribute
 Datapoint.Mediator.ActionAttribute.ActionAttribute(string! name) -> void
 Datapoint.Mediator.ActionAttribute.Description.get -> string?
 Datapoint.Mediator.ActionAttribute.Description.init -> void
-Datapoint.Mediator.ActionAttribute.Exposed.get -> bool
-Datapoint.Mediator.ActionAttribute.Exposed.init -> void
+Datapoint.Mediator.ActionAttribute.Hidden.get -> bool
+Datapoint.Mediator.ActionAttribute.Hidden.init -> void
 Datapoint.Mediator.ActionAttribute.Name.get -> string!
 Datapoint.Mediator.ActionDescriptor
 Datapoint.Mediator.ActionDescriptor.ActionDescriptor(string! name, string? description, Datapoint.Mediator.ActionKind kind, System.Type! actionType, System.Type? resultType) -> void

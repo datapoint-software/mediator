@@ -164,6 +164,6 @@ public sealed class ActionDispatcherTests
     [Action("invoice.list")]
     private sealed record ListInvoices(int Count) : IStreamQuery<int>;
 
-    [Action("invoice.purge", Exposed = false)]
+    [Action("invoice.purge", Hidden = true)]
     private sealed record PurgeInvoices : ICommand;
 }

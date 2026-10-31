@@ -10,7 +10,7 @@ namespace Datapoint.Mediator.DependencyInjection.Tests;
 public sealed class ActionRegistrationTests
 {
     [Fact]
-    public void Catalog_ListsExposedNamedActionsWithHandlers()
+    public void Catalog_ListsVisibleNamedActionsWithHandlers()
     {
         using var provider = new ServiceCollection()
             .AddMediator(o => o.AddHandler<GenerateReportHandler>().AddHandler<SecretReportHandler>().AddHandler<PingHandler>())
