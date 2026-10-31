@@ -2,6 +2,7 @@ using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
 using FluentValidation;
@@ -10,15 +11,16 @@ using FluentValidation.Results;
 namespace Datapoint.Mediator.FluentValidation;
 
 /// <summary>
-/// Validates commands and queries with their FluentValidation validators before their handler runs.
+/// Validates commands, queries and stream queries with their FluentValidation validators before their handler runs.
 /// </summary>
 /// <remarks>
 /// <para>
-/// For each command or query, the behaviour resolves every <see cref="IValidator{T}"/> registered for its exact type and
+/// For each command, query or stream query, the behaviour resolves every <see cref="IValidator{T}"/> registered for its exact type and
 /// runs them one after another. If any validator reports a failure, it throws a <see cref="ValidationException"/>
 /// containing the failures from all validators, and the handler is not called. Messages are not validated.
 /// </para>
 /// <para>
+/// A stream query is validated when its results are first enumerated, before the handler produces any result.
 /// Validators must be registered for the exact command or query type; validators for a base class or interface are not
 /// used. Create the behaviour from the current scope, so that scoped validators are resolved from it.
 /// </para>
@@ -77,6 +79,17 @@ public sealed class ValidationBehavior : IBehavior
         return validators.Length == 0 ? next(ct) : ValidateThenHandleAsync(query, validators, next, ct);
     }
 
+    /// <inheritdoc/>
+    /// <exception cref="ValidationException">The stream query is not valid. Thrown when the results are first enumerated.</exception>
+    public IAsyncEnumerable<TResult> HandleAsync<TResult>(
+        IStreamQuery<TResult> query,
+        Func<CancellationToken, IAsyncEnumerable<TResult>> next,
+        CancellationToken ct = default)
+    {
+        var validators = GetValidators(query);
+        return validators.Length == 0 ? next(ct) : ValidateThenStreamAsync(query, validators, next, ct);
+    }
+
     private IValidator[] GetValidators(object action)
     {
         var validatorsType = ValidatorsTypes.GetOrAdd(
@@ -110,6 +123,20 @@ public sealed class ValidationBehavior : IBehavior
     {
         await ValidateAsync(action, validators, ct).ConfigureAwait(false);
         return await next(ct).ConfigureAwait(false);
+    }
+
+    private static async IAsyncEnumerable<TResult> ValidateThenStreamAsync<TResult>(
+        object action,
+        IValidator[] validators,
+        Func<CancellationToken, IAsyncEnumerable<TResult>> next,
+        [EnumeratorCancellation] CancellationToken ct)
+    {
+        await ValidateAsync(action, validators, ct).ConfigureAwait(false);
+
+        await foreach (var result in next(ct).ConfigureAwait(false))
+        {
+            yield return result;
+        }
     }
 
     // Runs every validator, one after another, and throws once with all of their failures.
