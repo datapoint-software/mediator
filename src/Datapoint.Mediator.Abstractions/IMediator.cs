@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -33,6 +34,18 @@ public interface IMediator
     /// <param name="ct">A token to cancel the operation.</param>
     /// <returns>A task that completes with the query's result. Await it only once.</returns>
     ValueTask<TResult> QueryAsync<TResult>(IQuery<TResult> query, CancellationToken ct = default);
+
+    /// <summary>
+    /// Sends a stream query to its <see cref="IStreamQueryHandler{TQuery, TResult}"/>.
+    /// </summary>
+    /// <typeparam name="TResult">The type of each result.</typeparam>
+    /// <param name="query">The stream query to send.</param>
+    /// <param name="ct">A token to cancel the enumeration.</param>
+    /// <returns>
+    /// The query's results, produced as they are enumerated. The handler is resolved when this method is called, and
+    /// runs when the results are enumerated.
+    /// </returns>
+    IAsyncEnumerable<TResult> StreamAsync<TResult>(IStreamQuery<TResult> query, CancellationToken ct = default);
 
     /// <summary>
     /// Publishes a message to every <see cref="IMessageHandler{TMessage}"/> registered for it.

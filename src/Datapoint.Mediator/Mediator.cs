@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using Datapoint.Mediator.Dispatchers;
@@ -59,6 +60,15 @@ public sealed class Mediator : IMediator
     {
         ArgumentNullException.ThrowIfNull(query);
         return QueryDispatcher<TResult>.Get(query.GetType()).DispatchAsync(query, _serviceProvider, ct);
+    }
+
+    /// <inheritdoc/>
+    /// <exception cref="ArgumentNullException"><paramref name="query"/> is <see langword="null"/>.</exception>
+    /// <exception cref="InvalidOperationException">No handler is registered for the stream query.</exception>
+    public IAsyncEnumerable<TResult> StreamAsync<TResult>(IStreamQuery<TResult> query, CancellationToken ct = default)
+    {
+        ArgumentNullException.ThrowIfNull(query);
+        return StreamQueryDispatcher<TResult>.Get(query.GetType()).Dispatch(query, _serviceProvider, ct);
     }
 
     /// <inheritdoc/>

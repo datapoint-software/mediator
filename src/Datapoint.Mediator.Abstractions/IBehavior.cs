@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -52,6 +53,24 @@ public interface IBehavior
     ValueTask<TResult> HandleAsync<TResult>(
         IQuery<TResult> query,
         Func<CancellationToken, ValueTask<TResult>> next,
+        CancellationToken ct = default) =>
+        next(ct);
+
+    /// <summary>
+    /// Handles a stream query.
+    /// </summary>
+    /// <remarks>
+    /// Runs when <see cref="IMediator.StreamAsync{TResult}"/> is called, before the results are enumerated. To run code
+    /// while the results are enumerated, return an <c>async</c> iterator that enumerates <paramref name="next"/>.
+    /// </remarks>
+    /// <typeparam name="TResult">The type of each result.</typeparam>
+    /// <param name="query">The stream query being handled.</param>
+    /// <param name="next">Invokes the next behaviour in the pipeline, or the stream query's handler.</param>
+    /// <param name="ct">A token to cancel the enumeration.</param>
+    /// <returns>The query's results.</returns>
+    IAsyncEnumerable<TResult> HandleAsync<TResult>(
+        IStreamQuery<TResult> query,
+        Func<CancellationToken, IAsyncEnumerable<TResult>> next,
         CancellationToken ct = default) =>
         next(ct);
 

@@ -1,1 +1,2 @@
 #nullable enable
+Datapoint.Mediator.Mediator.StreamAsync<TResult>(Datapoint.Mediator.IStreamQuery<TResult>! query, System.Threading.CancellationToken ct = default(System.Threading.CancellationToken)) -> System.Collections.Generic.IAsyncEnumerable<TResult>!
