@@ -11,6 +11,7 @@
     <Project Path="src/Datapoint.Mediator.EntityFrameworkCore/Datapoint.Mediator.EntityFrameworkCore.csproj" />
     <Project Path="src/Datapoint.Mediator.FluentValidation.DependencyInjection/Datapoint.Mediator.FluentValidation.DependencyInjection.csproj" />
     <Project Path="src/Datapoint.Mediator.FluentValidation/Datapoint.Mediator.FluentValidation.csproj" />
+    <Project Path="src/Datapoint.Mediator.ModelContextProtocol/Datapoint.Mediator.ModelContextProtocol.csproj" />
     <Project Path="src/Datapoint.Mediator/Datapoint.Mediator.csproj" />
   </Folder>
   <Folder Name="/tests/">
@@ -21,6 +22,7 @@
     <Project Path="tests/Datapoint.Mediator.EntityFrameworkCore.Tests/Datapoint.Mediator.EntityFrameworkCore.Tests.csproj" />
     <Project Path="tests/Datapoint.Mediator.FluentValidation.DependencyInjection.Tests/Datapoint.Mediator.FluentValidation.DependencyInjection.Tests.csproj" />
     <Project Path="tests/Datapoint.Mediator.FluentValidation.Tests/Datapoint.Mediator.FluentValidation.Tests.csproj" />
+    <Project Path="tests/Datapoint.Mediator.ModelContextProtocol.Tests/Datapoint.Mediator.ModelContextProtocol.Tests.csproj" />
     <Project Path="tests/Datapoint.Mediator.Tests/Datapoint.Mediator.Tests.csproj" />
   </Folder>
 </Solution>

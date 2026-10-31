@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <Description>Offers Datapoint.Mediator actions as Model Context Protocol (MCP) tools, so AI agents can call your commands and queries with authorization, validation and transactions applied.</Description>
+    <PackageTags>$(PackageTags);mcp;model-context-protocol;ai;agents</PackageTags>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Datapoint.Mediator.Abstractions\Datapoint.Mediator.Abstractions.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="ModelContextProtocol" />
+  </ItemGroup>
+
+</Project>
