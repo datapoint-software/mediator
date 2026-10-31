@@ -59,6 +59,19 @@ public sealed class AddMediatorTests
     }
 
     [Fact]
+    public void AddMediator_KeyedHandlerRegisteredBefore_IsIgnoredByDuplicateDetection()
+    {
+        var services = new ServiceCollection();
+        services.AddKeyedScoped<ICommandHandler<Ping>, OtherPingHandler>("other");
+
+        services.AddMediator(o => o.AddHandler<PingHandler>());
+
+        var handler = Assert.Single(services, d => d.ServiceType == typeof(ICommandHandler<Ping>) && !d.IsKeyedService);
+        Assert.Equal(typeof(PingHandler), handler.ImplementationType);
+        Assert.Single(services, d => d.ServiceType == typeof(ICommandHandler<Ping>) && d.IsKeyedService);
+    }
+
+    [Fact]
     public void AddMediator_CalledTwice_AddsNothingTheSecondTime()
     {
         var services = new ServiceCollection();
