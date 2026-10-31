@@ -8,9 +8,10 @@ namespace Datapoint.Mediator;
 /// </summary>
 /// <remarks>
 /// <para>
-/// A name is made of lowercase letters and digits, separated by single dots, hyphens or underscores, and is at most
-/// 64 characters long, such as <c>invoice.create</c>. Names must be unique. Messages cannot be actions, because their
-/// handlers are not authorized.
+/// A name is made of lowercase letters and digits, separated by single dots or hyphens, and is at most 64 characters
+/// long, such as <c>invoices.create</c>. Underscores are not allowed, so that hosts whose tool names can't contain dots,
+/// such as some MCP clients, can replace dots with underscores without two names colliding. Names must be unique.
+/// Messages cannot be actions, because their handlers are not authorized.
 /// </para>
 /// <para>
 /// The attribute is not inherited, so a derived type must be named on its own.

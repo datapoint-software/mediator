@@ -56,7 +56,7 @@ public sealed partial class ActionCatalog : IActionCatalog
             {
                 throw new InvalidOperationException(
                     $"'{attribute.Name}' on '{type}' is not a valid action name. Use up to {MaxNameLength} lowercase " +
-                    "letters and digits, separated by single dots, hyphens or underscores, such as 'invoice.create'.");
+                    "letters and digits, separated by single dots or hyphens, such as 'invoices.create'.");
             }
 
             if (named.TryGetValue(attribute.Name, out var other))
@@ -125,6 +125,6 @@ public sealed partial class ActionCatalog : IActionCatalog
                 "IStreamQuery<TResult> to be an action, so it can be dispatched by name unambiguously.");
     }
 
-    [GeneratedRegex("^[a-z0-9]+([._-][a-z0-9]+)*$", RegexOptions.CultureInvariant)]
+    [GeneratedRegex("^[a-z0-9]+([.-][a-z0-9]+)*$", RegexOptions.CultureInvariant)]
     private static partial Regex NamePattern();
 }

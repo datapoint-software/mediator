@@ -49,11 +49,18 @@ public sealed class ActionCatalogTests
     [InlineData(typeof(SpaceName))]
     [InlineData(typeof(EmptyName))]
     [InlineData(typeof(TooLongName))]
+    [InlineData(typeof(UnderscoreName))]
     public void InvalidName_Throws(Type actionType)
     {
         var exception = Assert.Throws<InvalidOperationException>(() => new ActionCatalog([actionType]));
 
         Assert.Contains("not a valid action name", exception.Message);
+    }
+
+    [Fact]
+    public void DotsAndHyphens_AreValid()
+    {
+        Assert.True(new ActionCatalog([typeof(DotAndHyphenName)]).TryGetAction("invoices.create-draft", out _));
     }
 
     [Fact]
@@ -146,6 +153,12 @@ public sealed class ActionCatalogTests
 
     [Action("")]
     private sealed record EmptyName : ICommand;
+
+    [Action("invoices_create")]
+    private sealed record UnderscoreName : ICommand;
+
+    [Action("invoices.create-draft")]
+    private sealed record DotAndHyphenName : ICommand;
 
     [Action("a123456789a123456789a123456789a123456789a123456789a123456789abcde")]
     private sealed record TooLongName : ICommand;
