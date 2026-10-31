@@ -53,3 +53,10 @@ Assume the contributor is a junior developer. Your job is to help them reach sou
 - Each `src` project lists its public API in `PublicAPI.Shipped.txt` (released) and `PublicAPI.Unshipped.txt` (since the last release). The build fails when the public API and these files disagree.
 - When you change a public API, update `PublicAPI.Unshipped.txt` in the same commit, so the change is visible in review. A removed or changed line from `PublicAPI.Shipped.txt` is a breaking change.
 - On release, move the entries from `PublicAPI.Unshipped.txt` to `PublicAPI.Shipped.txt`.
+
+### Releasing
+
+- Versions come from git tags via [MinVer](https://github.com/adamralph/minver). Tags have no prefix: `4.0.0-alpha.1`, not `v4.0.0-alpha.1`. Untagged builds get a pre-release version such as `4.0.0-alpha.0.12`.
+- The current series is `4.0.0-alpha.N`. Release `4.0.0` once the package has been used in a real project. Versions `3.0.0` and below already exist on nuget.org and can never be reused.
+- To release: move the public API entries to `PublicAPI.Shipped.txt`, commit, then tag that commit on `main` and push the tag. The `Release` workflow builds, tests and publishes to nuget.org with Trusted Publishing, after approval in the `nuget` environment.
+- Never tag or push without the contributor asking. A published version is permanent.
