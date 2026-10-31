@@ -1,0 +1,204 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
+using FluentValidation;
+using Microsoft.Extensions.DependencyInjection;
+using Xunit;
+
+namespace Datapoint.Mediator.FluentValidation.Tests;
+
+public sealed class ValidationBehaviorTests
+{
+    private static readonly CreateUser ValidUser = new("Ana", "ana@example.com");
+
+    private bool _nextCalled;
+
+    [Fact]
+    public void Constructor_NullServiceProvider_Throws()
+    {
+        var exception = Assert.Throws<ArgumentNullException>(() => new ValidationBehavior(null!));
+
+        Assert.Equal("serviceProvider", exception.ParamName);
+    }
+
+    [Fact]
+    public async Task Command_NoValidators_CallsNext()
+    {
+        var behavior = CreateBehavior(_ => { });
+
+        await behavior.HandleAsync(new CreateUser("", ""), Next, TestContext.Current.CancellationToken);
+
+        Assert.True(_nextCalled);
+    }
+
+    [Fact]
+    public async Task Command_Valid_CallsNext()
+    {
+        var behavior = CreateBehavior(s => s.AddScoped<IValidator<CreateUser>, NameValidator>());
+
+        await behavior.HandleAsync(ValidUser, Next, TestContext.Current.CancellationToken);
+
+        Assert.True(_nextCalled);
+    }
+
+    [Fact]
+    public async Task Command_Invalid_ThrowsWithoutCallingNext()
+    {
+        var behavior = CreateBehavior(s => s.AddScoped<IValidator<CreateUser>, NameValidator>());
+
+        await Assert.ThrowsAsync<ValidationException>(
+            async () => await behavior.HandleAsync(new CreateUser("", "ana@example.com"), Next, TestContext.Current.CancellationToken));
+
+        Assert.False(_nextCalled);
+    }
+
+    [Fact]
+    public async Task Command_Invalid_ExceptionContainsFailuresFromAllValidators()
+    {
+        var behavior = CreateBehavior(s => s
+            .AddScoped<IValidator<CreateUser>, NameValidator>()
+            .AddScoped<IValidator<CreateUser>, EmailValidator>());
+
+        var exception = await Assert.ThrowsAsync<ValidationException>(
+            async () => await behavior.HandleAsync(new CreateUser("", ""), Next, TestContext.Current.CancellationToken));
+
+        Assert.Equal(["Name", "Email"], exception.Errors.Select(e => e.PropertyName));
+    }
+
+    [Fact]
+    public async Task CommandWithResult_Invalid_ThrowsWithoutCallingNext()
+    {
+        var behavior = CreateBehavior(s => s.AddScoped<IValidator<AddNumbers>, AddNumbersValidator>());
+
+        await Assert.ThrowsAsync<ValidationException>(
+            async () => await behavior.HandleAsync(new AddNumbers(-1, 1), NextWithResult(3), TestContext.Current.CancellationToken));
+
+        Assert.False(_nextCalled);
+    }
+
+    [Fact]
+    public async Task CommandWithResult_Valid_ReturnsNextResult()
+    {
+        var behavior = CreateBehavior(s => s.AddScoped<IValidator<AddNumbers>, AddNumbersValidator>());
+
+        var result = await behavior.HandleAsync(new AddNumbers(1, 2), NextWithResult(3), TestContext.Current.CancellationToken);
+
+        Assert.Equal(3, result);
+    }
+
+    [Fact]
+    public async Task Query_Invalid_ThrowsWithoutCallingNext()
+    {
+        var behavior = CreateBehavior(s => s.AddScoped<IValidator<FindUser>, FindUserValidator>());
+
+        await Assert.ThrowsAsync<ValidationException>(
+            async () => await behavior.HandleAsync(new FindUser(""), NextWithResult("Ana"), TestContext.Current.CancellationToken));
+
+        Assert.False(_nextCalled);
+    }
+
+    [Fact]
+    public async Task Query_Valid_ReturnsNextResult()
+    {
+        var behavior = CreateBehavior(s => s.AddScoped<IValidator<FindUser>, FindUserValidator>());
+
+        var result = await behavior.HandleAsync(new FindUser("Ana"), NextWithResult("Ana"), TestContext.Current.CancellationToken);
+
+        Assert.Equal("Ana", result);
+    }
+
+    [Fact]
+    public async Task Message_IsNotValidated()
+    {
+        // The message overload is a default interface method, so it is called through IBehavior, as the mediator does.
+        IBehavior behavior = CreateBehavior(s => s.AddScoped<IValidator<UserCreated>, UserCreatedValidator>());
+
+        await behavior.HandleAsync(new UserCreated(""), Next, TestContext.Current.CancellationToken);
+
+        Assert.True(_nextCalled);
+    }
+
+    [Fact]
+    public async Task Validators_RunSequentiallyInRegistrationOrder()
+    {
+        var log = new List<string>();
+        var tokens = new List<CancellationToken>();
+        // The first validator is slower, so running them concurrently would log "second" first.
+        var behavior = CreateBehavior(s => s
+            .AddSingleton<IValidator<CreateUser>>(new LoggingValidator("first", TimeSpan.FromMilliseconds(50), log, tokens))
+            .AddSingleton<IValidator<CreateUser>>(new LoggingValidator("second", TimeSpan.Zero, log, tokens)));
+
+        await behavior.HandleAsync(ValidUser, Next, TestContext.Current.CancellationToken);
+
+        Assert.Equal(["first", "second"], log);
+    }
+
+    [Fact]
+    public async Task Validators_ReceiveToken()
+    {
+        using var cts = new CancellationTokenSource();
+        var tokens = new List<CancellationToken>();
+        var behavior = CreateBehavior(s =>
+            s.AddSingleton<IValidator<CreateUser>>(new LoggingValidator("only", TimeSpan.Zero, [], tokens)));
+
+        await behavior.HandleAsync(ValidUser, Next, cts.Token);
+
+        Assert.Equal([cts.Token], tokens);
+    }
+
+    [Fact]
+    public async Task NullValidators_AreTreatedAsNone()
+    {
+        var behavior = new ValidationBehavior(new DelegateServiceProvider(_ => null));
+
+        await behavior.HandleAsync(new CreateUser("", ""), Next, TestContext.Current.CancellationToken);
+
+        Assert.True(_nextCalled);
+    }
+
+    [Fact]
+    public async Task NonArrayValidators_AreUsed()
+    {
+        var validators = new List<IValidator<CreateUser>> { new NameValidator() };
+        var behavior = new ValidationBehavior(new DelegateServiceProvider(
+            type => type == typeof(IEnumerable<IValidator<CreateUser>>) ? validators : null));
+
+        await Assert.ThrowsAsync<ValidationException>(
+            async () => await behavior.HandleAsync(new CreateUser("", "ana@example.com"), Next, TestContext.Current.CancellationToken));
+    }
+
+    [Fact]
+    public async Task ScopedValidator_ResolvesFromScope()
+    {
+        await using var provider = new ServiceCollection()
+            .AddScoped<ScopedDependency>()
+            .AddScoped<IValidator<CreateUser>, ScopedDependencyValidator>()
+            .BuildServiceProvider(new ServiceProviderOptions { ValidateScopes = true, ValidateOnBuild = true });
+        await using var scope = provider.CreateAsyncScope();
+        var behavior = new ValidationBehavior(scope.ServiceProvider);
+
+        await Assert.ThrowsAsync<ValidationException>(
+            async () => await behavior.HandleAsync(new CreateUser("", "ana@example.com"), Next, TestContext.Current.CancellationToken));
+    }
+
+    private static ValidationBehavior CreateBehavior(Action<IServiceCollection> configure)
+    {
+        var services = new ServiceCollection();
+        configure(services);
+        return new ValidationBehavior(services.BuildServiceProvider());
+    }
+
+    private ValueTask Next(CancellationToken ct)
+    {
+        _nextCalled = true;
+        return default;
+    }
+
+    private Func<CancellationToken, ValueTask<TResult>> NextWithResult<TResult>(TResult result) => _ =>
+    {
+        _nextCalled = true;
+        return new(result);
+    };
+}
