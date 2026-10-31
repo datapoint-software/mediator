@@ -1,0 +1,8 @@
+<Project>
+
+  <!-- Imported after each project file, so OutputType is known: only test executables collect coverage. -->
+  <ItemGroup Condition="'$(OutputType)' == 'Exe'">
+    <PackageReference Include="coverlet.MTP" />
+  </ItemGroup>
+
+</Project>
