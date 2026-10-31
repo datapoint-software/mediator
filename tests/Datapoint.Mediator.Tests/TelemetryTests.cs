@@ -11,7 +11,9 @@ using Xunit;
 
 namespace Datapoint.Mediator.Tests;
 
-// Listeners are process-wide, so every assertion filters on action types used only by these tests.
+// Listeners are process-wide, so every assertion filters on action types used only by these tests, and the telemetry
+// test classes share a collection, so they never run at the same time.
+[Collection(TelemetryCollection.Name)]
 public sealed class TelemetryTests : IDisposable
 {
     private readonly ConcurrentQueue<Activity> _activities = new();
