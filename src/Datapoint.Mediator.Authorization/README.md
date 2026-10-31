@@ -1,3 +1,49 @@
 # Datapoint.Mediator.Authorization
 
-See the repository README.
+A [Datapoint.Mediator](https://www.nuget.org/packages/Datapoint.Mediator) behaviour that authorizes commands, queries and stream queries for the current user, **denying access by default**. The rules live in your domain layer, so they apply the same way whether the action comes from an API, a CLI or an MCP server.
+
+Register it with [Datapoint.Mediator.Authorization.DependencyInjection](https://www.nuget.org/packages/Datapoint.Mediator.Authorization.DependencyInjection).
+
+## Rules, in the domain layer
+
+```csharp
+public sealed class DeleteInvoiceAuthorizer : IAuthorizer<DeleteInvoice>
+{
+    public ValueTask<bool> IsAuthorizedAsync(DeleteInvoice command, ClaimsPrincipal user, CancellationToken ct = default) =>
+        new(user.IsInRole("Finance"));
+}
+
+[AllowAnonymousAccess]
+public sealed record GetPublicPrices : IQuery<PriceList>;
+```
+
+- An action with **no authorizer is denied** (`AccessDeniedException`), unless it is marked `[AllowAnonymousAccess]`.
+- With no signed-in user, `AuthenticationRequiredException` is thrown (typically HTTP 401). A refused action throws `AccessDeniedException` (typically HTTP 403).
+- When an action has several authorizers, all of them must allow it.
+- Messages are not authorized, because they are published by the application itself.
+
+## The current user, in each host
+
+Each host registers an `IPrincipalAccessor` as a scoped service:
+
+```csharp
+// API: the request's user (after ASP.NET Core authentication).
+public sealed class HttpPrincipalAccessor(IHttpContextAccessor http) : IPrincipalAccessor
+{
+    public ClaimsPrincipal? Principal => http.HttpContext?.User;
+}
+
+// CLI, or MCP over stdio: the user signed in at startup (for example with an OAuth device code), or a service account.
+public sealed class FixedPrincipalAccessor(ClaimsPrincipal principal) : IPrincipalAccessor
+{
+    public ClaimsPrincipal? Principal => principal;
+}
+```
+
+An MCP server over HTTP reads the user from the authenticated request, like an API.
+
+> **Security:** a CLI that connects to the database with credentials the user can read only enforces these rules as long as the user goes through the CLI. For real enforcement, keep the credentials server-side: have the CLI call your API, or run it where users can't read its configuration. An AI agent acting through an MCP server should never receive more permissions than the user it acts for.
+
+## Order
+
+Register authorization **before** validation, so users who may not run an action can't learn its validation rules.
