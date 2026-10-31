@@ -39,3 +39,11 @@ Assume the contributor is a junior developer. Your job is to help them reach sou
 - Commit often, one commit per self-contained change.
 - Do not include attribution trailers, such as `Co-Authored-By`, in commit messages.
 - Do not include attribution lines, such as "Generated with Claude Code", in merge request descriptions.
+
+## Versioning
+
+- Version the package following [Semantic Versioning 2.0.0](https://semver.org/spec/v2.0.0.html), independently of .NET's version numbers.
+- Derive the version bump from the Conventional Commits since the last release: `fix` is a patch, `feat` is a minor, and any breaking change (`!` or a `BREAKING CHANGE` footer) is a major.
+- Release from `main`. Do not create release branches per version or per target framework.
+- Adding a target framework is a minor bump. Dropping one is a breaking change, so it is a major bump.
+- The package currently targets `net10.0` only.
