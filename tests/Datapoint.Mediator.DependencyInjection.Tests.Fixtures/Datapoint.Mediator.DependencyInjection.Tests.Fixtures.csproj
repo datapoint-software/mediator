@@ -1,0 +1,7 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\Datapoint.Mediator.Abstractions\Datapoint.Mediator.Abstractions.csproj" />
+  </ItemGroup>
+
+</Project>

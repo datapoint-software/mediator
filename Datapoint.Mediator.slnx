@@ -4,4 +4,9 @@
     <Project Path="src/Datapoint.Mediator.DependencyInjection/Datapoint.Mediator.DependencyInjection.csproj" />
     <Project Path="src/Datapoint.Mediator/Datapoint.Mediator.csproj" />
   </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/Datapoint.Mediator.DependencyInjection.Tests.Fixtures/Datapoint.Mediator.DependencyInjection.Tests.Fixtures.csproj" />
+    <Project Path="tests/Datapoint.Mediator.DependencyInjection.Tests/Datapoint.Mediator.DependencyInjection.Tests.csproj" />
+    <Project Path="tests/Datapoint.Mediator.Tests/Datapoint.Mediator.Tests.csproj" />
+  </Folder>
 </Solution>
