@@ -1,5 +1,11 @@
 # Mediator
 
+[![CI](https://github.com/datapoint-software/mediator/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/datapoint-software/mediator/actions/workflows/ci.yml)
+[![NuGet](https://img.shields.io/nuget/vpre/Datapoint.Mediator)](https://www.nuget.org/packages/Datapoint.Mediator)
+[![Downloads](https://img.shields.io/nuget/dt/Datapoint.Mediator)](https://www.nuget.org/packages/Datapoint.Mediator)
+[![License: MIT](https://img.shields.io/github/license/datapoint-software/mediator)](LICENSE)
+[![.NET 10](https://img.shields.io/badge/.NET-10.0-512BD4)](https://dotnet.microsoft.com/download/dotnet/10.0)
+
 A NuGet package that implements the Mediator pattern for .NET. It lets components send commands and queries and publish messages through a single mediator, instead of referencing each other's handlers directly, so the same business layer can be used from an API, a CLI or an MCP server.
 
 ## Packages
