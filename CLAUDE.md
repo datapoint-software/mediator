@@ -30,15 +30,15 @@ Assume the contributor is a junior developer. Your job is to help them reach sou
 - After each change, say what changed, how you verified it, and what you couldn't verify.
 - Keep explanations short and concrete. Use a small code example when it's clearer than prose.
 
-## Branches, commits and merge requests
+## Branches, commits and pull requests
 
-- Write branch names, commit messages and merge requests in English.
+- Write branch names, commit messages and pull requests in English.
 - `main` is the only long-lived branch.
 - Name branches following [Conventional Branch 1.1.0](https://conventionalbranch.org/): `<type>/<description>`, using lowercase letters, digits and hyphens only.
 - Write commit messages following [Conventional Commits 1.0.0](https://www.conventionalcommits.org/en/v1.0.0/): `<type>[optional scope][!]: <description>`, with an optional body and footers.
 - Commit often, one commit per self-contained change.
 - Do not include attribution trailers, such as `Co-Authored-By`, in commit messages.
-- Do not include attribution lines, such as "Generated with Claude Code", in merge request descriptions.
+- Do not include attribution lines, such as "Generated with Claude Code", in pull request descriptions.
 
 ## Versioning
 
