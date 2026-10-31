@@ -5,7 +5,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\src\Datapoint.Mediator.DependencyInjection\Datapoint.Mediator.DependencyInjection.csproj" />
+    <ProjectReference Include="..\..\src\Datapoint.Mediator.Authorization.DependencyInjection\Datapoint.Mediator.Authorization.DependencyInjection.csproj" />
     <ProjectReference Include="..\..\src\Datapoint.Mediator.ModelContextProtocol\Datapoint.Mediator.ModelContextProtocol.csproj" />
   </ItemGroup>
 
