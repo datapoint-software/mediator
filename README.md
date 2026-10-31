@@ -23,6 +23,8 @@ A NuGet package that implements the Mediator pattern for .NET. It lets component
 | `Datapoint.Mediator.EntityFrameworkCore` | A behaviour that runs each command in an EF Core transaction and saves once, at the end. |
 | `Datapoint.Mediator.EntityFrameworkCore.DependencyInjection` | `options.AddTransactionBehavior<TDbContext>()`. |
 | `Datapoint.Mediator.ModelContextProtocol` | Offers actions as MCP tools for AI agents: `services.AddMcpServer().WithMediatorActions()`. |
+| `Datapoint.Mediator.AspNetCore` | Maps actions as HTTP endpoints with OpenAPI metadata: `app.MapActions("/api")`. |
+| `Datapoint.Mediator.CommandLine` | Adds actions as System.CommandLine commands: `new RootCommand().AddActions(services)`. |
 
 ## Quick start
 
@@ -60,7 +62,13 @@ var id = await dispatcher.DispatchAsync("invoice.create", arguments, ct: ct); //
 - `[Action("invoice.purge", Hidden = true)]` keeps an action out of the catalog and of dispatch by name, while it can still be sent through `IMediator`. An unknown and a hidden action fail the same way (`ActionNotFoundException`), so callers can't discover internal actions.
 - Invalid names, duplicate names and named messages fail at startup, in `AddMediator`. Messages can't be actions, because their handlers aren't authorized.
 - Invalid JSON throws `InvalidActionArgumentsException`, whose message never repeats the input.
-- **MCP servers:** `Datapoint.Mediator.ModelContextProtocol` offers every action as an MCP tool in one line. See its README.
+- **Hosts:** one line offers every action in each kind of host. See each package's README.
+
+  | Host | Package | Registration | `invoices.create` becomes |
+  |---|---|---|---|
+  | API | `Datapoint.Mediator.AspNetCore` | `app.MapActions("/api")` | `POST /api/invoices/create` |
+  | CLI | `Datapoint.Mediator.CommandLine` | `root.AddActions(services)` | `mytool invoices create --customer Ana --amount 100` |
+  | MCP server | `Datapoint.Mediator.ModelContextProtocol` | `.WithMediatorActions()` | the tool `invoices_create` |
 
 ## Behaviour order
 
