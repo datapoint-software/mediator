@@ -46,10 +46,13 @@ jobs:
         with:
           user: ${{ vars.NUGET_USER }}
 
-      # Symbol packages (.snupkg) next to each .nupkg are pushed with it.
+      # Symbol packages (.snupkg) next to each .nupkg are pushed with it. The key is passed through the environment,
+      # not interpolated into the command, so it never becomes part of the script itself.
       - name: Push packages
+        env:
+          NUGET_API_KEY: ${{ steps.login.outputs.NUGET_API_KEY }}
         run: >-
           dotnet nuget push "artifacts/*.nupkg"
-          --api-key "${{ steps.login.outputs.NUGET_API_KEY }}"
+          --api-key "$NUGET_API_KEY"
           --source https://api.nuget.org/v3/index.json
           --skip-duplicate
