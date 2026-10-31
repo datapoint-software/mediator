@@ -1,6 +1,39 @@
 #nullable enable
+Datapoint.Mediator.ActionAttribute
+Datapoint.Mediator.ActionAttribute.ActionAttribute(string! name) -> void
+Datapoint.Mediator.ActionAttribute.Description.get -> string?
+Datapoint.Mediator.ActionAttribute.Description.init -> void
+Datapoint.Mediator.ActionAttribute.Exposed.get -> bool
+Datapoint.Mediator.ActionAttribute.Exposed.init -> void
+Datapoint.Mediator.ActionAttribute.Name.get -> string!
+Datapoint.Mediator.ActionDescriptor
+Datapoint.Mediator.ActionDescriptor.ActionDescriptor(string! name, string? description, Datapoint.Mediator.ActionKind kind, System.Type! actionType, System.Type? resultType) -> void
+Datapoint.Mediator.ActionDescriptor.ActionType.get -> System.Type!
+Datapoint.Mediator.ActionDescriptor.Description.get -> string?
+Datapoint.Mediator.ActionDescriptor.Kind.get -> Datapoint.Mediator.ActionKind
+Datapoint.Mediator.ActionDescriptor.Name.get -> string!
+Datapoint.Mediator.ActionDescriptor.ResultType.get -> System.Type?
+Datapoint.Mediator.ActionKind
+Datapoint.Mediator.ActionKind.Command = 0 -> Datapoint.Mediator.ActionKind
+Datapoint.Mediator.ActionKind.CommandWithResult = 1 -> Datapoint.Mediator.ActionKind
+Datapoint.Mediator.ActionKind.Query = 2 -> Datapoint.Mediator.ActionKind
+Datapoint.Mediator.ActionKind.StreamQuery = 3 -> Datapoint.Mediator.ActionKind
+Datapoint.Mediator.ActionNotFoundException
+Datapoint.Mediator.ActionNotFoundException.ActionNotFoundException() -> void
+Datapoint.Mediator.ActionNotFoundException.ActionNotFoundException(string! message) -> void
+Datapoint.Mediator.ActionNotFoundException.ActionNotFoundException(string! message, System.Exception! innerException) -> void
+Datapoint.Mediator.IActionCatalog
+Datapoint.Mediator.IActionCatalog.Actions.get -> System.Collections.Generic.IReadOnlyList<Datapoint.Mediator.ActionDescriptor!>!
+Datapoint.Mediator.IActionCatalog.TryGetAction(string! name, out Datapoint.Mediator.ActionDescriptor? action) -> bool
+Datapoint.Mediator.IActionDispatcher
+Datapoint.Mediator.IActionDispatcher.DispatchAsync(string! name, System.Text.Json.JsonElement arguments, System.Text.Json.JsonSerializerOptions? options = null, System.Threading.CancellationToken ct = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<object?>
+Datapoint.Mediator.IActionDispatcher.StreamAsync(string! name, System.Text.Json.JsonElement arguments, System.Text.Json.JsonSerializerOptions? options = null, System.Threading.CancellationToken ct = default(System.Threading.CancellationToken)) -> System.Collections.Generic.IAsyncEnumerable<object?>!
 Datapoint.Mediator.IBehavior.HandleAsync<TResult>(Datapoint.Mediator.IStreamQuery<TResult>! query, System.Func<System.Threading.CancellationToken, System.Collections.Generic.IAsyncEnumerable<TResult>!>! next, System.Threading.CancellationToken ct = default(System.Threading.CancellationToken)) -> System.Collections.Generic.IAsyncEnumerable<TResult>!
 Datapoint.Mediator.IMediator.StreamAsync<TResult>(Datapoint.Mediator.IStreamQuery<TResult>! query, System.Threading.CancellationToken ct = default(System.Threading.CancellationToken)) -> System.Collections.Generic.IAsyncEnumerable<TResult>!
 Datapoint.Mediator.IStreamQuery<TResult>
 Datapoint.Mediator.IStreamQueryHandler<TQuery, TResult>
 Datapoint.Mediator.IStreamQueryHandler<TQuery, TResult>.HandleAsync(TQuery query, System.Threading.CancellationToken ct = default(System.Threading.CancellationToken)) -> System.Collections.Generic.IAsyncEnumerable<TResult>!
+Datapoint.Mediator.InvalidActionArgumentsException
+Datapoint.Mediator.InvalidActionArgumentsException.InvalidActionArgumentsException() -> void
+Datapoint.Mediator.InvalidActionArgumentsException.InvalidActionArgumentsException(string! message) -> void
+Datapoint.Mediator.InvalidActionArgumentsException.InvalidActionArgumentsException(string! message, System.Exception! innerException) -> void
