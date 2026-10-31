@@ -1,0 +1,13 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <Description>Registers the Datapoint.Mediator authorization behaviour and authorizers with Microsoft.Extensions.DependencyInjection.</Description>
+    <PackageTags>$(PackageTags);authorization;security</PackageTags>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Datapoint.Mediator.Authorization\Datapoint.Mediator.Authorization.csproj" />
+    <ProjectReference Include="..\Datapoint.Mediator.DependencyInjection\Datapoint.Mediator.DependencyInjection.csproj" />
+  </ItemGroup>
+
+</Project>

@@ -1,0 +1,12 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <Description>A Datapoint.Mediator behaviour that authorizes commands and queries for the current user, denying access by default, so the same rules apply from an API, a CLI or an MCP server.</Description>
+    <PackageTags>$(PackageTags);authorization;security</PackageTags>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Datapoint.Mediator.Abstractions\Datapoint.Mediator.Abstractions.csproj" />
+  </ItemGroup>
+
+</Project>
