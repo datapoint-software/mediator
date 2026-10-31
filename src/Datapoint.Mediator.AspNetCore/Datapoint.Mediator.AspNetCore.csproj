@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <Description>Maps Datapoint.Mediator actions as ASP.NET Core endpoints, with OpenAPI metadata and ProblemDetails errors, so an API offers the same commands and queries as a CLI or an MCP server.</Description>
+    <PackageTags>$(PackageTags);aspnetcore;minimal-api;openapi</PackageTags>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Datapoint.Mediator.Abstractions\Datapoint.Mediator.Abstractions.csproj" />
+  </ItemGroup>
+
+</Project>

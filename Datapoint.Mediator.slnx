@@ -4,6 +4,7 @@
   </Folder>
   <Folder Name="/src/">
     <Project Path="src/Datapoint.Mediator.Abstractions/Datapoint.Mediator.Abstractions.csproj" />
+    <Project Path="src/Datapoint.Mediator.AspNetCore/Datapoint.Mediator.AspNetCore.csproj" />
     <Project Path="src/Datapoint.Mediator.Authorization.DependencyInjection/Datapoint.Mediator.Authorization.DependencyInjection.csproj" />
     <Project Path="src/Datapoint.Mediator.Authorization/Datapoint.Mediator.Authorization.csproj" />
     <Project Path="src/Datapoint.Mediator.DependencyInjection/Datapoint.Mediator.DependencyInjection.csproj" />
