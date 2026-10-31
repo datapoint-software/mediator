@@ -1,1 +1,7 @@
 #nullable enable
+Datapoint.Mediator.EntityFrameworkCore.NonTransactionalAttribute
+Datapoint.Mediator.EntityFrameworkCore.NonTransactionalAttribute.NonTransactionalAttribute() -> void
+Datapoint.Mediator.EntityFrameworkCore.TransactionBehavior<TDbContext>
+Datapoint.Mediator.EntityFrameworkCore.TransactionBehavior<TDbContext>.HandleAsync(Datapoint.Mediator.ICommand! command, System.Func<System.Threading.CancellationToken, System.Threading.Tasks.ValueTask>! next, System.Threading.CancellationToken ct = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask
+Datapoint.Mediator.EntityFrameworkCore.TransactionBehavior<TDbContext>.HandleAsync<TResult>(Datapoint.Mediator.ICommand<TResult>! command, System.Func<System.Threading.CancellationToken, System.Threading.Tasks.ValueTask<TResult>>! next, System.Threading.CancellationToken ct = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<TResult>
+Datapoint.Mediator.EntityFrameworkCore.TransactionBehavior<TDbContext>.TransactionBehavior(TDbContext! dbContext) -> void
