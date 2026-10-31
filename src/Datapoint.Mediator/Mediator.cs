@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
 using Datapoint.Mediator.Dispatchers;
@@ -41,7 +42,10 @@ public sealed class Mediator : IMediator
     public ValueTask SendAsync(ICommand command, CancellationToken ct = default)
     {
         ArgumentNullException.ThrowIfNull(command);
-        return CommandDispatcher.Get(command.GetType()).DispatchAsync(command, _serviceProvider, ct);
+        var dispatcher = CommandDispatcher.Get(command.GetType());
+        return MediatorTelemetry.IsEnabled
+            ? SendObservedAsync(dispatcher, command, ct)
+            : dispatcher.DispatchAsync(command, _serviceProvider, ct);
     }
 
     /// <inheritdoc/>
@@ -50,7 +54,10 @@ public sealed class Mediator : IMediator
     public ValueTask<TResult> SendAsync<TResult>(ICommand<TResult> command, CancellationToken ct = default)
     {
         ArgumentNullException.ThrowIfNull(command);
-        return ResultCommandDispatcher<TResult>.Get(command.GetType()).DispatchAsync(command, _serviceProvider, ct);
+        var dispatcher = ResultCommandDispatcher<TResult>.Get(command.GetType());
+        return MediatorTelemetry.IsEnabled
+            ? SendObservedAsync(dispatcher, command, ct)
+            : dispatcher.DispatchAsync(command, _serviceProvider, ct);
     }
 
     /// <inheritdoc/>
@@ -59,7 +66,10 @@ public sealed class Mediator : IMediator
     public ValueTask<TResult> QueryAsync<TResult>(IQuery<TResult> query, CancellationToken ct = default)
     {
         ArgumentNullException.ThrowIfNull(query);
-        return QueryDispatcher<TResult>.Get(query.GetType()).DispatchAsync(query, _serviceProvider, ct);
+        var dispatcher = QueryDispatcher<TResult>.Get(query.GetType());
+        return MediatorTelemetry.IsEnabled
+            ? QueryObservedAsync(dispatcher, query, ct)
+            : dispatcher.DispatchAsync(query, _serviceProvider, ct);
     }
 
     /// <inheritdoc/>
@@ -68,7 +78,10 @@ public sealed class Mediator : IMediator
     public IAsyncEnumerable<TResult> StreamAsync<TResult>(IStreamQuery<TResult> query, CancellationToken ct = default)
     {
         ArgumentNullException.ThrowIfNull(query);
-        return StreamQueryDispatcher<TResult>.Get(query.GetType()).Dispatch(query, _serviceProvider, ct);
+        var dispatcher = StreamQueryDispatcher<TResult>.Get(query.GetType());
+        return MediatorTelemetry.IsEnabled
+            ? StreamObserved(dispatcher, query, ct)
+            : dispatcher.Dispatch(query, _serviceProvider, ct);
     }
 
     /// <inheritdoc/>
@@ -76,6 +89,130 @@ public sealed class Mediator : IMediator
     public ValueTask PublishAsync(IMessage message, CancellationToken ct = default)
     {
         ArgumentNullException.ThrowIfNull(message);
-        return MessageDispatcher.Get(message.GetType()).DispatchAsync(message, _serviceProvider, ct);
+        var dispatcher = MessageDispatcher.Get(message.GetType());
+        return MediatorTelemetry.IsEnabled
+            ? PublishObservedAsync(dispatcher, message, ct)
+            : dispatcher.DispatchAsync(message, _serviceProvider, ct);
+    }
+
+    // The observed paths are separate methods, so the unobserved paths allocate nothing.
+    private async ValueTask SendObservedAsync(CommandDispatcher dispatcher, ICommand command, CancellationToken ct)
+    {
+        using var scope = MediatorTelemetry.Start(MediatorTelemetry.Send, command.GetType());
+
+        try
+        {
+            await dispatcher.DispatchAsync(command, _serviceProvider, ct).ConfigureAwait(false);
+        }
+        catch (Exception exception)
+        {
+            scope.Fail(exception);
+            throw;
+        }
+    }
+
+    private async ValueTask<TResult> SendObservedAsync<TResult>(
+        ResultCommandDispatcher<TResult> dispatcher,
+        ICommand<TResult> command,
+        CancellationToken ct)
+    {
+        using var scope = MediatorTelemetry.Start(MediatorTelemetry.Send, command.GetType());
+
+        try
+        {
+            return await dispatcher.DispatchAsync(command, _serviceProvider, ct).ConfigureAwait(false);
+        }
+        catch (Exception exception)
+        {
+            scope.Fail(exception);
+            throw;
+        }
+    }
+
+    private async ValueTask<TResult> QueryObservedAsync<TResult>(
+        QueryDispatcher<TResult> dispatcher,
+        IQuery<TResult> query,
+        CancellationToken ct)
+    {
+        using var scope = MediatorTelemetry.Start(MediatorTelemetry.Query, query.GetType());
+
+        try
+        {
+            return await dispatcher.DispatchAsync(query, _serviceProvider, ct).ConfigureAwait(false);
+        }
+        catch (Exception exception)
+        {
+            scope.Fail(exception);
+            throw;
+        }
+    }
+
+    private async ValueTask PublishObservedAsync(MessageDispatcher dispatcher, IMessage message, CancellationToken ct)
+    {
+        using var scope = MediatorTelemetry.Start(MediatorTelemetry.Publish, message.GetType());
+
+        try
+        {
+            await dispatcher.DispatchAsync(message, _serviceProvider, ct).ConfigureAwait(false);
+        }
+        catch (Exception exception)
+        {
+            scope.Fail(exception);
+            throw;
+        }
+    }
+
+    // The handler is still resolved here, so a missing handler fails immediately, as it does when unobserved.
+    private IAsyncEnumerable<TResult> StreamObserved<TResult>(
+        StreamQueryDispatcher<TResult> dispatcher,
+        IStreamQuery<TResult> query,
+        CancellationToken ct)
+    {
+        IAsyncEnumerable<TResult> results;
+
+        try
+        {
+            results = dispatcher.Dispatch(query, _serviceProvider, ct);
+        }
+        catch (Exception exception)
+        {
+            using var scope = MediatorTelemetry.Start(MediatorTelemetry.Stream, query.GetType());
+            scope.Fail(exception);
+            throw;
+        }
+
+        return StreamObservedAsync(results, query.GetType(), ct);
+    }
+
+    // The span covers the enumeration, from the first result requested to the last one produced.
+    private static async IAsyncEnumerable<TResult> StreamObservedAsync<TResult>(
+        IAsyncEnumerable<TResult> results,
+        Type queryType,
+        [EnumeratorCancellation] CancellationToken ct)
+    {
+        using var scope = MediatorTelemetry.Start(MediatorTelemetry.Stream, queryType);
+        await using var enumerator = results.GetAsyncEnumerator(ct);
+
+        while (true)
+        {
+            TResult current;
+
+            try
+            {
+                if (!await enumerator.MoveNextAsync().ConfigureAwait(false))
+                {
+                    break;
+                }
+
+                current = enumerator.Current;
+            }
+            catch (Exception exception)
+            {
+                scope.Fail(exception);
+                throw;
+            }
+
+            yield return current;
+        }
     }
 }
