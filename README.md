@@ -22,6 +22,7 @@ A NuGet package that implements the Mediator pattern for .NET. It lets component
 | `Datapoint.Mediator.Authorization.DependencyInjection` | `options.AddAuthorizationBehavior()` and `services.AddAuthorizersFromAssembly(...)`. |
 | `Datapoint.Mediator.EntityFrameworkCore` | A behaviour that runs each command in an EF Core transaction and saves once, at the end. |
 | `Datapoint.Mediator.EntityFrameworkCore.DependencyInjection` | `options.AddTransactionBehavior<TDbContext>()`. |
+| `Datapoint.Mediator.ModelContextProtocol` | Offers actions as MCP tools for AI agents: `services.AddMcpServer().WithMediatorActions()`. |
 
 ## Quick start
 
@@ -59,6 +60,7 @@ var id = await dispatcher.DispatchAsync("invoice.create", arguments, ct: ct); //
 - `[Action("invoice.purge", Hidden = true)]` keeps an action out of the catalog and of dispatch by name, while it can still be sent through `IMediator`. An unknown and a hidden action fail the same way (`ActionNotFoundException`), so callers can't discover internal actions.
 - Invalid names, duplicate names and named messages fail at startup, in `AddMediator`. Messages can't be actions, because their handlers aren't authorized.
 - Invalid JSON throws `InvalidActionArgumentsException`, whose message never repeats the input.
+- **MCP servers:** `Datapoint.Mediator.ModelContextProtocol` offers every action as an MCP tool in one line. See its README.
 
 ## Behaviour order
 
