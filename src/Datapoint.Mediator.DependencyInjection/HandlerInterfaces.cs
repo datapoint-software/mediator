@@ -28,5 +28,6 @@ internal static class HandlerInterfaces
         definition == typeof(ICommandHandler<>)
         || definition == typeof(ICommandHandler<,>)
         || definition == typeof(IQueryHandler<,>)
+        || definition == typeof(IStreamQueryHandler<,>)
         || definition == typeof(IMessageHandler<>);
 }
