@@ -7,6 +7,7 @@
     <Project Path="src/Datapoint.Mediator.AspNetCore/Datapoint.Mediator.AspNetCore.csproj" />
     <Project Path="src/Datapoint.Mediator.Authorization.DependencyInjection/Datapoint.Mediator.Authorization.DependencyInjection.csproj" />
     <Project Path="src/Datapoint.Mediator.Authorization/Datapoint.Mediator.Authorization.csproj" />
+    <Project Path="src/Datapoint.Mediator.CommandLine/Datapoint.Mediator.CommandLine.csproj" />
     <Project Path="src/Datapoint.Mediator.DependencyInjection/Datapoint.Mediator.DependencyInjection.csproj" />
     <Project Path="src/Datapoint.Mediator.EntityFrameworkCore.DependencyInjection/Datapoint.Mediator.EntityFrameworkCore.DependencyInjection.csproj" />
     <Project Path="src/Datapoint.Mediator.EntityFrameworkCore/Datapoint.Mediator.EntityFrameworkCore.csproj" />
