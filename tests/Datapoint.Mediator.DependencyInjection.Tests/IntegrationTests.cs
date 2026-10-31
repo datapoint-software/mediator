@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using Microsoft.Extensions.DependencyInjection;
 using Xunit;
@@ -19,9 +20,15 @@ public sealed class IntegrationTests
         var sum = await mediator.SendAsync(new Add(2, 3), ct);
         var echo = await mediator.QueryAsync(new Echo("hello"), ct);
         await mediator.PublishAsync(new Notified(), ct);
+        var counted = new List<int>();
+        await foreach (var i in mediator.StreamAsync(new CountTo(3), ct))
+        {
+            counted.Add(i);
+        }
 
         Assert.Equal(5, sum);
         Assert.Equal("hello", echo);
+        Assert.Equal([1, 2, 3], counted);
         Assert.Equal(["outer>", "inner>", "ping", "<inner", "<outer", "first", "second"], log);
     }
 
@@ -50,6 +57,7 @@ public sealed class IntegrationTests
                 .AddHandler<EchoHandler>()
                 .AddHandler<FirstNotifiedHandler>()
                 .AddHandler<SecondNotifiedHandler>()
+                .AddHandler<CountToHandler>()
                 .AddBehavior<OuterBehavior>()
                 .AddBehavior<InnerBehavior>());
 

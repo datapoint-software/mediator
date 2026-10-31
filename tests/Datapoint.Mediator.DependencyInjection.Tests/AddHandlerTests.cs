@@ -27,6 +27,15 @@ public sealed class AddHandlerTests
     }
 
     [Fact]
+    public void AddHandler_StreamQueryHandler_IsRegistered()
+    {
+        var services = new ServiceCollection().AddMediator(o => o.AddHandler<CountToHandler>());
+
+        Assert.Single(services, d => d.ServiceType == typeof(IStreamQueryHandler<CountTo, int>)
+            && d.ImplementationType == typeof(CountToHandler));
+    }
+
+    [Fact]
     public void AddHandler_WithoutLifetime_UsesScopedByDefault()
     {
         var services = new ServiceCollection().AddMediator(o => o.AddHandler<PingHandler>());

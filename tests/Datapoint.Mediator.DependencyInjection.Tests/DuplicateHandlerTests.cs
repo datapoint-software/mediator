@@ -25,6 +25,13 @@ public sealed class DuplicateHandlerTests
     }
 
     [Fact]
+    public void SecondStreamQueryHandler_Throws()
+    {
+        Assert.Throws<InvalidOperationException>(() =>
+            new ServiceCollection().AddMediator(o => o.AddHandler<CountToHandler>().AddHandler<OtherCountToHandler>()));
+    }
+
+    [Fact]
     public void SecondCommandHandler_InLaterAddMediatorCall_Throws()
     {
         var services = new ServiceCollection().AddMediator(o => o.AddHandler<PingHandler>());

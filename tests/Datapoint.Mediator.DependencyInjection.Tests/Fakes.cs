@@ -1,5 +1,7 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -112,3 +114,22 @@ public sealed class InnerBehavior(Recorder recorder) : IBehavior
 }
 
 public abstract class AbstractBehavior : IBehavior;
+
+public sealed record CountTo(int Count) : IStreamQuery<int>;
+
+public sealed class CountToHandler : IStreamQueryHandler<CountTo, int>
+{
+    public async IAsyncEnumerable<int> HandleAsync(CountTo query, [EnumeratorCancellation] CancellationToken ct = default)
+    {
+        for (var i = 1; i <= query.Count; i++)
+        {
+            await Task.Yield();
+            yield return i;
+        }
+    }
+}
+
+public sealed class OtherCountToHandler : IStreamQueryHandler<CountTo, int>
+{
+    public IAsyncEnumerable<int> HandleAsync(CountTo query, CancellationToken ct = default) => AsyncEnumerable.Empty<int>();
+}
