@@ -1,0 +1,8 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <ItemGroup>
+    <ProjectReference Include="..\Datapoint.Mediator.DependencyInjection\Datapoint.Mediator.DependencyInjection.csproj" />
+    <ProjectReference Include="..\Datapoint.Mediator.FluentValidation\Datapoint.Mediator.FluentValidation.csproj" />
+  </ItemGroup>
+
+</Project>
