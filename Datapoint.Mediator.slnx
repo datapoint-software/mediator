@@ -1,4 +1,7 @@
 <Solution>
+  <Folder Name="/benchmarks/">
+    <Project Path="benchmarks/Datapoint.Mediator.Benchmarks/Datapoint.Mediator.Benchmarks.csproj" />
+  </Folder>
   <Folder Name="/src/">
     <Project Path="src/Datapoint.Mediator.Abstractions/Datapoint.Mediator.Abstractions.csproj" />
     <Project Path="src/Datapoint.Mediator.DependencyInjection/Datapoint.Mediator.DependencyInjection.csproj" />
