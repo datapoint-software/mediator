@@ -20,6 +20,7 @@
     <Project Path="tests/Datapoint.Mediator.AspNetCore.Tests/Datapoint.Mediator.AspNetCore.Tests.csproj" />
     <Project Path="tests/Datapoint.Mediator.Authorization.DependencyInjection.Tests/Datapoint.Mediator.Authorization.DependencyInjection.Tests.csproj" />
     <Project Path="tests/Datapoint.Mediator.Authorization.Tests/Datapoint.Mediator.Authorization.Tests.csproj" />
+    <Project Path="tests/Datapoint.Mediator.CommandLine.Tests/Datapoint.Mediator.CommandLine.Tests.csproj" />
     <Project Path="tests/Datapoint.Mediator.DependencyInjection.Tests.Fixtures/Datapoint.Mediator.DependencyInjection.Tests.Fixtures.csproj" />
     <Project Path="tests/Datapoint.Mediator.DependencyInjection.Tests/Datapoint.Mediator.DependencyInjection.Tests.csproj" />
     <Project Path="tests/Datapoint.Mediator.EntityFrameworkCore.Tests/Datapoint.Mediator.EntityFrameworkCore.Tests.csproj" />
