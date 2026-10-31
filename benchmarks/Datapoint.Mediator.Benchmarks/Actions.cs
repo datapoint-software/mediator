@@ -1,4 +1,6 @@
 using System;
+using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
 using FluentValidation;
@@ -14,6 +16,8 @@ public sealed record Add(int A, int B) : ICommand<int>;
 public sealed record Echo(string Value) : IQuery<string>;
 
 public sealed record Notified : IMessage;
+
+public sealed record CountTo(int Count) : IStreamQuery<int>;
 
 public sealed class PingHandler : ICommandHandler<Ping>
 {
@@ -38,6 +42,19 @@ public sealed class AddHandler : ICommandHandler<Add, int>
 public sealed class EchoHandler : IQueryHandler<Echo, string>
 {
     public ValueTask<string> HandleAsync(Echo query, CancellationToken ct = default) => new(query.Value);
+}
+
+public sealed class CountToHandler : IStreamQueryHandler<CountTo, int>
+{
+    public async IAsyncEnumerable<int> HandleAsync(CountTo query, [EnumeratorCancellation] CancellationToken ct = default)
+    {
+        await Task.CompletedTask;
+
+        for (var i = 1; i <= query.Count; i++)
+        {
+            yield return i;
+        }
+    }
 }
 
 public sealed class FirstNotifiedHandler : IMessageHandler<Notified>

@@ -16,8 +16,10 @@ public class DispatchBenchmarks
     private static readonly Add Add = new(1, 2);
     private static readonly Echo Echo = new("value");
     private static readonly Notified Notified = new();
+    private static readonly CountTo CountToTen = new(10);
 
     private readonly PingHandler _handler = new();
+    private readonly CountToHandler _streamHandler = new();
 
     private ServiceProvider _plainProvider = null!;
     private ServiceProvider _behaviorsProvider = null!;
@@ -38,7 +40,8 @@ public class DispatchBenchmarks
             .AddHandler<EchoHandler>()
             .AddHandler<FirstNotifiedHandler>()
             .AddHandler<SecondNotifiedHandler>()
-            .AddHandler<ThirdNotifiedHandler>());
+            .AddHandler<ThirdNotifiedHandler>()
+            .AddHandler<CountToHandler>());
 
         (_behaviorsProvider, _behaviorsScope, _withBehaviors) = Create(o => o
             .AddHandler<PingHandler>()
@@ -78,6 +81,32 @@ public class DispatchBenchmarks
 
     [Benchmark]
     public ValueTask PublishToThreeHandlers() => _plain.PublishAsync(Notified);
+
+    [Benchmark]
+    public async Task<int> DirectStreamHandlerTenItems()
+    {
+        var sum = 0;
+
+        await foreach (var i in _streamHandler.HandleAsync(CountToTen))
+        {
+            sum += i;
+        }
+
+        return sum;
+    }
+
+    [Benchmark]
+    public async Task<int> StreamQueryTenItems()
+    {
+        var sum = 0;
+
+        await foreach (var i in _plain.StreamAsync(CountToTen))
+        {
+            sum += i;
+        }
+
+        return sum;
+    }
 
     [Benchmark]
     public ValueTask SendCommandWithValidation() => _withValidation.SendAsync(ValidatedPing);
