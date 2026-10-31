@@ -18,6 +18,7 @@ public sealed class CreateUserHandler : ICommandHandler<CreateUser, Guid>
 |---|---|
 | `ICommand`, `ICommand<TResult>` | Changes state; handled by exactly one `ICommandHandler`. |
 | `IQuery<TResult>` | Reads state; handled by exactly one `IQueryHandler`. |
+| `IStreamQuery<TResult>` | Reads state as a stream of results (`IAsyncEnumerable<TResult>`); handled by exactly one `IStreamQueryHandler`. |
 | `IMessage` | Announces something that happened; handled by any number of `IMessageHandler`s. |
 | `IBehavior` | Wraps handling with cross-cutting concerns such as logging or validation. |
 | `IMediator` | Sends commands and queries, and publishes messages. |
