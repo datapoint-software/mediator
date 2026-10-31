@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Reflection;
 using Microsoft.Extensions.DependencyInjection;
@@ -137,6 +138,9 @@ public sealed class MediatorOptions
         }
     }
 
+    // Excluded from coverage: ReflectionTypeLoadException only occurs when an assembly references a dependency that is
+    // missing at runtime, which a test can only reproduce with a deliberately broken build.
+    [ExcludeFromCodeCoverage(Justification = "Requires an assembly with a missing dependency.")]
     private static IEnumerable<Type> GetLoadableTypes(Assembly assembly)
     {
         try
