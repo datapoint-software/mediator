@@ -17,9 +17,9 @@ public interface ICommandHandler<in TCommand>
     /// Handles the specified command.
     /// </summary>
     /// <param name="command">The command to handle.</param>
-    /// <param name="cancellationToken">A token to cancel the operation.</param>
+    /// <param name="ct">A token to cancel the operation.</param>
     /// <returns>A task that completes when the command is handled. Await it only once.</returns>
-    ValueTask HandleAsync(TCommand command, CancellationToken cancellationToken = default);
+    ValueTask HandleAsync(TCommand command, CancellationToken ct = default);
 }
 
 /// <summary>
@@ -37,7 +37,7 @@ public interface ICommandHandler<in TCommand, TResult>
     /// Handles the specified command.
     /// </summary>
     /// <param name="command">The command to handle.</param>
-    /// <param name="cancellationToken">A token to cancel the operation.</param>
+    /// <param name="ct">A token to cancel the operation.</param>
     /// <returns>A task that completes with the command's result. Await it only once.</returns>
-    ValueTask<TResult> HandleAsync(TCommand command, CancellationToken cancellationToken = default);
+    ValueTask<TResult> HandleAsync(TCommand command, CancellationToken ct = default);
 }
