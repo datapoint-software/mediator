@@ -11,6 +11,10 @@ A NuGet package that implements the Mediator pattern for .NET. It lets component
 | `Datapoint.Mediator.DependencyInjection` | `services.AddMediator(...)` for `Microsoft.Extensions.DependencyInjection`. |
 | `Datapoint.Mediator.FluentValidation` | A behaviour that validates commands and queries with FluentValidation. |
 | `Datapoint.Mediator.FluentValidation.DependencyInjection` | `options.AddValidationBehavior()`. |
+| `Datapoint.Mediator.Authorization` | A behaviour that authorizes commands and queries for the current user, denying access by default. Reference it from your domain layer. |
+| `Datapoint.Mediator.Authorization.DependencyInjection` | `options.AddAuthorizationBehavior()` and `services.AddAuthorizersFromAssembly(...)`. |
+| `Datapoint.Mediator.EntityFrameworkCore` | A behaviour that runs each command in an EF Core transaction and saves once, at the end. |
+| `Datapoint.Mediator.EntityFrameworkCore.DependencyInjection` | `options.AddTransactionBehavior<TDbContext>()`. |
 
 ## Quick start
 
@@ -30,6 +34,25 @@ services.AddMediator(options => options.AddHandlersFromAssemblyContaining<Create
 // Anywhere with a scoped IMediator
 var id = await mediator.SendAsync(new CreateUser("Ana"), ct);
 ```
+
+## Behaviour order
+
+Behaviours run in the order they're registered, with the first one outermost. The recommended order is:
+
+```csharp
+services.AddMediator(options =>
+{
+    options.AddHandlersFromAssemblyContaining<CreateUserHandler>();
+    options.AddBehavior<ExceptionHandlingBehavior>(); // your own: turns failures into responses
+    options.AddAuthorizationBehavior();               // before anything reveals information
+    options.AddValidationBehavior();                  // before a transaction is opened
+    options.AddTransactionBehavior<AppDbContext>();   // innermost: wraps only the handler
+});
+```
+
+## Tracing and metrics
+
+The mediator reports a span and a duration measurement for every dispatch. Collect them with OpenTelemetry using `MediatorTelemetry.SourceName` and `MediatorTelemetry.MeterName`. Exception messages are never recorded.
 
 ## Requirements
 
