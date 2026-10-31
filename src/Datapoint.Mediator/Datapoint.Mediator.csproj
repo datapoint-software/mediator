@@ -1,5 +1,9 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
+  <PropertyGroup>
+    <Description>A fast Mediator pattern implementation for commands, queries and messages, with behaviour pipelines.</Description>
+  </PropertyGroup>
+
   <ItemGroup>
     <ProjectReference Include="..\Datapoint.Mediator.Abstractions\Datapoint.Mediator.Abstractions.csproj" />
   </ItemGroup>

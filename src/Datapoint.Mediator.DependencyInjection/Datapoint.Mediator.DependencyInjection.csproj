@@ -1,5 +1,9 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
+  <PropertyGroup>
+    <Description>Registers Datapoint.Mediator, its handlers and behaviours with Microsoft.Extensions.DependencyInjection, by hand or by assembly scanning.</Description>
+  </PropertyGroup>
+
   <ItemGroup>
     <ProjectReference Include="..\Datapoint.Mediator\Datapoint.Mediator.csproj" />
   </ItemGroup>

@@ -1,5 +1,10 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
+  <PropertyGroup>
+    <Description>A Datapoint.Mediator behaviour that validates commands and queries with FluentValidation before their handler runs.</Description>
+    <PackageTags>$(PackageTags);fluentvalidation;validation</PackageTags>
+  </PropertyGroup>
+
   <ItemGroup>
     <ProjectReference Include="..\Datapoint.Mediator.Abstractions\Datapoint.Mediator.Abstractions.csproj" />
   </ItemGroup>

@@ -1,0 +1,37 @@
+<Project>
+
+  <Import Project="$([MSBuild]::GetPathOfFileAbove('Directory.Build.props', '$(MSBuildThisFileDirectory)../'))" />
+
+  <PropertyGroup>
+    <Authors>Datapoint - Sistemas de Informação, Lda.</Authors>
+    <Company>Datapoint - Sistemas de Informação, Lda.</Company>
+    <Copyright>Copyright (c) 2026 Datapoint - Sistemas de Informação, Lda.</Copyright>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <PackageTags>mediator;cqrs;commands;queries;messages</PackageTags>
+  </PropertyGroup>
+
+  <!-- Source Link and symbols, so consumers can step into the source while debugging. -->
+  <PropertyGroup>
+    <PublishRepositoryUrl>true</PublishRepositoryUrl>
+    <EmbedUntrackedSources>true</EmbedUntrackedSources>
+    <IncludeSymbols>true</IncludeSymbols>
+    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(GITHUB_ACTIONS)' == 'true'">
+    <ContinuousIntegrationBuild>true</ContinuousIntegrationBuild>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="README.md" Pack="true" PackagePath="\" />
+  </ItemGroup>
+
+  <!-- The repository URL is only known once Source Link has read the git remote. -->
+  <Target Name="SetPackageProjectUrl" BeforeTargets="GenerateNuspec" DependsOnTargets="InitializeSourceControlInformation">
+    <PropertyGroup>
+      <PackageProjectUrl Condition="'$(PackageProjectUrl)' == ''">$([System.Text.RegularExpressions.Regex]::Replace('$(RepositoryUrl)', '\.git$', ''))</PackageProjectUrl>
+    </PropertyGroup>
+  </Target>
+
+</Project>

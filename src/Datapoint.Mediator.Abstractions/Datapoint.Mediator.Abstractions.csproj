@@ -2,6 +2,7 @@
 
   <PropertyGroup>
     <RootNamespace>Datapoint.Mediator</RootNamespace>
+    <Description>Contracts for Datapoint.Mediator: commands, queries, messages, their handlers, behaviours and IMediator.</Description>
   </PropertyGroup>
 
 </Project>

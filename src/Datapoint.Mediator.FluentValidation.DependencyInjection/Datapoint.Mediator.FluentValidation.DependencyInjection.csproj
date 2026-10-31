@@ -1,5 +1,10 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
+  <PropertyGroup>
+    <Description>Registers the Datapoint.Mediator FluentValidation behaviour with AddValidationBehavior().</Description>
+    <PackageTags>$(PackageTags);fluentvalidation;validation</PackageTags>
+  </PropertyGroup>
+
   <ItemGroup>
     <ProjectReference Include="..\Datapoint.Mediator.DependencyInjection\Datapoint.Mediator.DependencyInjection.csproj" />
     <ProjectReference Include="..\Datapoint.Mediator.FluentValidation\Datapoint.Mediator.FluentValidation.csproj" />
