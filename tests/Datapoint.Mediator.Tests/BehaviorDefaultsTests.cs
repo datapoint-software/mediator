@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using Datapoint.Mediator.Tests.Fakes;
@@ -69,6 +70,23 @@ public sealed class BehaviorDefaultsTests
             return default;
         }, cts.Token);
 
+        Assert.Equal(cts.Token, received);
+    }
+
+    [Fact]
+    public void StreamQuery_CallsNextWithSameTokenAndReturnsItsResult()
+    {
+        using var cts = new CancellationTokenSource();
+        CancellationToken? received = null;
+        var expected = Streams.CountTo(1, ct: TestContext.Current.CancellationToken);
+
+        var result = _behavior.HandleAsync(new CountTo(1), ct =>
+        {
+            received = ct;
+            return expected;
+        }, cts.Token);
+
+        Assert.Same(expected, result);
         Assert.Equal(cts.Token, received);
     }
 

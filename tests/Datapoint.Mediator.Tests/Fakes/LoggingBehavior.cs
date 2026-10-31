@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -41,6 +42,21 @@ public sealed class LoggingBehavior(string name, List<string> log) : IBehavior
     {
         log.Add($"{name}>");
         await next(ct);
+        log.Add($"<{name}");
+    }
+
+    public async IAsyncEnumerable<TResult> HandleAsync<TResult>(
+        IStreamQuery<TResult> query,
+        Func<CancellationToken, IAsyncEnumerable<TResult>> next,
+        [EnumeratorCancellation] CancellationToken ct = default)
+    {
+        log.Add($"{name}>");
+
+        await foreach (var result in next(ct))
+        {
+            yield return result;
+        }
+
         log.Add($"<{name}");
     }
 }

@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -28,4 +29,11 @@ public sealed class MessageHandler<TMessage>(Func<TMessage, CancellationToken, V
     where TMessage : IMessage
 {
     public ValueTask HandleAsync(TMessage message, CancellationToken ct = default) => handle(message, ct);
+}
+
+public sealed class StreamQueryHandler<TQuery, TResult>(Func<TQuery, CancellationToken, IAsyncEnumerable<TResult>> handle)
+    : IStreamQueryHandler<TQuery, TResult>
+    where TQuery : IStreamQuery<TResult>
+{
+    public IAsyncEnumerable<TResult> HandleAsync(TQuery query, CancellationToken ct = default) => handle(query, ct);
 }

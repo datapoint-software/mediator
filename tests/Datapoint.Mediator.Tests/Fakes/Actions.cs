@@ -8,6 +8,8 @@ public sealed record Echo(string Value) : IQuery<string>;
 
 public sealed record Notified : IMessage;
 
+public sealed record CountTo(int Count) : IStreamQuery<int>;
+
 // Implements the same generic interface twice, to check that each result type reaches its own handler.
 public sealed record DualCommand : ICommand<int>, ICommand<string>;
 
