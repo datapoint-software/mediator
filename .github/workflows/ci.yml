@@ -11,6 +11,9 @@ permissions:
 jobs:
   build:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write # Codecov: tokenless upload, by exchanging a GitHub OIDC token
     steps:
       - name: Check out
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -23,13 +26,47 @@ jobs:
           dotnet-version: 10.0.x
 
       - name: Restore
-        run: dotnet restore Datapoint.Mediator.slnx
+        run: |
+          dotnet restore Datapoint.Mediator.slnx
+          dotnet tool restore
 
       - name: Build
         run: dotnet build Datapoint.Mediator.slnx --configuration Release --no-restore
 
+      # Each test project writes its own report, because each one only covers the packages it tests.
       - name: Test
-        run: dotnet test Datapoint.Mediator.slnx --configuration Release --no-build
+        run: >-
+          dotnet test Datapoint.Mediator.slnx --configuration Release --no-build
+          --results-directory coverage/raw
+          --coverlet --coverlet-output-format cobertura
+          --coverlet-include "[Datapoint.Mediator*]*" --coverlet-exclude "[*.Tests.Fixtures]*"
+
+      - name: Merge coverage
+        run: >-
+          dotnet reportgenerator -reports:"coverage/raw/*.cobertura.*.xml" -targetdir:coverage
+          -reporttypes:"Cobertura;MarkdownSummaryGithub;JsonSummary"
+
+      - name: Summarise coverage
+        run: cat coverage/SummaryGithub.md >> "$GITHUB_STEP_SUMMARY"
+
+      # Pull requests from forks get no OIDC token, so only pushes and this repository's pull requests upload.
+      - name: Upload coverage to Codecov
+        if: github.event_name == 'push' || github.event.pull_request.head.repo.full_name == github.repository
+        uses: codecov/codecov-action@303a32d7a59b442fa8d48b6a1cc6825c09c847a5 # v7.1.1
+        with:
+          files: coverage/Cobertura.xml
+          disable_search: true
+          use_oidc: true
+          fail_ci_if_error: false
+
+      - name: Require 95% line coverage
+        run: |
+          coverage=$(jq '.summary.linecoverage' coverage/Summary.json)
+          if awk -v c="$coverage" 'BEGIN { exit !(c < 95) }'; then
+            echo "::error::Line coverage is $coverage%, below the required 95%."
+            exit 1
+          fi
+          echo "Line coverage is $coverage%."
 
       - name: Pack
         run: dotnet pack Datapoint.Mediator.slnx --configuration Release --no-build --output artifacts
