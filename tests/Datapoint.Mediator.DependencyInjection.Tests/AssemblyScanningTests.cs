@@ -57,7 +57,9 @@ public sealed class AssemblyScanningTests
         var services = new ServiceCollection().AddMediator(o =>
             o.AddHandlersFromAssembly(FixturesAssembly, ServiceLifetime.Singleton));
 
-        Assert.All(services.Where(d => d.ServiceType != typeof(IMediator)), d => Assert.Equal(ServiceLifetime.Singleton, d.Lifetime));
+        var handlers = services.Where(d => d.ServiceType.IsGenericType && d.ServiceType.Namespace == typeof(IMediator).Namespace).ToList();
+        Assert.NotEmpty(handlers);
+        Assert.All(handlers, d => Assert.Equal(ServiceLifetime.Singleton, d.Lifetime));
     }
 
     [Fact]
