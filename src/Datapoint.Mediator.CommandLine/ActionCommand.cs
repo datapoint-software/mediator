@@ -1,8 +1,11 @@
 using System;
 using System.Collections.Generic;
 using System.CommandLine;
+using System.CommandLine.Parsing;
 using System.ComponentModel;
+using System.Globalization;
 using System.Linq;
+using System.Numerics;
 using System.Reflection;
 using System.Text.Json;
 using System.Threading;
@@ -14,6 +17,11 @@ namespace Datapoint.Mediator.CommandLine;
 // Builds the command for one action: a typed option per property, a --json fallback, and an action that dispatches it.
 internal sealed class ActionCommand
 {
+    private static readonly MethodInfo CreateParserMethod = GetMethod(nameof(CreateParser));
+    private static readonly MethodInfo CreateNumberParserMethod = GetMethod(nameof(CreateNumberParser));
+    private static readonly MethodInfo UseParserMethod = GetMethod(nameof(UseParser));
+    private static readonly MethodInfo UseNullableParserMethod = GetMethod(nameof(UseNullableParser));
+
     private readonly ActionDescriptor _action;
     private readonly IServiceProvider _services;
     private readonly MediatorCommandLineOptions _options;
@@ -61,6 +69,7 @@ internal sealed class ActionCommand
                 $"--{JsonNamingPolicy.KebabCaseLower.ConvertName(property.Name)}",
                 Array.Empty<string>())!;
             option.Description = required ? $"{description} (required)".TrimStart() : description;
+            UseInvariantCulture(option, property.PropertyType);
 
             command.Options.Add(option);
             _properties.Add((_serializerOptions.PropertyNamingPolicy?.ConvertName(property.Name) ?? property.Name, option, required));
@@ -92,6 +101,67 @@ internal sealed class ActionCommand
 
         command.SetAction(RunAsync);
         return command;
+    }
+
+    // System.CommandLine parses with the current culture, so "42.5" would be refused, or misread, on a machine set to a
+    // language that writes "42,5". Values are parsed with the invariant culture instead, like the JSON output and --json.
+    // Numbers are parsed without thousands separators, because the invariant culture would otherwise read "42,5" as 425.
+    // bool is left alone, because flags take no value, and so are types without IParsable, such as enums and strings,
+    // whose parsing doesn't depend on culture.
+    private static void UseInvariantCulture(Option option, Type propertyType)
+    {
+        var underlyingType = Nullable.GetUnderlyingType(propertyType);
+        var valueType = underlyingType ?? propertyType;
+
+        if (!valueType.IsValueType || valueType == typeof(bool) || !Implements(valueType, typeof(IParsable<>)))
+        {
+            return;
+        }
+
+        var createParser = Implements(valueType, typeof(INumberBase<>)) ? CreateNumberParserMethod : CreateParserMethod;
+        var parser = createParser.MakeGenericMethod(valueType).Invoke(null, null);
+        var useParser = underlyingType is null ? UseParserMethod : UseNullableParserMethod;
+        useParser.MakeGenericMethod(valueType).Invoke(null, [option, parser]);
+    }
+
+    private delegate bool Parser<T>(string token, out T value);
+
+    private static MethodInfo GetMethod(string name) =>
+        typeof(ActionCommand).GetMethod(name, BindingFlags.NonPublic | BindingFlags.Static)!;
+
+    private static bool Implements(Type type, Type genericInterface) =>
+        type.GetInterfaces().Any(i => i.IsGenericType && i.GetGenericTypeDefinition() == genericInterface && i.GetGenericArguments()[0] == type);
+
+    private static Parser<T> CreateParser<T>()
+        where T : IParsable<T> =>
+        (string token, out T value) => T.TryParse(token, CultureInfo.InvariantCulture, out value!);
+
+    private static Parser<T> CreateNumberParser<T>()
+        where T : INumberBase<T>
+    {
+        var styles = Implements(typeof(T), typeof(IFloatingPoint<>)) ? NumberStyles.Float : NumberStyles.Integer;
+        return (string token, out T value) => T.TryParse(token, styles, CultureInfo.InvariantCulture, out value!);
+    }
+
+    private static void UseParser<T>(Option<T> option, Parser<T> parser)
+        where T : struct =>
+        option.CustomParser = result => TryParse(result, option.Name, parser, out var value) ? value : default;
+
+    private static void UseNullableParser<T>(Option<T?> option, Parser<T> parser)
+        where T : struct =>
+        option.CustomParser = result => TryParse(result, option.Name, parser, out var value) ? value : null;
+
+    private static bool TryParse<T>(ArgumentResult result, string optionName, Parser<T> parser, out T value)
+    {
+        var token = result.Tokens[0].Value;
+
+        if (parser(token, out value))
+        {
+            return true;
+        }
+
+        result.AddError($"Cannot parse argument '{token}' for option '{optionName}' as expected type '{typeof(T)}'.");
+        return false;
     }
 
     private static bool IsNullable(PropertyInfo property, NullabilityInfoContext nullability) =>

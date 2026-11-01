@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Globalization;
 using System.Runtime.CompilerServices;
 using System.Security.Claims;
 using System.Threading;
@@ -34,6 +35,10 @@ public sealed record FailingReport : ICommand;
 [Action("ping")]
 public sealed record Ping : ICommand;
 
+// Numbers, dates and times, which System.CommandLine would otherwise parse with the current culture.
+[Action("reports.schedule")]
+public sealed record ScheduleReport(DateOnly Day, double? Threshold = null, DateTimeOffset? NotifyAt = null) : ICommand;
+
 public sealed class Recorder
 {
     public List<string> Log { get; } = [];
@@ -51,7 +56,7 @@ public sealed class CreateInvoiceHandler(Recorder recorder) : ICommandHandler<Cr
 
     public ValueTask<Guid> HandleAsync(CreateInvoice command, CancellationToken ct = default)
     {
-        recorder.Log.Add($"create {command.Customer} {command.Amount} {command.Notes ?? "-"}");
+        recorder.Log.Add(string.Create(CultureInfo.InvariantCulture, $"create {command.Customer} {command.Amount} {command.Notes ?? "-"}"));
         return new(Id);
     }
 }
@@ -105,4 +110,15 @@ public sealed class PingHandler : ICommandHandler<Ping>
 public sealed class AllowAll<TAction> : IAuthorizer<TAction>
 {
     public ValueTask<bool> IsAuthorizedAsync(TAction action, ClaimsPrincipal principal, CancellationToken ct = default) => new(true);
+}
+
+public sealed class ScheduleReportHandler(Recorder recorder) : ICommandHandler<ScheduleReport>
+{
+    public ValueTask HandleAsync(ScheduleReport command, CancellationToken ct = default)
+    {
+        recorder.Log.Add(string.Create(
+            CultureInfo.InvariantCulture,
+            $"schedule {command.Day:O} {(command.Threshold?.ToString(CultureInfo.InvariantCulture) ?? "-")} {(command.NotifyAt?.ToString("O", CultureInfo.InvariantCulture) ?? "-")}"));
+        return default;
+    }
 }
