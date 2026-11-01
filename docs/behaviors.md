@@ -65,6 +65,14 @@ public sealed class SlowRequestLoggingBehavior(ILogger<SlowRequestLoggingBehavio
 o.AddBehavior<SlowRequestLoggingBehavior>();
 ```
 
+A behaviour that needs settings in its constructor can be registered with a factory, which gets the current scope's services:
+
+```csharp
+o.AddBehavior(sp => new SlowRequestLoggingBehavior(sp.GetRequiredService<ILogger<SlowRequestLoggingBehavior>>(), TimeSpan.FromSeconds(2)));
+```
+
+A behaviour type is registered once: registering the same type again, with or without a factory, keeps the first registration.
+
 | Overload | Called for |
 |---|---|
 | `HandleAsync(ICommand, …)` | commands without a result |

@@ -130,6 +130,30 @@ public sealed class MediatorOptions
         return this;
     }
 
+    /// <summary>
+    /// Registers a behaviour created by a factory, for behaviours that need settings in their constructor. Behaviours run
+    /// in the order they are registered, with the first one outermost.
+    /// </summary>
+    /// <typeparam name="TBehavior">The behaviour type, which must be a concrete class.</typeparam>
+    /// <param name="factory">Creates the behaviour from the service provider of the current scope.</param>
+    /// <param name="lifetime">The behaviour's lifetime, or <see langword="null"/> to use <see cref="DefaultLifetime"/>.</param>
+    /// <returns>These options, for chaining.</returns>
+    /// <remarks>
+    /// A behaviour type is registered once: when the same type is registered again, with or without a factory, the
+    /// first registration is kept.
+    /// </remarks>
+    /// <exception cref="ArgumentNullException"><paramref name="factory"/> is <see langword="null"/>.</exception>
+    /// <exception cref="ArgumentException"><typeparamref name="TBehavior"/> is not a concrete class.</exception>
+    public MediatorOptions AddBehavior<TBehavior>(Func<IServiceProvider, TBehavior> factory, ServiceLifetime? lifetime = null)
+        where TBehavior : class, IBehavior
+    {
+        ArgumentNullException.ThrowIfNull(factory);
+        EnsureConcrete(typeof(TBehavior), nameof(TBehavior));
+
+        Behaviors.Add(new Registration(typeof(TBehavior), lifetime, factory));
+        return this;
+    }
+
     private static void EnsureConcrete(Type type, string paramName)
     {
         if (!type.IsClass || type.IsAbstract || type.ContainsGenericParameters)
@@ -153,5 +177,9 @@ public sealed class MediatorOptions
         }
     }
 
-    internal readonly record struct Registration(Type ImplementationType, ServiceLifetime? Lifetime);
+    // Factory is set for behaviours created by a factory; its delegate type names the implementation type.
+    internal readonly record struct Registration(
+        Type ImplementationType,
+        ServiceLifetime? Lifetime,
+        Func<IServiceProvider, object>? Factory = null);
 }

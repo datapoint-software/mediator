@@ -60,10 +60,13 @@ public static class MediatorServiceCollectionExtensions
 
         foreach (var behavior in options.Behaviors)
         {
-            services.TryAddEnumerable(ServiceDescriptor.Describe(
-                typeof(IBehavior),
-                behavior.ImplementationType,
-                behavior.Lifetime ?? options.DefaultLifetime));
+            var lifetime = behavior.Lifetime ?? options.DefaultLifetime;
+
+            // TryAddEnumerable identifies a factory's implementation type from its delegate type, so a behaviour type
+            // is registered once either way.
+            services.TryAddEnumerable(behavior.Factory is null
+                ? ServiceDescriptor.Describe(typeof(IBehavior), behavior.ImplementationType, lifetime)
+                : ServiceDescriptor.Describe(typeof(IBehavior), behavior.Factory, lifetime));
         }
 
         return services;

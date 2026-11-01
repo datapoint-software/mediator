@@ -1,1 +1,2 @@
 #nullable enable
+Datapoint.Mediator.MediatorOptions.AddBehavior<TBehavior>(System.Func<System.IServiceProvider!, TBehavior!>! factory, Microsoft.Extensions.DependencyInjection.ServiceLifetime? lifetime = null) -> Datapoint.Mediator.MediatorOptions!
