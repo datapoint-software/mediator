@@ -205,6 +205,38 @@ public sealed class ExplainDownloadHandler(IEnumerable<IAuthorizer<DownloadItem>
 
 Keep the same rules as the behaviour: no authorizer means denied, and all must allow. Translate details into messages that are safe for that user to see.
 
+## Authentication before the transaction
+
+`AuthenticationBehavior` refuses requests without a signed-in user, and nothing else. Register it first, so that callers who aren't signed in are refused before a transaction begins:
+
+```csharp
+o.AddAuthenticationBehavior()   // first
+```
+
+It's told to observers as `AuthenticationRequired`. `[AllowAnonymousAccess]` actions and messages skip it. The authorization behaviour still checks authentication itself.
+
+## Authorizing inside the transaction
+
+By default, authorization runs before the transaction, so an action is checked against the data as it was then, and runs against the data as it is a moment later. If access can change in between, such as a share revoked or a label changed, register the transaction behaviour **before** authorization. The rules are then checked inside the same transaction as the handler, prepared by its initializers. See the [recommended order](behaviors.md#order).
+
+To make that order a rule rather than a convention:
+
+```csharp
+services.AddTransactionContext();
+services.AddMediator(o => o
+    …
+    .AddAuthorizationBehavior(a => a.RequireTransaction = TransactionRequirement.CommandsAndQueries));   // or Commands
+```
+
+- **At runtime:** authorizing an action of a required kind without a transaction begun by the mediator throws `InvalidOperationException`, before any authorizer runs. Stream queries are checked at first enumeration.
+- **At startup:** `AddMediator` throws if an action of a required kind is marked `[NonTransactional]`, unless it's `[AllowAnonymousAccess]`.
+
+Inside the transaction:
+- a denial rolls the transaction back, so an [observer](#auditing-every-decision) must write denials through its own `DbContext`;
+- a retried transaction authorizes, and observes, again: record `ITransactionContext.AttemptId` in your audit;
+- authorizers must only read: anything they change would be saved with the command;
+- the transaction only keeps what the authorizer read from changing at a strong enough isolation level, or with row locks: see [Transactions](transactions.md#settings).
+
 ## Messages
 
 Messages are **not** authorized: their handlers run without any check. That's safe as long as messages are published only by your own code, after an authorized command:

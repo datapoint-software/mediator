@@ -5,7 +5,7 @@
 
 ## Context
 
-PostgreSQL row-level security can isolate tenants with a transaction-local setting, `set_config('app.tenant_id', …, true)`, applied after the transaction begins and before any query. A setting applied before `TransactionBehavior` begins its transaction is lost, a retried transaction ([0010](0010-transaction-retries-and-nesting.md)) needs it again, and authorization running inside the transaction ([0020](0020-authorization-inside-the-transaction.md)) must see it.
+PostgreSQL row-level security can isolate tenants with a transaction-local setting, `set_config('app.tenant_id', …, true)`, applied after the transaction begins and before any query. A setting applied before `TransactionBehavior` begins its transaction is lost, a retried transaction ([0010](0010-transaction-retries-and-nesting.md)) needs it again, and authorization running inside the transaction ([0020](0020-commands-authorized-inside-their-transaction.md)) must see it.
 
 EF Core's `DbTransactionInterceptor.TransactionStarted` was considered. Interceptors are configured on `DbContextOptions`, which makes the current user, a scoped service, awkward to reach and breaks with context pooling, and they can't tell which request a transaction is for.
 

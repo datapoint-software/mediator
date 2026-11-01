@@ -12,7 +12,9 @@ A behaviour wraps the handling of requests, to add a cross-cutting concern once 
 
 ## Order
 
-Behaviours run in the order they're added, the first one outermost. The recommended order is:
+Behaviours run in the order they're added, the first one outermost. There are two recommended orders.
+
+**Usually**, refuse first and keep the transaction short:
 
 ```csharp
 services.AddMediator(o => o
@@ -26,6 +28,33 @@ services.AddMediator(o => o
 - **Authorization before validation,** so a user who may not run an action can't learn its validation rules from the errors.
 - **Validation before the transaction,** so invalid requests never open one.
 - **The transaction innermost,** so it's as short as possible.
+
+**When access can change between the check and the handler,** such as a share revoked while a command runs, authorize inside the transaction, so the rules are checked against the same data the handler reads:
+
+```csharp
+services.AddMediator(o => o
+    .AddHandlersFromAssemblyContaining<DownloadItemHandler>()
+    .AddAuthenticationBehavior()                                          // refuse anonymous callers before BEGIN
+    .AddTransactionBehavior<FileShareDbContext>(t =>
+    {
+        t.IsolationLevel = IsolationLevel.ReadCommitted;                  // plus your own row locks
+        t.Queries = QueryTransactions.ReadOnly;                           // queries in transactions too
+        t.QueryIsolationLevel = IsolationLevel.RepeatableRead;
+        t.ReadOnlyStatement = "SET TRANSACTION READ ONLY";
+        t.ForeignTransactions = ForeignTransactions.Throw;
+    })
+    .AddAuthorizationBehavior(a => a.RequireTransaction = TransactionRequirement.CommandsAndQueries)
+    .AddValidationBehavior());                                            // still after authorization
+```
+
+| Request | Pipeline |
+|---|---|
+| Command | authentication → BEGIN → initializers → authorization → validation → handler → save → commit |
+| Query | authentication → BEGIN → read-only statement → initializers → authorization → validation → handler → rollback |
+| Stream query | the same as a query, at first enumeration; rolled back when the enumeration ends |
+| Retry | the whole attempt again, authorization and its observers included |
+
+`RequireTransaction` makes the order a rule: if the transaction behaviour ends up after authorization, requests fail instead of being silently authorized outside the transaction. See [Authorizing inside the transaction](authorization.md#authorizing-inside-the-transaction) and [Transactions](transactions.md).
 
 ## Writing a behaviour
 

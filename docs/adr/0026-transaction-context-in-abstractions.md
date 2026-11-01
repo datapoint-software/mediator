@@ -6,7 +6,7 @@
 ## Context
 
 Two needs depend on knowing whether, and how, the current request runs in a transaction:
-- authorization can be required to run inside the transaction ([0020](0020-authorization-inside-the-transaction.md)), so the authorization behaviour must know whether one is active;
+- authorization can be required to run inside the transaction ([0020](0020-commands-authorized-inside-their-transaction.md)), so the authorization behaviour must know whether one is active;
 - audit observers that write through their own connection record decisions for attempts that may be rolled back and retried ([0010](0010-transaction-retries-and-nesting.md)), so they need the attempt number and an identifier for each attempt.
 
 The authorization package must not depend on Entity Framework Core ([0004](0004-package-split.md)). Matching types by name, as adapters do for exceptions ([0013](0013-adapters-match-authorization-exceptions-by-name.md)), works for a type check, but not for reading state.

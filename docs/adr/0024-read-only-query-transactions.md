@@ -6,7 +6,7 @@
 
 ## Context
 
-[0010](0010-transaction-retries-and-nesting.md) decided how commands run in transactions, and that queries, stream queries and messages are not affected. An application isolating tenants with PostgreSQL row-level security and a transaction-local setting ([0022](0022-transaction-initializers.md)) needs queries in a transaction too, read-only, prepared the same way. Authorization of a query inside that transaction also needs it ([0020](0020-authorization-inside-the-transaction.md)).
+[0010](0010-transaction-retries-and-nesting.md) decided how commands run in transactions, and that queries, stream queries and messages are not affected. An application isolating tenants with PostgreSQL row-level security and a transaction-local setting ([0022](0022-transaction-initializers.md)) needs queries in a transaction too, read-only, prepared the same way. Authorization of a query inside that transaction also needs it ([0020](0020-commands-authorized-inside-their-transaction.md)).
 
 Read-only isn't portable: PostgreSQL has `SET TRANSACTION READ ONLY`, which must be the first statement, and SQL Server has no read-only transactions. Detecting the provider was rejected, to keep the package provider-neutral.
 

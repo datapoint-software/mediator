@@ -90,3 +90,19 @@ public sealed class ThrowingAuthorizer<TAction>(Exception exception) : IAuthoriz
 public sealed record ReadGrant(string Role, bool Watermark);
 
 public sealed class StepUpRequiredException() : Exception("Step-up authentication is required.");
+
+public sealed class FakeTransactionContext(bool isActive) : ITransactionContext
+{
+    public bool IsActive => isActive;
+
+    public bool IsReadOnly => false;
+
+    public bool IsJoined => false;
+
+    public int Attempt => isActive ? 1 : 0;
+
+    public Guid AttemptId => Guid.Empty;
+}
+
+[AllowAnonymousAccess]
+public sealed record AnonymousWithResult : ICommand<int>;

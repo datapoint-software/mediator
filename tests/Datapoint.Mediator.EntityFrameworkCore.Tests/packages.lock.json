@@ -353,6 +353,19 @@
       "datapoint.mediator.abstractions": {
         "type": "Project"
       },
+      "datapoint.mediator.authorization": {
+        "type": "Project",
+        "dependencies": {
+          "Datapoint.Mediator.Abstractions": "[1.0.0, )"
+        }
+      },
+      "datapoint.mediator.authorization.dependencyinjection": {
+        "type": "Project",
+        "dependencies": {
+          "Datapoint.Mediator.Authorization": "[1.0.0, )",
+          "Datapoint.Mediator.DependencyInjection": "[1.0.0, )"
+        }
+      },
       "datapoint.mediator.dependencyinjection": {
         "type": "Project",
         "dependencies": {

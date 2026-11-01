@@ -41,6 +41,57 @@ public sealed class RegistrationTests
     }
 
     [Fact]
+    public void AddAuthorizationBehaviorWithSettings_NullArguments_Throw()
+    {
+        Assert.Equal("options", Assert.Throws<ArgumentNullException>(
+            () => ((MediatorOptions)null!).AddAuthorizationBehavior(_ => { })).ParamName);
+        Assert.Equal("configure", Assert.Throws<ArgumentNullException>(
+            () => new MediatorOptions().AddAuthorizationBehavior(null!)).ParamName);
+    }
+
+    [Fact]
+    public void AddAuthorizationBehaviorWithSettings_RegistersAScopedFactory()
+    {
+        var services = new ServiceCollection().AddMediator(o => o.AddAuthorizationBehavior(a => a.RequireTransaction = TransactionRequirement.Commands));
+
+        var descriptor = Assert.Single(services, d => d.ServiceType == typeof(IBehavior));
+        Assert.NotNull(descriptor.ImplementationFactory);
+        Assert.Equal(ServiceLifetime.Scoped, descriptor.Lifetime);
+        using var provider = services.BuildServiceProvider();
+        Assert.IsType<AuthorizationBehavior>(provider.CreateScope().ServiceProvider.GetRequiredService<IBehavior>());
+    }
+
+    [Fact]
+    public void AddAuthorizationBehavior_WithAndWithoutSettings_Throws()
+    {
+        Assert.Throws<InvalidOperationException>(() => new ServiceCollection().AddMediator(o => o
+            .AddAuthorizationBehavior()
+            .AddAuthorizationBehavior(_ => { })));
+    }
+
+    [Fact]
+    public void AddAuthorizationBehaviorWithSettings_InvalidSetting_Throws()
+    {
+        Assert.Throws<ArgumentOutOfRangeException>(
+            () => new MediatorOptions().AddAuthorizationBehavior(a => a.RequireTransaction = (TransactionRequirement)9));
+    }
+
+    [Fact]
+    public void AddAuthenticationBehavior_RegistersScopedBehaviorOnce()
+    {
+        var services = new ServiceCollection().AddMediator(o =>
+        {
+            o.DefaultLifetime = ServiceLifetime.Singleton;
+            Assert.Same(o, o.AddAuthenticationBehavior().AddAuthenticationBehavior());
+        });
+
+        var descriptor = Assert.Single(services, d => d.ServiceType == typeof(IBehavior));
+        Assert.Equal(typeof(AuthenticationBehavior), descriptor.ImplementationType);
+        Assert.Equal(ServiceLifetime.Scoped, descriptor.Lifetime);
+        Assert.Equal("options", Assert.Throws<ArgumentNullException>(() => ((MediatorOptions)null!).AddAuthenticationBehavior()).ParamName);
+    }
+
+    [Fact]
     public void AddAuthorizationContext_NullServices_Throws()
     {
         Assert.Equal("services", Assert.Throws<ArgumentNullException>(

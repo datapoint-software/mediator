@@ -10,7 +10,7 @@ public sealed class CreateInvoiceAuthorizer : IAuthorizer<CreateInvoice>
 }
 ```
 
-A decision can carry details of your own, such as the share or rule that applied, for your handlers (`IAuthorizationContext`) and audit log (`IAuthorizationObserver`); they never reach the caller. An action with no authorizer is denied, unless it's marked `[AllowAnonymousAccess]`. With no signed-in user, `AuthenticationRequiredException` is thrown.
+A decision can carry details of your own, such as the share or rule that applied, for your handlers (`IAuthorizationContext`) and audit log (`IAuthorizationObserver`); they never reach the caller. An action with no authorizer is denied, unless it's marked `[AllowAnonymousAccess]`. To authorize inside the database transaction, register `AuthenticationBehavior` first and the authorization behaviour after the transaction behaviour, with `RequireTransaction`. With no signed-in user, `AuthenticationRequiredException` is thrown.
 
 > **Security:** messages aren't authorized. Never publish a message built from user input: send an authorized command, and publish the message from its handler.
 

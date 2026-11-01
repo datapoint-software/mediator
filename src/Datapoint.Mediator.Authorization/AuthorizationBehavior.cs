@@ -1,7 +1,5 @@
 using System;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
-using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Security.Claims;
 using System.Threading;
@@ -54,21 +52,38 @@ namespace Datapoint.Mediator.Authorization;
 /// </remarks>
 public sealed class AuthorizationBehavior : IBehavior
 {
-    private static readonly ConcurrentDictionary<Type, bool> AnonymousActions = new();
-
     private readonly IServiceProvider _serviceProvider;
+    private readonly AuthorizationBehaviorOptions _options;
 
     /// <summary>
-    /// Initializes a new instance of the <see cref="AuthorizationBehavior"/> class.
+    /// Initializes a new instance of the <see cref="AuthorizationBehavior"/> class, with the default settings.
     /// </summary>
     /// <param name="serviceProvider">
     /// The service provider to resolve the <see cref="IPrincipalAccessor"/> and authorizers from.
     /// </param>
     /// <exception cref="ArgumentNullException"><paramref name="serviceProvider"/> is <see langword="null"/>.</exception>
     public AuthorizationBehavior(IServiceProvider serviceProvider)
+        : this(serviceProvider, new AuthorizationBehaviorOptions())
+    {
+    }
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="AuthorizationBehavior"/> class.
+    /// </summary>
+    /// <param name="serviceProvider">
+    /// The service provider to resolve the <see cref="IPrincipalAccessor"/>, authorizers, observers and
+    /// <see cref="ITransactionContext"/> from.
+    /// </param>
+    /// <param name="options">The settings. They are copied.</param>
+    /// <exception cref="ArgumentNullException">
+    /// <paramref name="serviceProvider"/> or <paramref name="options"/> is <see langword="null"/>.
+    /// </exception>
+    public AuthorizationBehavior(IServiceProvider serviceProvider, AuthorizationBehaviorOptions options)
     {
         ArgumentNullException.ThrowIfNull(serviceProvider);
+        ArgumentNullException.ThrowIfNull(options);
         _serviceProvider = serviceProvider;
+        _options = options.Copy();
     }
 
     /// <inheritdoc/>
@@ -84,7 +99,7 @@ public sealed class AuthorizationBehavior : IBehavior
         ICommand<TResult> command,
         Func<CancellationToken, ValueTask<TResult>> next,
         CancellationToken ct = default) =>
-        IsAnonymous(command) ? HandleAnonymousAsync(next, ct) : AuthorizeThenHandleAsync(command, next, ct);
+        IsAnonymous(command) ? HandleAnonymousAsync(next, ct) : AuthorizeThenHandleAsync(command, isCommand: true, next, ct);
 
     /// <inheritdoc/>
     /// <exception cref="AuthenticationRequiredException">There is no signed-in user.</exception>
@@ -93,7 +108,7 @@ public sealed class AuthorizationBehavior : IBehavior
         IQuery<TResult> query,
         Func<CancellationToken, ValueTask<TResult>> next,
         CancellationToken ct = default) =>
-        IsAnonymous(query) ? HandleAnonymousAsync(next, ct) : AuthorizeThenHandleAsync(query, next, ct);
+        IsAnonymous(query) ? HandleAnonymousAsync(next, ct) : AuthorizeThenHandleAsync(query, isCommand: false, next, ct);
 
     /// <inheritdoc/>
     /// <exception cref="AuthenticationRequiredException">
@@ -121,10 +136,7 @@ public sealed class AuthorizationBehavior : IBehavior
     public ValueTask HandleAsync(IMessage message, Func<CancellationToken, ValueTask> next, CancellationToken ct = default) =>
         HandleAnonymousAsync(next, ct);
 
-    private static bool IsAnonymous(object action) =>
-        AnonymousActions.GetOrAdd(
-            action.GetType(),
-            static type => type.IsDefined(typeof(AllowAnonymousAccessAttribute), inherit: false));
+    private static bool IsAnonymous(object action) => Authentication.IsAnonymous(action.GetType());
 
     // An anonymous action or a message, sent from an authorized action, must not see its decision.
     private static ValueTask HandleAnonymousAsync(Func<CancellationToken, ValueTask> next, CancellationToken ct) =>
@@ -150,16 +162,17 @@ public sealed class AuthorizationBehavior : IBehavior
 
     private async ValueTask AuthorizeThenHandleAsync(object action, Func<CancellationToken, ValueTask> next, CancellationToken ct)
     {
-        AuthorizationContext.Result = await AuthorizeAsync(action, ct).ConfigureAwait(false);
+        AuthorizationContext.Result = await AuthorizeAsync(action, isCommand: true, ct).ConfigureAwait(false);
         await next(ct).ConfigureAwait(false);
     }
 
     private async ValueTask<TResult> AuthorizeThenHandleAsync<TResult>(
         object action,
+        bool isCommand,
         Func<CancellationToken, ValueTask<TResult>> next,
         CancellationToken ct)
     {
-        AuthorizationContext.Result = await AuthorizeAsync(action, ct).ConfigureAwait(false);
+        AuthorizationContext.Result = await AuthorizeAsync(action, isCommand, ct).ConfigureAwait(false);
         return await next(ct).ConfigureAwait(false);
     }
 
@@ -169,7 +182,7 @@ public sealed class AuthorizationBehavior : IBehavior
         Func<CancellationToken, IAsyncEnumerable<TResult>> next,
         [EnumeratorCancellation] CancellationToken ct)
     {
-        var result = action is null ? null : await AuthorizeAsync(action, ct).ConfigureAwait(false);
+        var result = action is null ? null : await AuthorizeAsync(action, isCommand: false, ct).ConfigureAwait(false);
 
         AuthorizationContext.Result = result;
         await using var results = next(ct).ConfigureAwait(false).GetAsyncEnumerator();
@@ -188,23 +201,12 @@ public sealed class AuthorizationBehavior : IBehavior
         }
     }
 
-    private async ValueTask<AuthorizationResult> AuthorizeAsync(object action, CancellationToken ct)
+    private async ValueTask<AuthorizationResult> AuthorizeAsync(object action, bool isCommand, CancellationToken ct)
     {
-        var accessor = _serviceProvider.GetService(typeof(IPrincipalAccessor)) as IPrincipalAccessor
-            ?? throw new InvalidOperationException(
-                $"No '{typeof(IPrincipalAccessor)}' is registered. Register one that returns the current user.");
+        RequireTransaction(action, isCommand);
 
-        var principal = accessor.Principal;
-        var observers = GetObservers();
-
-        if (principal?.Identity?.IsAuthenticated != true)
-        {
-            await ObserveAsync(observers, action, principal, AuthorizationOutcome.AuthenticationRequired, null, null, ct)
-                .ConfigureAwait(false);
-
-            throw new AuthenticationRequiredException($"Authentication is required to run '{action.GetType()}'.");
-        }
-
+        var observers = Authentication.GetObservers(_serviceProvider);
+        var principal = await Authentication.RequirePrincipalAsync(_serviceProvider, action, observers, ct).ConfigureAwait(false);
         var decisions = new List<AuthorizerDecision>();
 
         try
@@ -217,7 +219,7 @@ public sealed class AuthorizationBehavior : IBehavior
         {
             // The authorizer's exception propagates unchanged, so a bug isn't hidden as a denial.
             var failed = new AuthorizationResult(action, decisions, failed: true);
-            await ObserveAsync(observers, action, principal, AuthorizationOutcome.Failed, failed, exception, ct)
+            await Authentication.ObserveAsync(observers, action, principal, AuthorizationOutcome.Failed, failed, exception, ct)
                 .ConfigureAwait(false);
 
             throw;
@@ -225,7 +227,7 @@ public sealed class AuthorizationBehavior : IBehavior
 
         var result = new AuthorizationResult(action, decisions);
         var outcome = result.IsAllowed ? AuthorizationOutcome.Allowed : AuthorizationOutcome.Denied;
-        await ObserveAsync(observers, action, principal, outcome, result, null, ct).ConfigureAwait(false);
+        await Authentication.ObserveAsync(observers, action, principal, outcome, result, null, ct).ConfigureAwait(false);
 
         // Fail closed: an action that nobody wrote a rule for is not allowed. The message never includes the details.
         if (decisions.Count == 0)
@@ -243,35 +245,22 @@ public sealed class AuthorizationBehavior : IBehavior
         return result;
     }
 
-    private IAuthorizationObserver[] GetObservers() =>
-        // Containers other than Microsoft's may return null or a non-array enumerable.
-        _serviceProvider.GetService(typeof(IEnumerable<IAuthorizationObserver>)) switch
+    // A configuration mistake, such as the transaction behaviour registered after this one, not a denial.
+    private void RequireTransaction(object action, bool isCommand)
+    {
+        var required = _options.RequireTransaction switch
         {
-            IAuthorizationObserver[] array => array,
-            IEnumerable<IAuthorizationObserver> enumerable => enumerable.ToArray(),
-            _ => [],
+            TransactionRequirement.Commands => isCommand,
+            TransactionRequirement.CommandsAndQueries => true,
+            _ => false,
         };
 
-    // Every observer runs, in order. If one throws, the action doesn't run: it can't be audited.
-    private static async ValueTask ObserveAsync(
-        IAuthorizationObserver[] observers,
-        object action,
-        ClaimsPrincipal? principal,
-        AuthorizationOutcome outcome,
-        AuthorizationResult? result,
-        Exception? exception,
-        CancellationToken ct)
-    {
-        if (observers.Length == 0)
+        if (required && _serviceProvider.GetService(typeof(ITransactionContext)) is not ITransactionContext { IsActive: true })
         {
-            return;
-        }
-
-        var authorization = new AuthorizationEvent(action, principal, outcome, result, exception);
-
-        foreach (var observer in observers)
-        {
-            await observer.OnAuthorizedAsync(authorization, ct).ConfigureAwait(false);
+            throw new InvalidOperationException(
+                $"'{action.GetType()}' must be authorized inside a transaction, but none is active. Register the " +
+                "transaction behaviour before the authorization behaviour, register ITransactionContext, and run " +
+                "queries in transactions if they're required too.");
         }
     }
 }

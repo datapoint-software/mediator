@@ -25,6 +25,7 @@ Each record follows [Michael Nygard's format](https://cognitect.com/blog/2011/11
 | [0017](0017-cli-parses-with-the-invariant-culture.md) | The CLI parses numbers and dates with the invariant culture | Accepted |
 | [0018](0018-authorizers-return-decisions.md) | Authorizers return decisions with details | Superseded by [0025](0025-decisions-bound-to-their-request.md) |
 | [0019](0019-decisions-are-available-and-observed.md) | Authorization decisions are available to the dispatch, and observed | Superseded by [0025](0025-decisions-bound-to-their-request.md) |
+| [0020](0020-commands-authorized-inside-their-transaction.md) | Commands and queries can be authorized inside their transaction | Accepted |
 | [0021](0021-transaction-behavior-options.md) | `TransactionBehavior` is configured with options | Accepted |
 | [0022](0022-transaction-initializers.md) | Transaction initializers run after BEGIN, on every attempt and on join | Accepted |
 | [0023](0023-whoever-begins-a-transaction-commits-it.md) | Whoever begins a transaction saves and commits it | Accepted |

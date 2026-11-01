@@ -32,6 +32,8 @@ public sealed class Recorder
     public List<TransactionInitialization> Initializations { get; } = [];
 
     public bool FailInitializer { get; set; }
+
+    public bool Deny { get; set; }
 }
 
 public sealed class TransientTestException : Exception;
@@ -356,4 +358,44 @@ public sealed class Gate(int parties)
 
         return _allArrived.Task.WaitAsync(ct);
     }
+}
+
+// Records where it ran, and denies when told to.
+public sealed class RecordingAuthorizer(Recorder recorder, ITransactionContext context) :
+    Datapoint.Mediator.Authorization.IAuthorizer<CreateInvoice>,
+    Datapoint.Mediator.Authorization.IAuthorizer<CreateInvoiceFailingOnce>,
+    Datapoint.Mediator.Authorization.IAuthorizer<ReadContext>,
+    Datapoint.Mediator.Authorization.IAuthorizer<StreamAmounts>
+{
+    public ValueTask<Datapoint.Mediator.Authorization.AuthorizationDecision> AuthorizeAsync(CreateInvoice action, System.Security.Claims.ClaimsPrincipal principal, CancellationToken ct = default) => Decide(action);
+
+    public ValueTask<Datapoint.Mediator.Authorization.AuthorizationDecision> AuthorizeAsync(CreateInvoiceFailingOnce action, System.Security.Claims.ClaimsPrincipal principal, CancellationToken ct = default) => Decide(action);
+
+    public ValueTask<Datapoint.Mediator.Authorization.AuthorizationDecision> AuthorizeAsync(ReadContext action, System.Security.Claims.ClaimsPrincipal principal, CancellationToken ct = default) => Decide(action);
+
+    public ValueTask<Datapoint.Mediator.Authorization.AuthorizationDecision> AuthorizeAsync(StreamAmounts action, System.Security.Claims.ClaimsPrincipal principal, CancellationToken ct = default) => Decide(action);
+
+    private ValueTask<Datapoint.Mediator.Authorization.AuthorizationDecision> Decide(object action)
+    {
+        recorder.Log.Add($"authorize {action.GetType().Name} {ContextText.Of(context)}");
+        return new(Datapoint.Mediator.Authorization.AuthorizationDecision.AllowIf(!recorder.Deny));
+    }
+}
+
+public sealed class RecordingObserver(Recorder recorder) : Datapoint.Mediator.Authorization.IAuthorizationObserver
+{
+    public ValueTask OnAuthorizedAsync(Datapoint.Mediator.Authorization.AuthorizationEvent authorization, CancellationToken ct = default)
+    {
+        recorder.Log.Add($"observed {authorization.Outcome}");
+        return default;
+    }
+}
+
+[Datapoint.Mediator.Authorization.AllowAnonymousAccess]
+[NonTransactional]
+public sealed record AnonymousWithoutTransaction : ICommand;
+
+public sealed class AnonymousWithoutTransactionHandler : ICommandHandler<AnonymousWithoutTransaction>
+{
+    public ValueTask HandleAsync(AnonymousWithoutTransaction command, CancellationToken ct = default) => default;
 }

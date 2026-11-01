@@ -4,7 +4,9 @@ Every security consideration in this manual, as one checklist. Each item links t
 
 ## Authorization
 
-- [ ] **The authorization behaviour is registered,** before validation and transactions. → [Behaviours](behaviors.md#order)
+- [ ] **The authorization behaviour is registered,** before validation, and either before the transaction or, when access can change while a request runs, after it with `RequireTransaction` and `AuthenticationBehavior` first. → [Behaviours](behaviors.md#order)
+- [ ] **Audit observers write through their own connection,** so denials inside a transaction aren't rolled back with it. → [Authorization](authorization.md#auditing-every-decision)
+- [ ] **Transaction initializers take the tenant from the authenticated user,** or check membership of a tenant taken from the request. → [Transactions](transactions.md#preparing-each-transaction)
 - [ ] **Every action has an authorizer,** or is deliberately marked `[AllowAnonymousAccess]`. Authorization fails closed, so a missing authorizer denies the action, but a test catches it earlier. → [Testing](testing.md#every-action-has-an-authorizer)
 - [ ] **Authorizers check the action's arguments** where it matters, such as ownership of the invoice being cancelled, not just the user's role. → [Authorization](authorization.md#authorizers)
 - [ ] **Exactly one `IPrincipalAccessor`** fits the host: HTTP for APIs and remote MCP servers, fixed for CLIs and local MCP servers. → [Authorization](authorization.md#the-current-user)

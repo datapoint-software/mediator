@@ -45,7 +45,7 @@ All package names start with `Datapoint.Mediator.`, except the implementation, w
 | `Mediator` | `Mediator`, the dispatchers, `ActionCatalog`, `ActionDispatcher` and `MediatorTelemetry`. | none |
 | `DependencyInjection` | `AddMediator`, `MediatorOptions`, handler scanning, and building the action catalog. | `Microsoft.Extensions.DependencyInjection.Abstractions` |
 | `FluentValidation` | `ValidationBehavior`. | FluentValidation |
-| `Authorization` | `AuthorizationBehavior`, `IAuthorizer<T>` and its decisions, `IAuthorizationContext`, `IAuthorizationObserver`, `IPrincipalAccessor`, `FixedPrincipalAccessor`, `[AllowAnonymousAccess]` and the two exceptions. | none |
+| `Authorization` | `AuthenticationBehavior`, `AuthorizationBehavior` and its options, `IAuthorizer<T>` and its decisions, `IAuthorizationContext`, `IAuthorizationObserver`, `IPrincipalAccessor`, `FixedPrincipalAccessor`, `[AllowAnonymousAccess]` and the two exceptions. | none |
 | `Authorization.AspNetCore` | `HttpPrincipalAccessor` and `AddHttpPrincipalAccessor`. | ASP.NET Core (framework reference) |
 | `EntityFrameworkCore` | `TransactionBehavior<TDbContext>`, its options, `ITransactionInitializer<TDbContext>`, `TransactionContext` and `[NonTransactional]`. | EF Core (relational) |
 | `*.DependencyInjection` | The `Add…Behavior()` and `Add…Accessor()` registration methods for each feature. | — |
@@ -80,6 +80,7 @@ Stream queries return an `IAsyncEnumerable<T>`. The handler is resolved when `St
 
 | Behaviour | Commands | Queries | Stream queries | Messages |
 |---|---|---|---|---|
+| `AuthenticationBehavior` | ✓ | ✓ | ✓ | — |
 | `AuthorizationBehavior` | ✓ | ✓ | ✓ | not authorized ([ADR 0008](docs/adr/0008-messages-are-not-authorized.md)); only clears the decision |
 | `ValidationBehavior` | ✓ | ✓ | ✓ | — |
 | `TransactionBehavior<TDbContext>` | ✓ | opt-in, read-only | opt-in, read-only | — |
@@ -141,5 +142,6 @@ Any change must keep these true. Tests cover each one, and the linked records ex
 - **One `IPrincipalAccessor` per app:** the registration methods refuse a second one ([0014](docs/adr/0014-one-principal-accessor.md)).
 - **Dispatch without behaviours allocates nothing:** check with the benchmarks ([0006](docs/adr/0006-cached-generic-dispatchers.md)).
 - **Invalid action configurations fail in `AddMediator`,** never at the first request ([0011](docs/adr/0011-named-actions.md)).
+- **`RequireTransaction` is enforced** at startup (`[NonTransactional]` authorized actions) and at runtime (no active `ITransactionContext`), so a misordered pipeline can't silently authorize outside the transaction ([0020](docs/adr/0020-commands-authorized-inside-their-transaction.md)).
 - **Settings are never silently ignored:** a behaviour registered with a factory can't be registered again ([0027](docs/adr/0027-startup-checks.md)).
 - **Handlers and behaviours resolve from the caller's scope:** `IMediator` and `IActionDispatcher` are scoped, and `IActionCatalog` is a singleton.
