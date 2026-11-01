@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- The business layer: actions, handlers, validators, authorizers and data. Every host references only this. -->
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\src\Datapoint.Mediator.Authorization.DependencyInjection\Datapoint.Mediator.Authorization.DependencyInjection.csproj" />
+    <ProjectReference Include="..\..\..\src\Datapoint.Mediator.EntityFrameworkCore.DependencyInjection\Datapoint.Mediator.EntityFrameworkCore.DependencyInjection.csproj" />
+    <ProjectReference Include="..\..\..\src\Datapoint.Mediator.FluentValidation.DependencyInjection\Datapoint.Mediator.FluentValidation.DependencyInjection.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="FluentValidation.DependencyInjectionExtensions" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" />
+  </ItemGroup>
+
+</Project>

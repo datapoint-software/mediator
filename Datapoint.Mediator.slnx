@@ -2,6 +2,12 @@
   <Folder Name="/benchmarks/">
     <Project Path="benchmarks/Datapoint.Mediator.Benchmarks/Datapoint.Mediator.Benchmarks.csproj" />
   </Folder>
+  <Folder Name="/samples/">
+    <Project Path="samples/Invoicing/Invoicing.Api/Invoicing.Api.csproj" />
+    <Project Path="samples/Invoicing/Invoicing.Cli/Invoicing.Cli.csproj" />
+    <Project Path="samples/Invoicing/Invoicing.Domain/Invoicing.Domain.csproj" />
+    <Project Path="samples/Invoicing/Invoicing.McpServer/Invoicing.McpServer.csproj" />
+  </Folder>
   <Folder Name="/src/">
     <Project Path="src/Datapoint.Mediator.Abstractions/Datapoint.Mediator.Abstractions.csproj" />
     <Project Path="src/Datapoint.Mediator.AspNetCore/Datapoint.Mediator.AspNetCore.csproj" />
