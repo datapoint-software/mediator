@@ -72,7 +72,7 @@ public sealed class EndToEndTests
     private static ServiceProvider BuildProvider(ClaimsPrincipal? principal) =>
         new ServiceCollection()
             .AddSingleton<Recorder>()
-            .AddScoped<IPrincipalAccessor>(_ => new FixedPrincipalAccessor(principal))
+            .AddFixedPrincipalAccessor(principal)
             .AddAuthorizersFromAssemblyContaining<EndToEndTests>()
             .AddMediator(o => o.AddHandler<ApproveInvoiceHandler>().AddHandler<VoidInvoiceHandler>().AddAuthorizationBehavior())
             .BuildServiceProvider(new ServiceProviderOptions { ValidateScopes = true, ValidateOnBuild = true });
