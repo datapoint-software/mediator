@@ -8,6 +8,7 @@
     <Copyright>Copyright (c) 2026 Datapoint - Sistemas de Informação, Lda.</Copyright>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageReadmeFile>README.md</PackageReadmeFile>
+    <PackageIcon>icon.png</PackageIcon>
     <PackageTags>mediator;cqrs;commands;queries;messages</PackageTags>
   </PropertyGroup>
 
@@ -25,6 +26,8 @@
 
   <ItemGroup>
     <None Include="README.md" Pack="true" PackagePath="\" />
+    <!-- Rendered at 256×256 from the favicon at https://datapoint.software/, because NuGet only accepts PNG or JPEG. -->
+    <None Include="$(MSBuildThisFileDirectory)icon.png" Pack="true" PackagePath="\" Visible="false" />
   </ItemGroup>
 
   <!-- Versions come from git tags without a prefix, such as 4.0.0-alpha.1. -->
