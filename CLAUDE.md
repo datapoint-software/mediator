@@ -59,7 +59,11 @@ Assume the contributor is a junior developer. Your job is to help them reach sou
 
 - Versions come from git tags via [MinVer](https://github.com/adamralph/minver). Tags have no prefix: `4.0.0-alpha.1`, not `v4.0.0-alpha.1`. Untagged builds get a pre-release version such as `4.0.0-alpha.0.12`.
 - The current series is `4.0.0-alpha.N`. Release `4.0.0` once the package has been used in a real project. Versions `3.0.0` and below already exist on nuget.org and can never be reused.
-- To release: move the public API entries to `PublicAPI.Shipped.txt`, commit, then tag that commit on `main` and push the tag. The `Release` workflow builds, tests and publishes to nuget.org with Trusted Publishing, after approval in the `nuget` environment.
+- `CHANGELOG.md` follows [Keep a Changelog 1.1.0](https://keepachangelog.com/en/1.1.0/) and is generated from the Conventional Commits by [git-cliff](https://git-cliff.org/) (`brew install git-cliff`), configured in `cliff.toml`. `feat`, `fix`, `perf` and `docs` commits are listed, as are breaking changes of any type. There is no public history before `4.0.0-alpha.1`.
+- To release:
+  1. Move the public API entries to `PublicAPI.Shipped.txt`.
+  2. Add the version's section to the changelog: `git cliff --unreleased --tag <version> --prepend CHANGELOG.md`. Review it, then commit both changes.
+  3. Tag that commit on `main` and push the tag. The `Release` workflow builds, tests and publishes to nuget.org with Trusted Publishing, after approval in the `nuget` environment, then creates the GitHub release with the same notes.
 - Never tag or push without the contributor asking. A published version is permanent.
 
 ## Tests and coverage
