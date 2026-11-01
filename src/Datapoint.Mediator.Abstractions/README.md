@@ -1,25 +1,16 @@
 # Datapoint.Mediator.Abstractions
 
-The contracts for [Datapoint.Mediator](https://www.nuget.org/packages/Datapoint.Mediator): commands, queries and messages, their handlers, behaviours and `IMediator`.
-
-Reference this package from your domain or application layer, where commands, queries, messages and handlers are defined. It has no dependencies, so that layer stays independent of any host (API, CLI or MCP server).
+The contracts for [Datapoint.Mediator](https://www.nuget.org/packages/Datapoint.Mediator): commands, queries, stream queries and messages, their handlers, behaviours, `IMediator`, and named actions. Reference it from your business layer: it has no dependencies, so that layer stays independent of any host.
 
 ```csharp
-public sealed record CreateUser(string Name) : ICommand<Guid>;
+[Action("invoices.create", Description = "Creates an invoice for a customer.")]
+public sealed record CreateInvoice(string Customer, decimal Amount) : ICommand<Guid>;
 
-public sealed class CreateUserHandler : ICommandHandler<CreateUser, Guid>
+public sealed class CreateInvoiceHandler : ICommandHandler<CreateInvoice, Guid>
 {
-    public ValueTask<Guid> HandleAsync(CreateUser command, CancellationToken ct = default) =>
-        new(Guid.NewGuid());
+    public ValueTask<Guid> HandleAsync(CreateInvoice command, CancellationToken ct = default) =>
+        new(Guid.CreateVersion7());
 }
 ```
 
-| Contract | Purpose |
-|---|---|
-| `ICommand`, `ICommand<TResult>` | Changes state; handled by exactly one `ICommandHandler`. |
-| `IQuery<TResult>` | Reads state; handled by exactly one `IQueryHandler`. |
-| `IStreamQuery<TResult>` | Reads state as a stream of results (`IAsyncEnumerable<TResult>`); handled by exactly one `IStreamQueryHandler`. |
-| `IMessage` | Announces something that happened; handled by any number of `IMessageHandler`s. |
-| `IBehavior` | Wraps handling with cross-cutting concerns such as logging or validation. |
-| `IMediator` | Sends commands and queries, and publishes messages. |
-| `[Action("name")]`, `IActionCatalog`, `IActionDispatcher` | Name actions, list them, and dispatch them by name with JSON arguments, for hosts such as a CLI or an MCP server. |
+**Documentation:** [Concepts](https://github.com/datapoint-software/mediator/blob/main/docs/concepts.md) · [Actions](https://github.com/datapoint-software/mediator/blob/main/docs/actions.md) · [Manual](https://github.com/datapoint-software/mediator/blob/main/docs/README.md)

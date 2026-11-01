@@ -3,13 +3,11 @@
 Registers the [Datapoint.Mediator.FluentValidation](https://www.nuget.org/packages/Datapoint.Mediator.FluentValidation) behaviour.
 
 ```csharp
-services.AddValidatorsFromAssemblyContaining<CreateUserValidator>(); // FluentValidation's own registration
-services.AddMediator(options =>
-{
-    options.AddHandlersFromAssemblyContaining<CreateUserHandler>();
-    options.AddValidationBehavior();
-});
+services.AddValidatorsFromAssemblyContaining<CreateInvoiceValidator>();   // FluentValidation's own registration
+services.AddMediator(o => o
+    .AddHandlersFromAssemblyContaining<CreateInvoiceHandler>()
+    .AddAuthorizationBehavior()
+    .AddValidationBehavior());
 ```
 
-- The behaviour is always registered as scoped, so it resolves validators from the current scope.
-- It runs at the position it's added in, relative to other behaviours. Add it after any behaviour that should handle validation failures, such as exception handling.
+**Documentation:** [Validation](https://github.com/datapoint-software/mediator/blob/main/docs/validation.md) · [Behaviour order](https://github.com/datapoint-software/mediator/blob/main/docs/behaviors.md#order)

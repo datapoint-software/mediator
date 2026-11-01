@@ -1,18 +1,16 @@
 # Datapoint.Mediator.Authorization.DependencyInjection
 
-Registers the [Datapoint.Mediator.Authorization](https://www.nuget.org/packages/Datapoint.Mediator.Authorization) behaviour and your authorizers.
+Registers the [Datapoint.Mediator.Authorization](https://www.nuget.org/packages/Datapoint.Mediator.Authorization) behaviour, your authorizers, and the current user for hosts that act for one user, such as a CLI.
 
 ```csharp
-services.AddFixedPrincipalAccessor(principal);   // or AddHttpPrincipalAccessor() in an API: one per host
-services.AddAuthorizersFromAssemblyContaining<DeleteInvoiceAuthorizer>();
-services.AddMediator(options =>
-{
-    options.AddHandlersFromAssemblyContaining<DeleteInvoiceHandler>();
-    options.AddAuthorizationBehavior();   // before validation
-    options.AddValidationBehavior();
-});
+services.AddAuthorizersFromAssemblyContaining<CreateInvoiceAuthorizer>();
+services.AddFixedPrincipalAccessor(signedInUser);   // CLI or MCP over stdio; null when nobody is signed in
+services.AddMediator(o => o
+    .AddHandlersFromAssemblyContaining<CreateInvoiceHandler>()
+    .AddAuthorizationBehavior()                     // before validation
+    .AddValidationBehavior());
 ```
 
-- The behaviour is always registered as scoped, so it resolves the current user and authorizers from the current scope.
-- `AddAuthorizersFromAssembly` registers every concrete authorizer class, as scoped by default. An action can have several authorizers, and all of them must allow it.
-- `AddFixedPrincipalAccessor` registers the same user, or `null` when no one is signed in, for every command and query: for CLIs and MCP servers over stdio. Registering a second `IPrincipalAccessor` throws `InvalidOperationException`.
+Registering a second, different `IPrincipalAccessor` throws, so a misconfiguration can't silently change the current user.
+
+**Documentation:** [Authorization](https://github.com/datapoint-software/mediator/blob/main/docs/authorization.md)

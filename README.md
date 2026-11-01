@@ -46,6 +46,12 @@ services.AddMediator(options => options.AddHandlersFromAssemblyContaining<Create
 var id = await mediator.SendAsync(new CreateUser("Ana"), ct);
 ```
 
+## Documentation
+
+- The [manual](docs/README.md): getting started, concepts, and a guide per feature and host.
+- The [samples](samples/README.md): one business layer offered as an HTTP API, a CLI and an MCP server.
+- For contributors: [CONTRIBUTING.md](CONTRIBUTING.md), [ARCHITECTURE.md](ARCHITECTURE.md) and the [decision records](docs/adr/README.md).
+
 ## Actions: dispatch by name from an API, a CLI or an MCP server
 
 Name a command, query or stream query with `[Action]`, and any host can dispatch it from a name and JSON arguments:
