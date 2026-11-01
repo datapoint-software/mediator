@@ -16,6 +16,10 @@ public sealed class AuthorizationContext : IAuthorizationContext
     /// <inheritdoc/>
     public AuthorizationResult? Current => Value.Value;
 
+    /// <inheritdoc/>
+    public AuthorizationResult? For(object action) =>
+        Value.Value is { } result && ReferenceEquals(result.Action, action) ? result : null;
+
     // Set by AuthorizationBehavior. A change made inside an async method doesn't flow back to its caller.
     internal static AuthorizationResult? Result
     {

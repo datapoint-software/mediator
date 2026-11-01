@@ -49,8 +49,9 @@ public sealed class AuthorizationEvent
 
     /// <summary>
     /// Gets the combined decision, with each authorizer's details. It is <see langword="null"/> when no authorizer
-    /// was asked (<see cref="AuthorizationOutcome.AuthenticationRequired"/>), or one threw
-    /// (<see cref="AuthorizationOutcome.Failed"/>). When the action has no authorizer, it has no decisions.
+    /// was asked (<see cref="AuthorizationOutcome.AuthenticationRequired"/>). When the action has no authorizer, it has
+    /// no decisions. When an authorizer threw (<see cref="AuthorizationOutcome.Failed"/>), it is denied and holds the
+    /// decisions made before.
     /// </summary>
     public AuthorizationResult? Result { get; }
 

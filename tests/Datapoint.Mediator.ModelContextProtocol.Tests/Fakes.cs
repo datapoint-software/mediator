@@ -93,3 +93,12 @@ public sealed class DenyWithDetails<TAction> : IAuthorizer<TAction>
     public ValueTask<AuthorizationDecision> AuthorizeAsync(TAction action, ClaimsPrincipal principal, CancellationToken ct = default) =>
         new(AuthorizationDecision.Deny(Secret));
 }
+
+// Denies with an exception of the application's own, whose message must not reach the caller unless mapped.
+public sealed class StepUpRequiredException() : Exception("step-up for share 42, label TOP-SECRET");
+
+public sealed class DenyWithStepUp<TAction> : IAuthorizer<TAction>
+{
+    public ValueTask<AuthorizationDecision> AuthorizeAsync(TAction action, ClaimsPrincipal principal, CancellationToken ct = default) =>
+        new(AuthorizationDecision.Deny("TOP-SECRET", new StepUpRequiredException()));
+}

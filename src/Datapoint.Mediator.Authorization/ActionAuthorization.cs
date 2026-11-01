@@ -18,20 +18,23 @@ internal abstract class ActionAuthorization
             actionType,
             static type => (ActionAuthorization)Activator.CreateInstance(typeof(ActionAuthorization<>).MakeGenericType(type))!);
 
-    // Returns the combined decision. A denied result has no decisions when the action has no authorizer.
-    public abstract ValueTask<AuthorizationResult> AuthorizeAsync(
+    // Adds each authorizer's decision to the list, so the caller keeps them when an authorizer throws. The list stays
+    // empty when the action has no authorizer.
+    public abstract ValueTask AuthorizeAsync(
         object action,
         ClaimsPrincipal principal,
         IServiceProvider serviceProvider,
+        List<AuthorizerDecision> decisions,
         CancellationToken ct);
 }
 
 internal sealed class ActionAuthorization<TAction> : ActionAuthorization
 {
-    public override async ValueTask<AuthorizationResult> AuthorizeAsync(
+    public override async ValueTask AuthorizeAsync(
         object action,
         ClaimsPrincipal principal,
         IServiceProvider serviceProvider,
+        List<AuthorizerDecision> decisions,
         CancellationToken ct)
     {
         // Containers other than Microsoft's may return null or a non-array enumerable.
@@ -42,7 +45,6 @@ internal sealed class ActionAuthorization<TAction> : ActionAuthorization
             _ => [],
         };
 
-        var decisions = new List<AuthorizerDecision>(authorizers.Length);
         var typedAction = (TAction)action;
 
         foreach (var authorizer in authorizers)
@@ -59,8 +61,5 @@ internal sealed class ActionAuthorization<TAction> : ActionAuthorization
                 break;
             }
         }
-
-        // Fail closed: with no decisions, the result is denied.
-        return new AuthorizationResult(typeof(TAction), decisions);
     }
 }

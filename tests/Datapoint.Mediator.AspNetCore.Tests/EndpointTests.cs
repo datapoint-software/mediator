@@ -166,6 +166,23 @@ public sealed class EndpointTests
     }
 
     [Fact]
+    public async Task DenialWithAnApplicationException_GoesThroughMapException()
+    {
+        await using var app = await TestApp.StartAsync(
+            o => o.MapException = e => e is StepUpRequiredException ? Results.StatusCode(428) : null,
+            configureMediator: m => m.AddAuthorizationBehavior(),
+            configureServices: s => s
+                .AddSingleton<IPrincipalAccessor>(new FixedPrincipalAccessor(SignedIn()))
+                .AddSingleton<IAuthorizer<ArchiveInvoice>, DenyWithStepUp<ArchiveInvoice>>());
+
+        var response = await app.Client.PostAsJsonAsync("/api/invoices/archive", new { id = 1 }, Ct);
+
+        Assert.Equal((HttpStatusCode)428, response.StatusCode);
+        Assert.DoesNotContain("TOP-SECRET", await response.Content.ReadAsStringAsync(Ct));
+        Assert.Empty(app.App.Services.GetRequiredService<Recorder>().Log);
+    }
+
+    [Fact]
     public async Task DeniedStreamQuery_Returns403_NotABroken200()
     {
         await using var app = await StartWithAuthorizationAsync(SignedIn());

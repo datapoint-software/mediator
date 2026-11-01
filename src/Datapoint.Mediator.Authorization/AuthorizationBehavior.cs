@@ -39,8 +39,10 @@ namespace Datapoint.Mediator.Authorization;
 /// </list>
 /// <para>
 /// The handler only runs when the action is allowed, and can read the decision from <see cref="IAuthorizationContext"/>.
+/// A denial throws the exception the decision carries, if any, instead of <see cref="AccessDeniedException"/>.
 /// A stream query is authorized when its results are first
-/// enumerated. Messages are not authorized, because they are published by the application itself. Never publish a
+/// enumerated. Messages are not authorized, because they are published by the application itself, and their handlers
+/// don't see the publisher's decision. Never publish a
 /// message built directly from user input: send an authorized command instead, and publish the message from its
 /// handler.
 /// </para>
@@ -108,12 +110,23 @@ public sealed class AuthorizationBehavior : IBehavior
             ? AuthorizationContext.Result is null ? next(ct) : AuthorizeThenStreamAsync(null, next, ct)
             : AuthorizeThenStreamAsync(query, next, ct);
 
+    /// <summary>
+    /// Runs the message handlers without the decision of the action that published the message: messages are not
+    /// authorized, so <see cref="IAuthorizationContext.Current"/> is <see langword="null"/> while they run.
+    /// </summary>
+    /// <param name="message">The message.</param>
+    /// <param name="next">Runs the message handlers.</param>
+    /// <param name="ct">A token to cancel the operation.</param>
+    /// <returns>A task that completes when the message handlers have run.</returns>
+    public ValueTask HandleAsync(IMessage message, Func<CancellationToken, ValueTask> next, CancellationToken ct = default) =>
+        HandleAnonymousAsync(next, ct);
+
     private static bool IsAnonymous(object action) =>
         AnonymousActions.GetOrAdd(
             action.GetType(),
             static type => type.IsDefined(typeof(AllowAnonymousAccessAttribute), inherit: false));
 
-    // An anonymous action sent from an authorized one must not see the outer decision.
+    // An anonymous action or a message, sent from an authorized action, must not see its decision.
     private static ValueTask HandleAnonymousAsync(Func<CancellationToken, ValueTask> next, CancellationToken ct) =>
         AuthorizationContext.Result is null ? next(ct) : HandleWithoutDecisionAsync(next, ct);
 
@@ -192,35 +205,39 @@ public sealed class AuthorizationBehavior : IBehavior
             throw new AuthenticationRequiredException($"Authentication is required to run '{action.GetType()}'.");
         }
 
-        AuthorizationResult result;
+        var decisions = new List<AuthorizerDecision>();
 
         try
         {
-            result = await ActionAuthorization.Get(action.GetType())
-                .AuthorizeAsync(action, principal, _serviceProvider, ct)
+            await ActionAuthorization.Get(action.GetType())
+                .AuthorizeAsync(action, principal, _serviceProvider, decisions, ct)
                 .ConfigureAwait(false);
         }
         catch (Exception exception) when (observers.Length > 0)
         {
             // The authorizer's exception propagates unchanged, so a bug isn't hidden as a denial.
-            await ObserveAsync(observers, action, principal, AuthorizationOutcome.Failed, null, exception, ct)
+            var failed = new AuthorizationResult(action, decisions, failed: true);
+            await ObserveAsync(observers, action, principal, AuthorizationOutcome.Failed, failed, exception, ct)
                 .ConfigureAwait(false);
 
             throw;
         }
 
+        var result = new AuthorizationResult(action, decisions);
         var outcome = result.IsAllowed ? AuthorizationOutcome.Allowed : AuthorizationOutcome.Denied;
         await ObserveAsync(observers, action, principal, outcome, result, null, ct).ConfigureAwait(false);
 
         // Fail closed: an action that nobody wrote a rule for is not allowed. The message never includes the details.
-        if (result.Decisions.Count == 0)
+        if (decisions.Count == 0)
         {
             throw new AccessDeniedException($"No authorizer is registered for '{action.GetType()}', so access is denied.");
         }
 
         if (!result.IsAllowed)
         {
-            throw new AccessDeniedException($"Access to '{action.GetType()}' is denied.");
+            // The authorizers stop at the first denial, so it is the last decision.
+            throw decisions[^1].Decision.Exception
+                ?? new AccessDeniedException($"Access to '{action.GetType()}' is denied.");
         }
 
         return result;

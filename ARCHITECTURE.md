@@ -80,7 +80,7 @@ Stream queries return an `IAsyncEnumerable<T>`. The handler is resolved when `St
 
 | Behaviour | Commands | Queries | Stream queries | Messages |
 |---|---|---|---|---|
-| `AuthorizationBehavior` | ✓ | ✓ | ✓ | — ([ADR 0008](docs/adr/0008-messages-are-not-authorized.md)) |
+| `AuthorizationBehavior` | ✓ | ✓ | ✓ | not authorized ([ADR 0008](docs/adr/0008-messages-are-not-authorized.md)); only clears the decision |
 | `ValidationBehavior` | ✓ | ✓ | ✓ | — |
 | `TransactionBehavior<TDbContext>` | ✓ | — | — | — |
 
@@ -88,9 +88,9 @@ Behaviours that read attributes, such as `[AllowAnonymousAccess]` or `[NonTransa
 
 ### Authorization
 
-`AuthorizationBehavior` gets the user from `IPrincipalAccessor`, then runs the action's authorizers through a cached `ActionAuthorization<TAction>`, stopping at the first denial. The combined `AuthorizationResult` goes to every `IAuthorizationObserver`, then either an exception is thrown or the result is stored in `AuthorizationContext`'s static `AsyncLocal` before `next` runs ([ADR 0019](docs/adr/0019-decisions-are-available-and-observed.md)):
+`AuthorizationBehavior` gets the user from `IPrincipalAccessor`, then runs the action's authorizers through a cached `ActionAuthorization<TAction>`, stopping at the first denial. The combined `AuthorizationResult` goes to every `IAuthorizationObserver`, then either an exception is thrown or the result is stored in `AuthorizationContext`'s static `AsyncLocal` before `next` runs ([ADR 0025](docs/adr/0025-decisions-bound-to-their-request.md)):
 - The value is set inside an `async` method, so it flows into `next` and the caller gets its own value back when the method returns. Don't set it from a non-`async` method.
-- Anonymous actions clear it, so they never see an outer decision.
+- Anonymous actions and messages clear it, so they never see an outer decision. Handlers read it with `For(action)`, which checks that the decision was made for that instance.
 - For stream queries, the behaviour enumerates `next` itself and sets the value before every `MoveNextAsync`, because an async iterator runs each step in its consumer's context.
 - Decision details never go into exception messages.
 
@@ -124,8 +124,8 @@ Exception messages are never recorded. When nothing listens, the dispatch isn't 
 
 Any change must keep these true. Tests cover each one, and the linked records explain why.
 
-- **Authorization fails closed:** an action with no authorizer is denied, a `null` decision is a denial, and no user means `AuthenticationRequiredException` ([0018](docs/adr/0018-authorizers-return-decisions.md)).
-- **Decision details never reach the caller:** they're not in exception messages, and an observer that throws stops the action ([0018](docs/adr/0018-authorizers-return-decisions.md), [0019](docs/adr/0019-decisions-are-available-and-observed.md)).
+- **Authorization fails closed:** an action with no authorizer is denied, a `null` decision is a denial, and no user means `AuthenticationRequiredException` ([0025](docs/adr/0025-decisions-bound-to-their-request.md)).
+- **Decisions are bound to their request, and their details never reach the caller:** `For(action)` checks the instance, message handlers see no decision, details are never in exception messages, and an observer that throws stops the action ([0025](docs/adr/0025-decisions-bound-to-their-request.md)).
 - **Messages are not authorized,** and can never be actions ([0008](docs/adr/0008-messages-are-not-authorized.md)).
 - **Hidden actions are indistinguishable from unknown ones** ([0011](docs/adr/0011-named-actions.md)).
 - **No adapter echoes input or exception details,** and telemetry never records exception messages ([0012](docs/adr/0012-adapters-never-echo-input-or-exceptions.md)).

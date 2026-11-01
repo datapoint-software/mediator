@@ -6,7 +6,6 @@ Datapoint.Mediator.Authorization.AuthorizationDecision.Details.get -> object?
 Datapoint.Mediator.Authorization.AuthorizationDecision.IsAllowed.get -> bool
 static Datapoint.Mediator.Authorization.AuthorizationDecision.Allow(object? details = null) -> Datapoint.Mediator.Authorization.AuthorizationDecision!
 static Datapoint.Mediator.Authorization.AuthorizationDecision.AllowIf(bool condition) -> Datapoint.Mediator.Authorization.AuthorizationDecision!
-static Datapoint.Mediator.Authorization.AuthorizationDecision.Deny(object? details = null) -> Datapoint.Mediator.Authorization.AuthorizationDecision!
 Datapoint.Mediator.Authorization.AuthorizationContext
 Datapoint.Mediator.Authorization.AuthorizationContext.AuthorizationContext() -> void
 Datapoint.Mediator.Authorization.AuthorizationContext.Current.get -> Datapoint.Mediator.Authorization.AuthorizationResult?
@@ -24,7 +23,6 @@ Datapoint.Mediator.Authorization.AuthorizationOutcome.Denied = 1 -> Datapoint.Me
 Datapoint.Mediator.Authorization.AuthorizationOutcome.Failed = 3 -> Datapoint.Mediator.Authorization.AuthorizationOutcome
 Datapoint.Mediator.Authorization.AuthorizationResult
 Datapoint.Mediator.Authorization.AuthorizationResult.ActionType.get -> System.Type!
-Datapoint.Mediator.Authorization.AuthorizationResult.AuthorizationResult(System.Type! actionType, System.Collections.Generic.IReadOnlyList<Datapoint.Mediator.Authorization.AuthorizerDecision!>! decisions) -> void
 Datapoint.Mediator.Authorization.AuthorizationResult.Decisions.get -> System.Collections.Generic.IReadOnlyList<Datapoint.Mediator.Authorization.AuthorizerDecision!>!
 Datapoint.Mediator.Authorization.AuthorizationResult.IsAllowed.get -> bool
 Datapoint.Mediator.Authorization.AuthorizationResult.TryGetDetails<T>(out T details) -> bool
@@ -36,3 +34,10 @@ Datapoint.Mediator.Authorization.IAuthorizationContext
 Datapoint.Mediator.Authorization.IAuthorizationContext.Current.get -> Datapoint.Mediator.Authorization.AuthorizationResult?
 Datapoint.Mediator.Authorization.IAuthorizationObserver
 Datapoint.Mediator.Authorization.IAuthorizationObserver.OnAuthorizedAsync(Datapoint.Mediator.Authorization.AuthorizationEvent! authorization, System.Threading.CancellationToken ct = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask
+Datapoint.Mediator.Authorization.AuthorizationBehavior.HandleAsync(Datapoint.Mediator.IMessage! message, System.Func<System.Threading.CancellationToken, System.Threading.Tasks.ValueTask>! next, System.Threading.CancellationToken ct = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask
+Datapoint.Mediator.Authorization.AuthorizationContext.For(object! action) -> Datapoint.Mediator.Authorization.AuthorizationResult?
+Datapoint.Mediator.Authorization.AuthorizationDecision.Exception.get -> System.Exception?
+Datapoint.Mediator.Authorization.AuthorizationResult.Action.get -> object!
+Datapoint.Mediator.Authorization.AuthorizationResult.AuthorizationResult(object! action, System.Collections.Generic.IReadOnlyList<Datapoint.Mediator.Authorization.AuthorizerDecision!>! decisions) -> void
+Datapoint.Mediator.Authorization.IAuthorizationContext.For(object! action) -> Datapoint.Mediator.Authorization.AuthorizationResult?
+static Datapoint.Mediator.Authorization.AuthorizationDecision.Deny(object? details = null, System.Exception? exception = null) -> Datapoint.Mediator.Authorization.AuthorizationDecision!

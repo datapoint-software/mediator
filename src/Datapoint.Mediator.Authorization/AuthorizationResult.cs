@@ -10,25 +10,32 @@ namespace Datapoint.Mediator.Authorization;
 /// <remarks>
 /// The action is allowed only when it has at least one authorizer and every authorizer allowed it. The authorizers run
 /// in registration order and stop at the first denial, so <see cref="Decisions"/> holds every decision up to and
-/// including the one that denied the action.
+/// including the one that denied the action. When an authorizer throws, it holds the decisions made before, and the
+/// result is denied.
 /// </remarks>
 public sealed class AuthorizationResult
 {
     /// <summary>
     /// Initializes a new instance of the <see cref="AuthorizationResult"/> class.
     /// </summary>
-    /// <param name="actionType">The type of the command, query or stream query.</param>
+    /// <param name="action">The command, query or stream query that was authorized.</param>
     /// <param name="decisions">The decisions of the authorizers that ran, in the order they ran.</param>
     /// <exception cref="ArgumentNullException">
-    /// <paramref name="actionType"/> or <paramref name="decisions"/> is <see langword="null"/>.
+    /// <paramref name="action"/> or <paramref name="decisions"/> is <see langword="null"/>.
     /// </exception>
-    public AuthorizationResult(Type actionType, IReadOnlyList<AuthorizerDecision> decisions)
+    public AuthorizationResult(object action, IReadOnlyList<AuthorizerDecision> decisions)
+        : this(action, decisions, failed: false)
     {
-        ArgumentNullException.ThrowIfNull(actionType);
+    }
+
+    // A failed authorization, where an authorizer threw, is denied whatever the decisions made before it.
+    internal AuthorizationResult(object action, IReadOnlyList<AuthorizerDecision> decisions, bool failed)
+    {
+        ArgumentNullException.ThrowIfNull(action);
         ArgumentNullException.ThrowIfNull(decisions);
-        ActionType = actionType;
+        Action = action;
         Decisions = decisions;
-        IsAllowed = decisions.Count > 0;
+        IsAllowed = !failed && decisions.Count > 0;
 
         foreach (var decision in decisions)
         {
@@ -37,9 +44,15 @@ public sealed class AuthorizationResult
     }
 
     /// <summary>
+    /// Gets the command, query or stream query that was authorized. It contains the caller's input, so don't log it as
+    /// it is.
+    /// </summary>
+    public object Action { get; }
+
+    /// <summary>
     /// Gets the type of the command, query or stream query.
     /// </summary>
-    public Type ActionType { get; }
+    public Type ActionType => Action.GetType();
 
     /// <summary>
     /// Gets a value indicating whether the action is allowed: it has at least one authorizer, and all of them allowed

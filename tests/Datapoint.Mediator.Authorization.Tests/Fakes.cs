@@ -88,3 +88,5 @@ public sealed class ThrowingAuthorizer<TAction>(Exception exception) : IAuthoriz
 }
 
 public sealed record ReadGrant(string Role, bool Watermark);
+
+public sealed class StepUpRequiredException() : Exception("Step-up authentication is required.");

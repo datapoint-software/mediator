@@ -1,6 +1,6 @@
 # 19. Authorization decisions are available to the dispatch, and observed
 
-- **Status:** Accepted
+- **Status:** Superseded by [0025](0025-decisions-bound-to-their-request.md)
 - **Date:** 2026-11-01
 
 ## Context

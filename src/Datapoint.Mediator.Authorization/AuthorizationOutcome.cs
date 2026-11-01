@@ -11,7 +11,8 @@ public enum AuthorizationOutcome
     Allowed = 0,
 
     /// <summary>
-    /// An authorizer denied the action, or it has no authorizer. An <see cref="AccessDeniedException"/> is thrown.
+    /// An authorizer denied the action, or it has no authorizer. An <see cref="AccessDeniedException"/> is thrown, or the
+    /// exception the denying decision carries.
     /// </summary>
     Denied = 1,
 

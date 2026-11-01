@@ -261,7 +261,7 @@ public sealed class AuthorizationBehaviorTests
     [Fact]
     public async Task Message_IsNotAuthorized()
     {
-        // The message overload is a default interface method, so it is called through IBehavior, as the mediator does.
+        // Called through IBehavior, as the mediator does.
         IBehavior behavior = CreateBehavior(principal: null, _ => { });
 
         await behavior.HandleAsync(new InvoiceCreated(), Next, TestContext.Current.CancellationToken);

@@ -8,9 +8,11 @@ public sealed class AuthorizationResultTests
     [Fact]
     public void NoDecisions_IsDenied()
     {
-        var result = new AuthorizationResult(typeof(GetInvoice), []);
+        var action = new GetInvoice();
+        var result = new AuthorizationResult(action, []);
 
         Assert.False(result.IsAllowed);
+        Assert.Same(action, result.Action);
         Assert.Equal(typeof(GetInvoice), result.ActionType);
         Assert.Empty(result.Decisions);
     }
@@ -18,7 +20,7 @@ public sealed class AuthorizationResultTests
     [Fact]
     public void AllAllowed_IsAllowed()
     {
-        var result = new AuthorizationResult(typeof(GetInvoice), [Decision(AuthorizationDecision.Allow()), Decision(AuthorizationDecision.Allow("x"))]);
+        var result = new AuthorizationResult(new GetInvoice(), [Decision(AuthorizationDecision.Allow()), Decision(AuthorizationDecision.Allow("x"))]);
 
         Assert.True(result.IsAllowed);
     }
@@ -26,7 +28,7 @@ public sealed class AuthorizationResultTests
     [Fact]
     public void AnyDenied_IsDenied()
     {
-        var result = new AuthorizationResult(typeof(GetInvoice), [Decision(AuthorizationDecision.Allow()), Decision(AuthorizationDecision.Deny())]);
+        var result = new AuthorizationResult(new GetInvoice(), [Decision(AuthorizationDecision.Allow()), Decision(AuthorizationDecision.Deny())]);
 
         Assert.False(result.IsAllowed);
     }
@@ -48,7 +50,7 @@ public sealed class AuthorizationResultTests
     [Fact]
     public void TryGetDetails_NoDetailsOfThatType_ReturnsFalse()
     {
-        var result = new AuthorizationResult(typeof(GetInvoice), [Decision(AuthorizationDecision.Allow())]);
+        var result = new AuthorizationResult(new GetInvoice(), [Decision(AuthorizationDecision.Allow())]);
 
         Assert.False(result.TryGetDetails<ReadGrant>(out var found));
         Assert.Null(found);
@@ -57,8 +59,8 @@ public sealed class AuthorizationResultTests
     [Fact]
     public void NullArguments_Throw()
     {
-        Assert.Equal("actionType", Assert.Throws<ArgumentNullException>(() => new AuthorizationResult(null!, [])).ParamName);
-        Assert.Equal("decisions", Assert.Throws<ArgumentNullException>(() => new AuthorizationResult(typeof(GetInvoice), null!)).ParamName);
+        Assert.Equal("action", Assert.Throws<ArgumentNullException>(() => new AuthorizationResult(null!, [])).ParamName);
+        Assert.Equal("decisions", Assert.Throws<ArgumentNullException>(() => new AuthorizationResult(new GetInvoice(), null!)).ParamName);
         Assert.Equal("authorizerType", Assert.Throws<ArgumentNullException>(() => new AuthorizerDecision(null!, AuthorizationDecision.Allow())).ParamName);
         Assert.Equal("decision", Assert.Throws<ArgumentNullException>(() => new AuthorizerDecision(typeof(object), null!)).ParamName);
         Assert.Equal("action", Assert.Throws<ArgumentNullException>(
@@ -70,7 +72,7 @@ public sealed class AuthorizationResultTests
     {
         var action = new GetInvoice();
         var principal = Principals.SignedIn();
-        var result = new AuthorizationResult(typeof(GetInvoice), []);
+        var result = new AuthorizationResult(new GetInvoice(), []);
         var exception = new InvalidOperationException();
 
         var authorization = new AuthorizationEvent(action, principal, AuthorizationOutcome.Failed, result, exception);

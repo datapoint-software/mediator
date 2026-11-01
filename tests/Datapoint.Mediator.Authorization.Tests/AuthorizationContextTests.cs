@@ -142,18 +142,54 @@ public sealed class AuthorizationContextTests
     }
 
     [Fact]
-    public async Task MessagePublishedByAHandler_SeesThePublishersDecision()
+    public async Task MessagePublishedByAHandler_DoesNotSeeThePublishersDecision()
     {
-        IBehavior behavior = _behavior;
-        string? seen = null;
+        var seen = new List<string?>();
 
-        await _behavior.HandleAsync(new DeleteInvoice(1), ct => behavior.HandleAsync(new InvoiceCreated(), _ =>
+        await _behavior.HandleAsync(new DeleteInvoice(1), async ct =>
         {
-            seen = Details(_context.Current);
-            return default;
-        }, ct), Ct);
+            await _behavior.HandleAsync(new InvoiceCreated(), _ =>
+            {
+                seen.Add(Details(_context.Current));
+                return default;
+            }, ct);
+            seen.Add(Details(_context.Current));
+        }, Ct);
 
-        Assert.Equal("delete grant", seen);
+        Assert.Equal([null, "delete grant"], seen);
+    }
+
+    [Fact]
+    public async Task MessageWithoutDecision_RunsItsHandlers()
+    {
+        var ran = false;
+
+        await _behavior.HandleAsync(new InvoiceCreated(), _ =>
+        {
+            ran = true;
+            return default;
+        }, Ct);
+
+        Assert.True(ran);
+    }
+
+    [Fact]
+    public async Task For_ReturnsTheDecisionOnlyForTheSameInstance()
+    {
+        var command = new DeleteInvoice(1);
+        AuthorizationResult? same = null;
+        AuthorizationResult? equalButOther = null;
+
+        await _behavior.HandleAsync(command, _ =>
+        {
+            same = _context.For(command);
+            equalButOther = _context.For(new DeleteInvoice(1));   // equal record, different instance
+            return default;
+        }, Ct);
+
+        Assert.Same(command, same!.Action);
+        Assert.Null(equalButOther);
+        Assert.Null(_context.For(command));
     }
 
     private static string? Details(AuthorizationResult? result) =>

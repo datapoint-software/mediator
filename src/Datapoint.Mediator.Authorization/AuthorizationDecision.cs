@@ -1,3 +1,5 @@
+using System;
+
 namespace Datapoint.Mediator.Authorization;
 
 /// <summary>
@@ -20,10 +22,11 @@ public sealed class AuthorizationDecision
     private static readonly AuthorizationDecision Allowed = new(isAllowed: true, details: null);
     private static readonly AuthorizationDecision Denied = new(isAllowed: false, details: null);
 
-    private AuthorizationDecision(bool isAllowed, object? details)
+    private AuthorizationDecision(bool isAllowed, object? details, Exception? exception = null)
     {
         IsAllowed = isAllowed;
         Details = details;
+        Exception = exception;
     }
 
     /// <summary>
@@ -35,6 +38,12 @@ public sealed class AuthorizationDecision
     /// Gets the application-defined value that explains the decision, or <see langword="null"/> when there is none.
     /// </summary>
     public object? Details { get; }
+
+    /// <summary>
+    /// Gets the exception to throw instead of <see cref="AccessDeniedException"/> when this decision denies the action,
+    /// or <see langword="null"/> to throw <see cref="AccessDeniedException"/>.
+    /// </summary>
+    public Exception? Exception { get; }
 
     /// <summary>
     /// Creates a decision that allows the action.
@@ -53,9 +62,15 @@ public sealed class AuthorizationDecision
     /// An application-defined value that explains why the action is denied, or <see langword="null"/>. It is never
     /// reported to the caller.
     /// </param>
+    /// <param name="exception">
+    /// The exception to throw instead of <see cref="AccessDeniedException"/>, for an outcome of the application's own,
+    /// such as "step-up authentication required"; or <see langword="null"/>. Host adapters treat it like any exception
+    /// of the application: they report it only if the application maps it, so don't put details in its message unless
+    /// that mapping is safe. When a transaction is retried, the same instance is thrown again.
+    /// </param>
     /// <returns>A decision that denies the action.</returns>
-    public static AuthorizationDecision Deny(object? details = null) =>
-        details is null ? Denied : new(isAllowed: false, details);
+    public static AuthorizationDecision Deny(object? details = null, Exception? exception = null) =>
+        details is null && exception is null ? Denied : new(isAllowed: false, details, exception);
 
     /// <summary>
     /// Creates a decision without details that allows the action when <paramref name="condition"/> is

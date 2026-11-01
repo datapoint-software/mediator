@@ -1,6 +1,6 @@
 # 18. Authorizers return decisions with details
 
-- **Status:** Accepted
+- **Status:** Superseded by [0025](0025-decisions-bound-to-their-request.md)
 - **Date:** 2026-11-01
 - **Supersedes:** [0007](0007-authorization-fails-closed.md)
 

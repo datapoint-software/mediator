@@ -64,6 +64,18 @@ services.AddMediator(o => o
     .AddValidationBehavior());
 ```
 
+### Denials of your own
+
+Some denials aren't a plain 403, such as "step-up authentication required" or "confirm first". Pass the exception to throw instead of `AccessDeniedException`:
+
+```csharp
+return AuthorizationDecision.Deny(new StepUpRequired(Level: 2), new StepUpRequiredException(level: 2));
+```
+
+- Observers see the outcome `Denied`, with the details and the decision's `Exception`.
+- Host adapters treat it like any exception of yours: map it with `MapException` (ASP.NET Core) or `ErrorMessage` (CLI, MCP), or callers get a generic error. Don't put details in its message unless your mapping is safe.
+- When a transaction is retried, the same exception instance is thrown again.
+
 ## The rules
 
 Authorization **fails closed**: when in doubt, it refuses.
@@ -72,7 +84,7 @@ Authorization **fails closed**: when in doubt, it refuses.
 |---|---|
 | No current user, or a user without an authenticated identity | `AuthenticationRequiredException` (HTTP 401, CLI exit code 3) |
 | The action has **no authorizer** | `AccessDeniedException` (HTTP 403, CLI exit code 4) |
-| Any of the action's authorizers denies it, or returns `null` | `AccessDeniedException` |
+| Any of the action's authorizers denies it, or returns `null` | `AccessDeniedException`, or the [exception the decision carries](#denials-of-your-own) |
 | An authorizer throws | its exception propagates, and the action doesn't run |
 | An [observer](#auditing-every-decision) throws | its exception propagates, and the action doesn't run, even if it was allowed |
 | Every authorizer allows it | the action runs |
@@ -102,8 +114,9 @@ public sealed class DownloadItemHandler(IAuthorizationContext authorization, Fil
 {
     public async ValueTask<FileDownload> HandleAsync(DownloadItem query, CancellationToken ct = default)
     {
+        // For(query) returns the decision only if it was made for this exact request.
         // Fail closed: without a grant, don't guess the constraints.
-        if (authorization.Current?.TryGetDetails<ReadGrant>(out var grant) != true)
+        if (authorization.For(query)?.TryGetDetails<ReadGrant>(out var grant) != true)
         {
             throw new InvalidOperationException("DownloadItem was not authorized with a ReadGrant.");
         }
@@ -113,26 +126,31 @@ public sealed class DownloadItemHandler(IAuthorizationContext authorization, Fil
 }
 ```
 
-- `Current` is an `AuthorizationResult`: `IsAllowed`, the `Decisions` of each authorizer (its type and its decision), and `TryGetDetails<T>`, which returns the first details of type `T`.
+- `For(request)` returns an `AuthorizationResult` only when the current decision was made for that exact instance (reference equality), and `null` otherwise. The result has the `Action`, `IsAllowed`, the `Decisions` of each authorizer (its type and its decision), and `TryGetDetails<T>`, which returns the first details of type `T`.
+- `Current` returns the current decision without that check. Behaviours registered after authorization can use it, but handlers should use `For`.
 - The decision flows with the call, like `IHttpContextAccessor`: a command sent from a handler sees its own decision, then the outer one again; parallel dispatches see their own.
-- Behaviours registered after authorization see it too. Message handlers see the decision of the action that published the message.
-- `[AllowAnonymousAccess]` actions see `null`.
+- Message handlers aren't authorized, so they see `null`, and so do `[AllowAnonymousAccess]` actions.
+- A behaviour that replaces the request with a new instance between authorization and the handler, for example to normalise it, makes `For(newInstance)` return `null`, so a handler that needs a decision fails. **That's intended:** the new instance wasn't authorized. Normalise before authorization instead, or change the instance in place.
 
 ## Auditing every decision
 
-An `IAuthorizationObserver` is told every outcome, allowed or not, with the reasons:
+An `IAuthorizationObserver` is told every outcome, allowed or not, with the reasons. When authorization runs inside a transaction, a denial rolls it back, so write the audit through **its own `DbContext`**, not the one your handlers use:
 
 ```csharp
-public sealed class AuthorizationAuditor(AuditLog audit) : IAuthorizationObserver
+public sealed class AuthorizationAuditor(IDbContextFactory<AuditDbContext> audits) : IAuthorizationObserver
 {
     public async ValueTask OnAuthorizedAsync(AuthorizationEvent authorization, CancellationToken ct = default)
     {
-        await audit.WriteAsync(new AuditEntry(
-            Action: authorization.Action.GetType().Name,              // the type, never the action's contents
-            User: authorization.Principal?.FindFirstValue("sub"),
-            Outcome: authorization.Outcome.ToString(),
-            Reasons: authorization.Result?.Decisions.Select(d => new AuditReason(d.AuthorizerType.Name, d.Decision.IsAllowed, d.Decision.Details)).ToArray() ?? [],
-            Error: authorization.Exception?.GetType().FullName), ct);
+        await using var audit = await audits.CreateDbContextAsync(ct);   // its own connection: survives a rollback
+        audit.Entries.Add(new AuditEntry
+        {
+            Action = authorization.Action.GetType().Name,              // the type, never the action's contents
+            User = authorization.Principal?.FindFirstValue("sub"),
+            Outcome = authorization.Outcome.ToString(),
+            Reasons = authorization.Result?.Decisions.Select(d => new AuditReason(d.AuthorizerType.Name, d.Decision.IsAllowed, d.Decision.Details)).ToList() ?? [],
+            Error = authorization.Exception?.GetType().FullName,
+        });
+        await audit.SaveChangesAsync(ct);
     }
 }
 ```
@@ -146,7 +164,7 @@ services.AddAuthorizationObserver<AuthorizationAuditor>();
 | `Allowed` | every authorizer allowed it | every decision |
 | `Denied` | an authorizer denied it, or it has none | the decisions up to the denial; empty with no authorizer |
 | `AuthenticationRequired` | no signed-in user | `null` |
-| `Failed` | an authorizer threw; `Exception` holds it | `null` |
+| `Failed` | an authorizer threw; `Exception` holds it | denied, with the decisions made before it |
 
 - Observers run in registration order, after the authorizers and before the action runs or the exception is thrown.
 - **If an observer throws, the action doesn't run**, even when it was allowed: an action that can't be audited doesn't run. If you prefer availability, catch and log inside your observer.

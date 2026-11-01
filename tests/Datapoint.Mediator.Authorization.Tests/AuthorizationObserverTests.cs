@@ -107,7 +107,47 @@ public sealed class AuthorizationObserverTests
         var authorization = Assert.Single(observer.Events);
         Assert.Equal(AuthorizationOutcome.Failed, authorization.Outcome);
         Assert.Same(thrown, authorization.Exception);
-        Assert.Null(authorization.Result);
+        Assert.False(authorization.Result!.IsAllowed);
+        Assert.Empty(authorization.Result.Decisions);
+    }
+
+    [Fact]
+    public async Task AuthorizerThrows_TheFailedEventKeepsTheEarlierDecisions_AndIsDenied()
+    {
+        var observer = new RecordingObserver("observer", _log);
+        var behavior = CreateBehavior(Principals.SignedIn(), s => s
+            .AddSingleton<IAuthorizationObserver>(observer)
+            .AddSingleton<IAuthorizer<DeleteInvoice>>(new TestAuthorizer<DeleteInvoice>("roles", AuthorizationDecision.Allow("finance"), _log))
+            .AddSingleton<IAuthorizer<DeleteInvoice>>(new ThrowingAuthorizer<DeleteInvoice>(new InvalidOperationException())));
+
+        await Assert.ThrowsAsync<InvalidOperationException>(
+            async () => await behavior.HandleAsync(new DeleteInvoice(1), Next, TestContext.Current.CancellationToken));
+
+        var authorization = Assert.Single(observer.Events);
+        Assert.Equal(AuthorizationOutcome.Failed, authorization.Outcome);
+        Assert.False(authorization.Result!.IsAllowed);
+        Assert.Equal("finance", Assert.Single(authorization.Result.Decisions).Decision.Details);
+    }
+
+    [Fact]
+    public async Task DenialWithAnException_ThrowsIt_AndIsObservedAsDenied()
+    {
+        var stepUp = new StepUpRequiredException();
+        var observer = new RecordingObserver("observer", _log);
+        var behavior = CreateBehavior(Principals.SignedIn(), s => s
+            .AddSingleton<IAuthorizationObserver>(observer)
+            .AddSingleton<IAuthorizer<DeleteInvoice>>(new TestAuthorizer<DeleteInvoice>("mfa", AuthorizationDecision.Deny("level 2", stepUp), _log)));
+
+        var thrown = await Assert.ThrowsAsync<StepUpRequiredException>(
+            async () => await behavior.HandleAsync(new DeleteInvoice(1), Next, TestContext.Current.CancellationToken));
+
+        Assert.Same(stepUp, thrown);
+        Assert.False(_nextCalled);
+        var authorization = Assert.Single(observer.Events);
+        Assert.Equal(AuthorizationOutcome.Denied, authorization.Outcome);
+        Assert.Null(authorization.Exception);
+        Assert.Same(stepUp, authorization.Result!.Decisions[^1].Decision.Exception);
+        Assert.Equal("level 2", authorization.Result.Decisions[^1].Decision.Details);
     }
 
     [Fact]

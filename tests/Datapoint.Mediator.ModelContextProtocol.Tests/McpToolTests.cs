@@ -226,6 +226,22 @@ public sealed class McpToolTests
     }
 
     [Fact]
+    public async Task CallTool_DenialWithAnApplicationException_ReportsGenericError()
+    {
+        await using var mcp = await McpHarness.StartAsync(
+            configureMediator: o => o.AddAuthorizationBehavior(),
+            configureServices: s => s
+                .AddSingleton<IPrincipalAccessor>(new FixedPrincipalAccessor(SignedIn()))
+                .AddSingleton<IAuthorizer<ArchiveInvoice>, DenyWithStepUp<ArchiveInvoice>>());
+
+        var denied = await mcp.Client.CallToolAsync("invoices_archive", new Dictionary<string, object?> { ["id"] = 1 }, cancellationToken: Ct);
+
+        Assert.True(denied.IsError);
+        Assert.DoesNotContain("TOP-SECRET", Text(denied));
+        Assert.Empty(mcp.Recorder.Log);
+    }
+
+    [Fact]
     public async Task CallTool_WithoutServiceProvider_ReportsGenericError()
     {
         await using var mcp = await McpHarness.StartAsync(withServiceProvider: false);
