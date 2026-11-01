@@ -22,5 +22,6 @@ Each record follows [Michael Nygard's format](https://cognitect.com/blog/2011/11
 | [0014](0014-one-principal-accessor.md) | One `IPrincipalAccessor` per application | Accepted |
 | [0015](0015-versioning.md) | 4.0.0 is the first public version, versioned with MinVer | Accepted |
 | [0016](0016-full-line-coverage.md) | 100% line coverage, enforced in CI | Accepted |
+| [0017](0017-cli-parses-with-the-invariant-culture.md) | The CLI parses numbers and dates with the invariant culture | Accepted |
 
 To add a record, copy the structure of an existing one, use the next number, and add it to this table.

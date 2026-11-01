@@ -98,7 +98,7 @@ Actions let hosts dispatch commands and queries by name, with JSON arguments ([A
 | Adapter | Built from the catalog | Error mapping |
 |---|---|---|
 | `AspNetCore` (`ActionEndpoints`) | `POST {prefix}/{name with dots as slashes}`, with OpenAPI metadata | 400, 401, 403, then `MapException`, then rethrow |
-| `CommandLine` (`ActionCommand`) | a subcommand per dot segment, with typed options and a `--json` fallback | exit codes 2, 3, 4, then `ErrorMessage`, then 70 |
+| `CommandLine` (`ActionCommand`) | a subcommand per dot segment, with typed options parsed with the invariant culture, and a `--json` fallback | exit codes 2, 3, 4, then `ErrorMessage`, then 70 |
 | `ModelContextProtocol` (`ActionTool`, `ActionToolsSetup`) | a tool per action, named with dots as underscores, with a JSON schema | safe messages, then `ErrorMessage`, then a generic SDK error |
 
 The adapters recognise the authorization exceptions by their full type name, so they don't depend on the authorization package ([ADR 0013](docs/adr/0013-adapters-match-authorization-exceptions-by-name.md)). They never describe any other exception ([ADR 0012](docs/adr/0012-adapters-never-echo-input-or-exceptions.md)).

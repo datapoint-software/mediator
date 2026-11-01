@@ -46,7 +46,9 @@ For actions with nested objects or collections, every command also accepts `--js
 invoicing invoices create --json '{"customer":"Ana","amount":100}'
 ```
 
-> **Note:** System.CommandLine parses numbers and dates with the current culture. On a machine set to Portuguese, `--amount 42.5` is refused and `42,5` is expected. `--json` always uses invariant JSON numbers.
+Numbers, dates and times are parsed the same way on every machine, whatever its language, so scripts behave the same everywhere ([ADR 0017](../adr/0017-cli-parses-with-the-invariant-culture.md)):
+- numbers use a dot as the decimal separator, with no thousands separators: `--amount 42.5`, never `42,5` or `1,000`;
+- dates and times use ISO 8601: `--day 2026-11-01`, `--notify-at 2026-11-01T09:30:00+00:00`.
 
 ## Output
 
