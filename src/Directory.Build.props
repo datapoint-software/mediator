@@ -49,6 +49,15 @@
     <PackageReference Include="Microsoft.CodeAnalysis.PublicApiAnalyzers" PrivateAssets="all" />
   </ItemGroup>
 
+  <!--
+    Fails the pack when a package is not binary compatible with its baseline.
+    Pre-releases may break the API, so there is no baseline yet. Once 4.0.0 is released, set
+    PackageValidationBaselineVersion to 4.0.0 here, and clear it in the .csproj of any package first released later.
+  -->
+  <PropertyGroup>
+    <EnablePackageValidation>true</EnablePackageValidation>
+  </PropertyGroup>
+
   <!-- The repository URL is only known once Source Link has read the git remote. -->
   <Target Name="SetPackageProjectUrl" BeforeTargets="GenerateNuspec" DependsOnTargets="InitializeSourceControlInformation">
     <PropertyGroup>

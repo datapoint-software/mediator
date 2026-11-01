@@ -53,6 +53,7 @@ Assume the contributor is a junior developer. Your job is to help them reach sou
 - Each `src` project lists its public API in `PublicAPI.Shipped.txt` (released) and `PublicAPI.Unshipped.txt` (since the last release). The build fails when the public API and these files disagree.
 - When you change a public API, update `PublicAPI.Unshipped.txt` in the same commit, so the change is visible in review. A removed or changed line from `PublicAPI.Shipped.txt` is a breaking change.
 - On release, move the entries from `PublicAPI.Unshipped.txt` to `PublicAPI.Shipped.txt`.
+- [Package validation](https://learn.microsoft.com/dotnet/fundamentals/apicompat/package-validation/overview) runs on `dotnet pack`. It has no baseline during the `4.0.0` pre-releases, because they may break the API. Once `4.0.0` is released, set `PackageValidationBaselineVersion` to `4.0.0` in `src/Directory.Build.props`, so the pack fails on any binary break that isn't released as a new major version.
 
 ### Releasing
 
