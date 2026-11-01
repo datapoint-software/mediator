@@ -71,7 +71,28 @@ A behaviour that needs settings in its constructor can be registered with a fact
 o.AddBehavior(sp => new SlowRequestLoggingBehavior(sp.GetRequiredService<ILogger<SlowRequestLoggingBehavior>>(), TimeSpan.FromSeconds(2)));
 ```
 
-A behaviour type is registered once: registering the same type again, with or without a factory, keeps the first registration.
+Registering the same behaviour type twice without a factory has no effect. A behaviour registered with a factory can only be registered once: registering its type again, with or without a factory, makes `AddMediator` throw `InvalidOperationException`, so its settings are never silently ignored.
+
+### Startup checks
+
+A behaviour's registration method can add a check that runs in `AddMediator`, so a configuration mistake fails at startup instead of at the first request:
+
+```csharp
+public static MediatorOptions AddAuditBehavior(this MediatorOptions options) => options
+    .AddBehavior<AuditBehavior>()
+    .AddStartupCheck(context =>
+    {
+        foreach (var type in context.RequestTypes)   // every command, query and stream query with a handler
+        {
+            if (type.IsDefined(typeof(AuditedAttribute)) && !type.IsSealed)
+            {
+                throw new InvalidOperationException($"'{type}' is audited, so it must be sealed.");
+            }
+        }
+    });
+```
+
+Checks run at the end of every `AddMediator` call, over every request registered so far, including those from later calls.
 
 | Overload | Called for |
 |---|---|

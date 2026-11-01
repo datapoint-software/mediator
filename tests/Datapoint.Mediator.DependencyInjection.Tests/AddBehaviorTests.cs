@@ -92,18 +92,47 @@ public sealed class AddBehaviorTests
     }
 
     [Fact]
-    public void AddBehaviorWithFactory_SameTypeAgain_KeepsTheFirstRegistration()
+    public void AddBehaviorWithFactory_ConflictingWithAnotherRegistration_Throws()
+    {
+        Assert.Throws<InvalidOperationException>(() => new ServiceCollection().AddMediator(o => o
+            .AddBehavior<OuterBehavior>()
+            .AddBehavior(_ => new OuterBehavior(new Recorder()))));
+        Assert.Throws<InvalidOperationException>(() => new ServiceCollection().AddMediator(o => o
+            .AddBehavior(_ => new OuterBehavior(new Recorder()))
+            .AddBehavior<OuterBehavior>()));
+        Assert.Throws<InvalidOperationException>(() => new ServiceCollection().AddMediator(o => o
+            .AddBehavior(_ => new OuterBehavior(new Recorder()))
+            .AddBehavior(_ => new OuterBehavior(new Recorder()))));
+    }
+
+    [Fact]
+    public void AddBehaviorWithFactory_ConflictingAcrossAddMediatorCalls_Throws()
+    {
+        var services = new ServiceCollection().AddMediator(o => o.AddBehavior(_ => new OuterBehavior(new Recorder())));
+
+        var exception = Assert.Throws<InvalidOperationException>(() => services.AddMediator(o => o.AddBehavior<OuterBehavior>()));
+
+        Assert.Contains(nameof(OuterBehavior), exception.Message);
+    }
+
+    [Fact]
+    public void AddBehavior_AlreadyRegisteredAsAnInstance_HasNoEffect()
+    {
+        var services = new ServiceCollection().AddSingleton<IBehavior>(new OuterBehavior(new Recorder()));
+
+        services.AddMediator(o => o.AddBehavior<OuterBehavior>());
+
+        Assert.Single(services, d => d.ServiceType == typeof(IBehavior));
+    }
+
+    [Fact]
+    public void AddBehaviorWithFactory_DifferentTypes_AreBothRegistered()
     {
         var services = new ServiceCollection().AddMediator(o => o
-            .AddBehavior<OuterBehavior>()
             .AddBehavior(_ => new OuterBehavior(new Recorder()))
-            .AddBehavior(_ => new InnerBehavior(new Recorder()))
-            .AddBehavior<InnerBehavior>());
+            .AddBehavior(_ => new InnerBehavior(new Recorder())));
 
-        var descriptors = services.Where(d => d.ServiceType == typeof(IBehavior)).ToArray();
-        Assert.Equal(2, descriptors.Length);
-        Assert.Equal(typeof(OuterBehavior), descriptors[0].ImplementationType);
-        Assert.NotNull(descriptors[1].ImplementationFactory);
+        Assert.Equal(2, services.Count(d => d.ServiceType == typeof(IBehavior)));
     }
 
     [Fact]

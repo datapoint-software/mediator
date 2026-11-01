@@ -99,6 +99,7 @@ Behaviours that read attributes, such as `[AllowAnonymousAccess]` or `[NonTransa
 Actions let hosts dispatch commands and queries by name, with JSON arguments ([ADR 0011](docs/adr/0011-named-actions.md)).
 
 1. **Registration.** `AddMediator` collects the request types of every registered handler and adds them to an `ActionCatalogBuilder`. That builder is a singleton instance kept in the service collection, so every `AddMediator` call adds to the same catalog. Each `Add` builds a new `ActionCatalog`, which validates everything at that moment: name pattern and length, duplicates, messages marked as actions, and types implementing more than one action interface. So **invalid actions fail at startup**.
+   After the catalog, the builder runs every startup check registered with `MediatorOptions.AddStartupCheck`, by any `AddMediator` call, over every command, query and stream query so far ([ADR 0027](docs/adr/0027-startup-checks.md)).
 2. **Catalog.** `IActionCatalog` (a singleton) lists the visible actions, with their name, description, kind, action type and result type. Hidden actions aren't listed.
 3. **Dispatch.** `ActionDispatcher` (scoped) looks a name up in the catalog. An unknown name and a hidden one both throw the same `ActionNotFoundException`. It then deserializes the `JsonElement` into the action type, throwing `InvalidActionArgumentsException` without echoing the input, and sends it through `IMediator` with a cached `ActionInvoker` for the action's kind. Every behaviour runs as usual.
 4. **Hosts.** Each adapter reads the catalog when the app starts:
@@ -133,4 +134,5 @@ Any change must keep these true. Tests cover each one, and the linked records ex
 - **One `IPrincipalAccessor` per app:** the registration methods refuse a second one ([0014](docs/adr/0014-one-principal-accessor.md)).
 - **Dispatch without behaviours allocates nothing:** check with the benchmarks ([0006](docs/adr/0006-cached-generic-dispatchers.md)).
 - **Invalid action configurations fail in `AddMediator`,** never at the first request ([0011](docs/adr/0011-named-actions.md)).
+- **Settings are never silently ignored:** a behaviour registered with a factory can't be registered again ([0027](docs/adr/0027-startup-checks.md)).
 - **Handlers and behaviours resolve from the caller's scope:** `IMediator` and `IActionDispatcher` are scoped, and `IActionCatalog` is a singleton.

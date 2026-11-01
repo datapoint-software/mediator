@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace Datapoint.Mediator;
 
@@ -8,6 +9,7 @@ namespace Datapoint.Mediator;
 internal sealed class ActionCatalogBuilder
 {
     private readonly List<Type> _actionTypes = [];
+    private readonly List<Action<MediatorStartupContext>> _startupChecks = [];
 
     public ActionCatalog Catalog { get; private set; } = new([]);
 
@@ -17,5 +19,19 @@ internal sealed class ActionCatalogBuilder
         Catalog = new ActionCatalog(combined);
         _actionTypes.Clear();
         _actionTypes.AddRange(combined);
+    }
+
+    // Runs every check registered so far, by any AddMediator call, over every command, query and stream query so far.
+    public void Check(IEnumerable<Action<MediatorStartupContext>> startupChecks)
+    {
+        _startupChecks.AddRange(startupChecks);
+
+        var context = new MediatorStartupContext(
+            _actionTypes.Where(type => !typeof(IMessage).IsAssignableFrom(type)).Distinct().ToArray());
+
+        foreach (var check in _startupChecks)
+        {
+            check(context);
+        }
     }
 }

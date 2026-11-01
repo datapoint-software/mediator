@@ -26,6 +26,8 @@ public sealed class MediatorOptions
 
     internal List<Registration> Behaviors { get; } = [];
 
+    internal List<Action<MediatorStartupContext>> StartupChecks { get; } = [];
+
     /// <summary>
     /// Registers a handler for every command, query and message handler interface it implements.
     /// </summary>
@@ -139,8 +141,9 @@ public sealed class MediatorOptions
     /// <param name="lifetime">The behaviour's lifetime, or <see langword="null"/> to use <see cref="DefaultLifetime"/>.</param>
     /// <returns>These options, for chaining.</returns>
     /// <remarks>
-    /// A behaviour type is registered once: when the same type is registered again, with or without a factory, the
-    /// first registration is kept.
+    /// A behaviour type created by a factory can only be registered once: registering the same type again, with or
+    /// without a factory, makes <c>AddMediator</c> throw <see cref="InvalidOperationException"/>, so settings are never
+    /// silently ignored.
     /// </remarks>
     /// <exception cref="ArgumentNullException"><paramref name="factory"/> is <see langword="null"/>.</exception>
     /// <exception cref="ArgumentException"><typeparamref name="TBehavior"/> is not a concrete class.</exception>
@@ -151,6 +154,27 @@ public sealed class MediatorOptions
         EnsureConcrete(typeof(TBehavior), nameof(TBehavior));
 
         Behaviors.Add(new Registration(typeof(TBehavior), lifetime, factory));
+        return this;
+    }
+
+    /// <summary>
+    /// Registers a check that runs when <c>AddMediator</c> is called, so a configuration mistake fails at startup
+    /// rather than at the first request.
+    /// </summary>
+    /// <param name="check">
+    /// Inspects the registered commands, queries and stream queries, and throws <see cref="InvalidOperationException"/>
+    /// to report a mistake.
+    /// </param>
+    /// <returns>These options, for chaining.</returns>
+    /// <remarks>
+    /// Checks run at the end of every <c>AddMediator</c> call, including later ones, over every request type registered
+    /// so far, so a request added by a later call is checked too.
+    /// </remarks>
+    /// <exception cref="ArgumentNullException"><paramref name="check"/> is <see langword="null"/>.</exception>
+    public MediatorOptions AddStartupCheck(Action<MediatorStartupContext> check)
+    {
+        ArgumentNullException.ThrowIfNull(check);
+        StartupChecks.Add(check);
         return this;
     }
 

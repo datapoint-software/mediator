@@ -58,18 +58,59 @@ public static class MediatorServiceCollectionExtensions
         AddHandlers(services, options);
         AddActions(services, options);
 
+        AddBehaviors(services, options);
+        FindActionCatalogBuilder(services)!.Check(options.StartupChecks);
+
+        return services;
+    }
+
+    private static void AddBehaviors(IServiceCollection services, MediatorOptions options)
+    {
         foreach (var behavior in options.Behaviors)
         {
-            var lifetime = behavior.Lifetime ?? options.DefaultLifetime;
+            var existing = FindBehavior(services, behavior.ImplementationType);
 
-            // TryAddEnumerable identifies a factory's implementation type from its delegate type, so a behaviour type
-            // is registered once either way.
-            services.TryAddEnumerable(behavior.Factory is null
+            if (existing is not null)
+            {
+                // Settings passed to a factory must never be silently replaced or ignored.
+                if (behavior.Factory is not null || existing.ImplementationFactory is not null)
+                {
+                    throw new InvalidOperationException(
+                        $"Cannot register the behaviour '{behavior.ImplementationType}' again, because it is already " +
+                        "registered and one of the registrations has settings. Register it once.");
+                }
+
+                continue;
+            }
+
+            var lifetime = behavior.Lifetime ?? options.DefaultLifetime;
+            services.Add(behavior.Factory is null
                 ? ServiceDescriptor.Describe(typeof(IBehavior), behavior.ImplementationType, lifetime)
                 : ServiceDescriptor.Describe(typeof(IBehavior), behavior.Factory, lifetime));
         }
+    }
 
-        return services;
+    private static ServiceDescriptor? FindBehavior(IServiceCollection services, Type implementationType)
+    {
+        foreach (var descriptor in services)
+        {
+            if (descriptor.ServiceType != typeof(IBehavior) || descriptor.IsKeyedService)
+            {
+                continue;
+            }
+
+            // A factory's delegate type names the type it creates, as TryAddEnumerable relies on.
+            var type = descriptor.ImplementationType
+                ?? descriptor.ImplementationInstance?.GetType()
+                ?? descriptor.ImplementationFactory!.GetType().GenericTypeArguments[1];
+
+            if (type == implementationType)
+            {
+                return descriptor;
+            }
+        }
+
+        return null;
     }
 
     private static void AddActions(IServiceCollection services, MediatorOptions options)
