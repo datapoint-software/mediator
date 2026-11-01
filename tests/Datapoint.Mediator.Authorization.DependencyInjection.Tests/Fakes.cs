@@ -69,8 +69,3 @@ public sealed class GenericAuthorizer<T> : IAuthorizer<T>
 }
 
 public sealed class OtherBehavior : IBehavior;
-
-public sealed class FixedPrincipalAccessor(ClaimsPrincipal? principal) : IPrincipalAccessor
-{
-    public ClaimsPrincipal? Principal => principal;
-}

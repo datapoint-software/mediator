@@ -27,11 +27,6 @@ public sealed record ListPrices : IStreamQuery<int>;
 
 public sealed record DerivedFromAnonymous : AnonymousBase;
 
-public sealed class TestPrincipalAccessor(ClaimsPrincipal? principal) : IPrincipalAccessor
-{
-    public ClaimsPrincipal? Principal => principal;
-}
-
 // Allows or refuses as configured, logging its name and recording what it received.
 public sealed class TestAuthorizer<TAction>(string name, bool allow, List<string> log) : IAuthorizer<TAction>
 {

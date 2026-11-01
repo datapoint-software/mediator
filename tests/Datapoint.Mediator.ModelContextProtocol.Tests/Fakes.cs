@@ -80,11 +80,6 @@ public sealed class FailingReportHandler : ICommandHandler<FailingReport>
         throw new InvalidOperationException("secret internal detail");
 }
 
-public sealed class FixedPrincipalAccessor(ClaimsPrincipal? principal) : IPrincipalAccessor
-{
-    public ClaimsPrincipal? Principal => principal;
-}
-
 public sealed class AllowAll<TAction> : IAuthorizer<TAction>
 {
     public ValueTask<bool> IsAuthorizedAsync(TAction action, ClaimsPrincipal principal, CancellationToken ct = default) => new(true);

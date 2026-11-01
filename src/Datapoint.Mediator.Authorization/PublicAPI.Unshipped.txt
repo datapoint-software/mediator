@@ -19,3 +19,6 @@ Datapoint.Mediator.Authorization.IAuthorizer<TAction>
 Datapoint.Mediator.Authorization.IAuthorizer<TAction>.IsAuthorizedAsync(TAction action, System.Security.Claims.ClaimsPrincipal! principal, System.Threading.CancellationToken ct = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<bool>
 Datapoint.Mediator.Authorization.IPrincipalAccessor
 Datapoint.Mediator.Authorization.IPrincipalAccessor.Principal.get -> System.Security.Claims.ClaimsPrincipal?
+Datapoint.Mediator.Authorization.FixedPrincipalAccessor
+Datapoint.Mediator.Authorization.FixedPrincipalAccessor.FixedPrincipalAccessor(System.Security.Claims.ClaimsPrincipal? principal) -> void
+Datapoint.Mediator.Authorization.FixedPrincipalAccessor.Principal.get -> System.Security.Claims.ClaimsPrincipal?

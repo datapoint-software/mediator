@@ -104,7 +104,7 @@ public sealed class AuthorizationBehaviorTests
     public async Task NullAuthorizers_DenyAccess()
     {
         var behavior = new AuthorizationBehavior(new DelegateServiceProvider(type =>
-            type == typeof(IPrincipalAccessor) ? new TestPrincipalAccessor(Principals.SignedIn()) : null));
+            type == typeof(IPrincipalAccessor) ? new FixedPrincipalAccessor(Principals.SignedIn()) : null));
 
         await Assert.ThrowsAsync<AccessDeniedException>(
             async () => await behavior.HandleAsync(new DeleteInvoice(1), Next, TestContext.Current.CancellationToken));
@@ -121,7 +121,7 @@ public sealed class AuthorizationBehaviorTests
             new TestAuthorizer<DeleteInvoice>("second", false, _log),
         };
         var behavior = new AuthorizationBehavior(new DelegateServiceProvider(type =>
-            type == typeof(IPrincipalAccessor) ? new TestPrincipalAccessor(Principals.SignedIn())
+            type == typeof(IPrincipalAccessor) ? new FixedPrincipalAccessor(Principals.SignedIn())
             : type == typeof(IEnumerable<IAuthorizer<DeleteInvoice>>) ? authorizers
             : null));
 
@@ -260,7 +260,7 @@ public sealed class AuthorizationBehaviorTests
 
     private AuthorizationBehavior CreateBehavior(ClaimsPrincipal? principal, Action<IServiceCollection> configure)
     {
-        var services = new ServiceCollection().AddSingleton<IPrincipalAccessor>(new TestPrincipalAccessor(principal));
+        var services = new ServiceCollection().AddSingleton<IPrincipalAccessor>(new FixedPrincipalAccessor(principal));
         configure(services);
         return new AuthorizationBehavior(services.BuildServiceProvider());
     }

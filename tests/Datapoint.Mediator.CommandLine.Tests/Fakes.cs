@@ -102,11 +102,6 @@ public sealed class PingHandler : ICommandHandler<Ping>
     public ValueTask HandleAsync(Ping command, CancellationToken ct = default) => default;
 }
 
-public sealed class FixedPrincipalAccessor(ClaimsPrincipal? principal) : IPrincipalAccessor
-{
-    public ClaimsPrincipal? Principal => principal;
-}
-
 public sealed class AllowAll<TAction> : IAuthorizer<TAction>
 {
     public ValueTask<bool> IsAuthorizedAsync(TAction action, ClaimsPrincipal principal, CancellationToken ct = default) => new(true);
