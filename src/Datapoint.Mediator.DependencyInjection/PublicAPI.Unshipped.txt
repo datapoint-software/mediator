@@ -1,5 +1,1 @@
 #nullable enable
-Datapoint.Mediator.MediatorOptions.AddBehavior<TBehavior>(System.Func<System.IServiceProvider!, TBehavior!>! factory, Microsoft.Extensions.DependencyInjection.ServiceLifetime? lifetime = null) -> Datapoint.Mediator.MediatorOptions!
-Datapoint.Mediator.MediatorOptions.AddStartupCheck(System.Action<Datapoint.Mediator.MediatorStartupContext!>! check) -> Datapoint.Mediator.MediatorOptions!
-Datapoint.Mediator.MediatorStartupContext
-Datapoint.Mediator.MediatorStartupContext.RequestTypes.get -> System.Collections.Generic.IReadOnlyCollection<System.Type!>!

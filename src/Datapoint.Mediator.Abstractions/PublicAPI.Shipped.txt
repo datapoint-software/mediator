@@ -55,6 +55,12 @@ Datapoint.Mediator.IQueryHandler<TQuery, TResult>.HandleAsync(TQuery query, Syst
 Datapoint.Mediator.IStreamQuery<TResult>
 Datapoint.Mediator.IStreamQueryHandler<TQuery, TResult>
 Datapoint.Mediator.IStreamQueryHandler<TQuery, TResult>.HandleAsync(TQuery query, System.Threading.CancellationToken ct = default(System.Threading.CancellationToken)) -> System.Collections.Generic.IAsyncEnumerable<TResult>!
+Datapoint.Mediator.ITransactionContext
+Datapoint.Mediator.ITransactionContext.Attempt.get -> int
+Datapoint.Mediator.ITransactionContext.AttemptId.get -> System.Guid
+Datapoint.Mediator.ITransactionContext.IsActive.get -> bool
+Datapoint.Mediator.ITransactionContext.IsJoined.get -> bool
+Datapoint.Mediator.ITransactionContext.IsReadOnly.get -> bool
 Datapoint.Mediator.InvalidActionArgumentsException
 Datapoint.Mediator.InvalidActionArgumentsException.InvalidActionArgumentsException() -> void
 Datapoint.Mediator.InvalidActionArgumentsException.InvalidActionArgumentsException(string! message) -> void

@@ -4,6 +4,26 @@ All notable changes to the Datapoint.Mediator packages are documented in this fi
 
 The format is based on [Keep a Changelog 1.1.0](https://keepachangelog.com/en/1.1.0/), and the packages follow [Semantic Versioning 2.0.0](https://semver.org/spec/v2.0.0.html).
 
+## [4.0.0-beta.2](https://github.com/datapoint-software/mediator/releases/tag/4.0.0-beta.2) - 2026-11-01
+
+### Added
+
+- **Breaking:** **authorization:** Return decisions with details from authorizers ([723713c](https://github.com/datapoint-software/mediator/commit/723713c3ef4333a5faad4feb8faa608e0b62c66f))
+- **authorization:** Expose decisions to the dispatch and observe them ([063bccb](https://github.com/datapoint-software/mediator/commit/063bccbd5a64bf2adb76cfea91355db7d2597829))
+- **dependency-injection:** Register behaviours created by a factory ([288f0ba](https://github.com/datapoint-software/mediator/commit/288f0bafb39444beb7e63fbc12cd987bd4cbc16c))
+- **Breaking:** **authorization:** Bind decisions to their request and hide them from messages ([d0d4ec4](https://github.com/datapoint-software/mediator/commit/d0d4ec44db0f8cb80eff1f1bcd30a6474a924a4f))
+- **Breaking:** **dependency-injection:** Refuse conflicting behaviour registrations and add startup checks ([8a918b0](https://github.com/datapoint-software/mediator/commit/8a918b0aaab40735713159040651cf76a0687875))
+- **abstractions:** Add ITransactionContext ([a23946d](https://github.com/datapoint-software/mediator/commit/a23946d4732801497f7bdfb257eceab373b0e4a0))
+- **Breaking:** **entity-framework-core:** Add transaction options, initializers and read-only query transactions ([269042d](https://github.com/datapoint-software/mediator/commit/269042d29861260e7a421664d379960d2495292b))
+- **authorization:** Add AuthenticationBehavior and RequireTransaction ([d154ff2](https://github.com/datapoint-software/mediator/commit/d154ff23a88d825727846b44ddd140c9bcaa1983))
+
+### Migrating from 4.0.0-beta.1
+
+- **Authorizers:** `IAuthorizer<T>.IsAuthorizedAsync` (returning `bool`) is now `AuthorizeAsync`, returning an `AuthorizationDecision`. Replace `new(condition)` with `new(AuthorizationDecision.AllowIf(condition))`, or return `AuthorizationDecision.Allow(details)` / `Deny(details)`. Details never reach callers: adapters still only report 401 or 403.
+- **`Datapoint.Mediator.EntityFrameworkCore`** now depends on `Microsoft.EntityFrameworkCore.Relational`.
+
+Everything else is new and opt-in: decision details, `IAuthorizationContext`, observers, `AuthenticationBehavior`, transaction options, initializers, read-only query transactions and `ITransactionContext`. See [ADR 0020](https://github.com/datapoint-software/mediator/blob/main/docs/adr/0020-commands-authorized-inside-their-transaction.md) to [ADR 0027](https://github.com/datapoint-software/mediator/blob/main/docs/adr/0027-startup-checks.md) for the decisions.
+
 ## [4.0.0-beta.1](https://github.com/datapoint-software/mediator/releases/tag/4.0.0-beta.1) - 2026-11-01
 
 ### Added

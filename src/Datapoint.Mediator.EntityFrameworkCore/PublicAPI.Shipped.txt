@@ -1,7 +1,44 @@
 #nullable enable
+Datapoint.Mediator.EntityFrameworkCore.ForeignTransactions
+Datapoint.Mediator.EntityFrameworkCore.ForeignTransactions.Join = 0 -> Datapoint.Mediator.EntityFrameworkCore.ForeignTransactions
+Datapoint.Mediator.EntityFrameworkCore.ForeignTransactions.Throw = 1 -> Datapoint.Mediator.EntityFrameworkCore.ForeignTransactions
+Datapoint.Mediator.EntityFrameworkCore.ITransactionInitializer<TDbContext>
+Datapoint.Mediator.EntityFrameworkCore.ITransactionInitializer<TDbContext>.InitializeAsync(TDbContext! dbContext, Datapoint.Mediator.EntityFrameworkCore.TransactionInitialization! transaction, System.Threading.CancellationToken ct = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask
 Datapoint.Mediator.EntityFrameworkCore.NonTransactionalAttribute
 Datapoint.Mediator.EntityFrameworkCore.NonTransactionalAttribute.NonTransactionalAttribute() -> void
+Datapoint.Mediator.EntityFrameworkCore.QueryTransactions
+Datapoint.Mediator.EntityFrameworkCore.QueryTransactions.None = 0 -> Datapoint.Mediator.EntityFrameworkCore.QueryTransactions
+Datapoint.Mediator.EntityFrameworkCore.QueryTransactions.ReadOnly = 1 -> Datapoint.Mediator.EntityFrameworkCore.QueryTransactions
 Datapoint.Mediator.EntityFrameworkCore.TransactionBehavior<TDbContext>
 Datapoint.Mediator.EntityFrameworkCore.TransactionBehavior<TDbContext>.HandleAsync(Datapoint.Mediator.ICommand! command, System.Func<System.Threading.CancellationToken, System.Threading.Tasks.ValueTask>! next, System.Threading.CancellationToken ct = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask
 Datapoint.Mediator.EntityFrameworkCore.TransactionBehavior<TDbContext>.HandleAsync<TResult>(Datapoint.Mediator.ICommand<TResult>! command, System.Func<System.Threading.CancellationToken, System.Threading.Tasks.ValueTask<TResult>>! next, System.Threading.CancellationToken ct = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<TResult>
+Datapoint.Mediator.EntityFrameworkCore.TransactionBehavior<TDbContext>.HandleAsync<TResult>(Datapoint.Mediator.IQuery<TResult>! query, System.Func<System.Threading.CancellationToken, System.Threading.Tasks.ValueTask<TResult>>! next, System.Threading.CancellationToken ct = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<TResult>
+Datapoint.Mediator.EntityFrameworkCore.TransactionBehavior<TDbContext>.HandleAsync<TResult>(Datapoint.Mediator.IStreamQuery<TResult>! query, System.Func<System.Threading.CancellationToken, System.Collections.Generic.IAsyncEnumerable<TResult>!>! next, System.Threading.CancellationToken ct = default(System.Threading.CancellationToken)) -> System.Collections.Generic.IAsyncEnumerable<TResult>!
 Datapoint.Mediator.EntityFrameworkCore.TransactionBehavior<TDbContext>.TransactionBehavior(TDbContext! dbContext) -> void
+Datapoint.Mediator.EntityFrameworkCore.TransactionBehavior<TDbContext>.TransactionBehavior(TDbContext! dbContext, System.Collections.Generic.IEnumerable<Datapoint.Mediator.EntityFrameworkCore.ITransactionInitializer<TDbContext!>!>! initializers, Datapoint.Mediator.EntityFrameworkCore.TransactionBehaviorOptions? options = null) -> void
+Datapoint.Mediator.EntityFrameworkCore.TransactionBehaviorOptions
+Datapoint.Mediator.EntityFrameworkCore.TransactionBehaviorOptions.ForeignTransactions.get -> Datapoint.Mediator.EntityFrameworkCore.ForeignTransactions
+Datapoint.Mediator.EntityFrameworkCore.TransactionBehaviorOptions.ForeignTransactions.set -> void
+Datapoint.Mediator.EntityFrameworkCore.TransactionBehaviorOptions.IsolationLevel.get -> System.Data.IsolationLevel
+Datapoint.Mediator.EntityFrameworkCore.TransactionBehaviorOptions.IsolationLevel.set -> void
+Datapoint.Mediator.EntityFrameworkCore.TransactionBehaviorOptions.Queries.get -> Datapoint.Mediator.EntityFrameworkCore.QueryTransactions
+Datapoint.Mediator.EntityFrameworkCore.TransactionBehaviorOptions.Queries.set -> void
+Datapoint.Mediator.EntityFrameworkCore.TransactionBehaviorOptions.QueryIsolationLevel.get -> System.Data.IsolationLevel
+Datapoint.Mediator.EntityFrameworkCore.TransactionBehaviorOptions.QueryIsolationLevel.set -> void
+Datapoint.Mediator.EntityFrameworkCore.TransactionBehaviorOptions.ReadOnlyStatement.get -> string?
+Datapoint.Mediator.EntityFrameworkCore.TransactionBehaviorOptions.ReadOnlyStatement.set -> void
+Datapoint.Mediator.EntityFrameworkCore.TransactionBehaviorOptions.TransactionBehaviorOptions() -> void
+Datapoint.Mediator.EntityFrameworkCore.TransactionContext
+Datapoint.Mediator.EntityFrameworkCore.TransactionContext.Attempt.get -> int
+Datapoint.Mediator.EntityFrameworkCore.TransactionContext.AttemptId.get -> System.Guid
+Datapoint.Mediator.EntityFrameworkCore.TransactionContext.IsActive.get -> bool
+Datapoint.Mediator.EntityFrameworkCore.TransactionContext.IsJoined.get -> bool
+Datapoint.Mediator.EntityFrameworkCore.TransactionContext.IsReadOnly.get -> bool
+Datapoint.Mediator.EntityFrameworkCore.TransactionContext.TransactionContext() -> void
+Datapoint.Mediator.EntityFrameworkCore.TransactionInitialization
+Datapoint.Mediator.EntityFrameworkCore.TransactionInitialization.Attempt.get -> int
+Datapoint.Mediator.EntityFrameworkCore.TransactionInitialization.AttemptId.get -> System.Guid
+Datapoint.Mediator.EntityFrameworkCore.TransactionInitialization.IsJoined.get -> bool
+Datapoint.Mediator.EntityFrameworkCore.TransactionInitialization.IsReadOnly.get -> bool
+Datapoint.Mediator.EntityFrameworkCore.TransactionInitialization.Request.get -> object!
+Datapoint.Mediator.EntityFrameworkCore.TransactionInitialization.TransactionInitialization(object! request, bool isReadOnly, bool isJoined, int attempt, System.Guid attemptId) -> void

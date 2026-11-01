@@ -2,13 +2,17 @@
 Datapoint.Mediator.MediatorOptions
 Datapoint.Mediator.MediatorOptions.AddBehavior(System.Type! behaviorType, Microsoft.Extensions.DependencyInjection.ServiceLifetime? lifetime = null) -> Datapoint.Mediator.MediatorOptions!
 Datapoint.Mediator.MediatorOptions.AddBehavior<TBehavior>(Microsoft.Extensions.DependencyInjection.ServiceLifetime? lifetime = null) -> Datapoint.Mediator.MediatorOptions!
+Datapoint.Mediator.MediatorOptions.AddBehavior<TBehavior>(System.Func<System.IServiceProvider!, TBehavior!>! factory, Microsoft.Extensions.DependencyInjection.ServiceLifetime? lifetime = null) -> Datapoint.Mediator.MediatorOptions!
 Datapoint.Mediator.MediatorOptions.AddHandler(System.Type! handlerType, Microsoft.Extensions.DependencyInjection.ServiceLifetime? lifetime = null) -> Datapoint.Mediator.MediatorOptions!
 Datapoint.Mediator.MediatorOptions.AddHandler<THandler>(Microsoft.Extensions.DependencyInjection.ServiceLifetime? lifetime = null) -> Datapoint.Mediator.MediatorOptions!
 Datapoint.Mediator.MediatorOptions.AddHandlersFromAssembly(System.Reflection.Assembly! assembly, Microsoft.Extensions.DependencyInjection.ServiceLifetime? lifetime = null) -> Datapoint.Mediator.MediatorOptions!
 Datapoint.Mediator.MediatorOptions.AddHandlersFromAssemblyContaining<T>(Microsoft.Extensions.DependencyInjection.ServiceLifetime? lifetime = null) -> Datapoint.Mediator.MediatorOptions!
+Datapoint.Mediator.MediatorOptions.AddStartupCheck(System.Action<Datapoint.Mediator.MediatorStartupContext!>! check) -> Datapoint.Mediator.MediatorOptions!
 Datapoint.Mediator.MediatorOptions.DefaultLifetime.get -> Microsoft.Extensions.DependencyInjection.ServiceLifetime
 Datapoint.Mediator.MediatorOptions.DefaultLifetime.set -> void
 Datapoint.Mediator.MediatorOptions.MediatorOptions() -> void
+Datapoint.Mediator.MediatorStartupContext
+Datapoint.Mediator.MediatorStartupContext.RequestTypes.get -> System.Collections.Generic.IReadOnlyCollection<System.Type!>!
 Microsoft.Extensions.DependencyInjection.MediatorServiceCollectionExtensions
 static Microsoft.Extensions.DependencyInjection.MediatorServiceCollectionExtensions.AddMediator(this Microsoft.Extensions.DependencyInjection.IServiceCollection! services) -> Microsoft.Extensions.DependencyInjection.IServiceCollection!
 static Microsoft.Extensions.DependencyInjection.MediatorServiceCollectionExtensions.AddMediator(this Microsoft.Extensions.DependencyInjection.IServiceCollection! services, System.Action<Datapoint.Mediator.MediatorOptions!>! configure) -> Microsoft.Extensions.DependencyInjection.IServiceCollection!

@@ -1,7 +1,1 @@
 #nullable enable
-Microsoft.Extensions.DependencyInjection.AuthorizationContextServiceCollectionExtensions
-Microsoft.Extensions.DependencyInjection.AuthorizationObserverServiceCollectionExtensions
-static Microsoft.Extensions.DependencyInjection.AuthorizationContextServiceCollectionExtensions.AddAuthorizationContext(this Microsoft.Extensions.DependencyInjection.IServiceCollection! services) -> Microsoft.Extensions.DependencyInjection.IServiceCollection!
-static Microsoft.Extensions.DependencyInjection.AuthorizationObserverServiceCollectionExtensions.AddAuthorizationObserver<TObserver>(this Microsoft.Extensions.DependencyInjection.IServiceCollection! services, Microsoft.Extensions.DependencyInjection.ServiceLifetime lifetime = Microsoft.Extensions.DependencyInjection.ServiceLifetime.Scoped) -> Microsoft.Extensions.DependencyInjection.IServiceCollection!
-static Microsoft.Extensions.DependencyInjection.AuthorizationMediatorOptionsExtensions.AddAuthenticationBehavior(this Datapoint.Mediator.MediatorOptions! options) -> Datapoint.Mediator.MediatorOptions!
-static Microsoft.Extensions.DependencyInjection.AuthorizationMediatorOptionsExtensions.AddAuthorizationBehavior(this Datapoint.Mediator.MediatorOptions! options, System.Action<Datapoint.Mediator.Authorization.AuthorizationBehaviorOptions!>! configure) -> Datapoint.Mediator.MediatorOptions!
