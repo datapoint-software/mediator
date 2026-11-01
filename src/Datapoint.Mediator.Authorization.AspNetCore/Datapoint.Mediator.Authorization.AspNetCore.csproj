@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <Description>Provides the ASP.NET Core request's user to the Datapoint.Mediator authorization behaviour, for APIs and MCP servers over HTTP.</Description>
+    <PackageTags>$(PackageTags);authorization;security;aspnetcore</PackageTags>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Datapoint.Mediator.Authorization\Datapoint.Mediator.Authorization.csproj" />
+  </ItemGroup>
+
+</Project>
