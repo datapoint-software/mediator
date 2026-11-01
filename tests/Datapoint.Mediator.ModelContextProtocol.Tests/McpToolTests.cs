@@ -210,6 +210,22 @@ public sealed class McpToolTests
     }
 
     [Fact]
+    public async Task CallTool_DenialWithDetails_ReportsAccessDenied_WithoutTheDetails()
+    {
+        await using var mcp = await McpHarness.StartAsync(
+            configureMediator: o => o.AddAuthorizationBehavior(),
+            configureServices: s => s
+                .AddSingleton<IPrincipalAccessor>(new FixedPrincipalAccessor(SignedIn()))
+                .AddSingleton<IAuthorizer<ArchiveInvoice>, DenyWithDetails<ArchiveInvoice>>());
+
+        var denied = await mcp.Client.CallToolAsync("invoices_archive", new Dictionary<string, object?> { ["id"] = 1 }, cancellationToken: Ct);
+
+        Assert.True(denied.IsError);
+        Assert.Contains("Access is denied.", Text(denied));
+        Assert.DoesNotContain("TOP-SECRET", Text(denied));
+    }
+
+    [Fact]
     public async Task CallTool_WithoutServiceProvider_ReportsGenericError()
     {
         await using var mcp = await McpHarness.StartAsync(withServiceProvider: false);

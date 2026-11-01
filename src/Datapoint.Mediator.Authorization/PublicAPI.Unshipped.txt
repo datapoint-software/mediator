@@ -1,1 +1,9 @@
 #nullable enable
+*REMOVED*Datapoint.Mediator.Authorization.IAuthorizer<TAction>.IsAuthorizedAsync(TAction action, System.Security.Claims.ClaimsPrincipal! principal, System.Threading.CancellationToken ct = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<bool>
+Datapoint.Mediator.Authorization.IAuthorizer<TAction>.AuthorizeAsync(TAction action, System.Security.Claims.ClaimsPrincipal! principal, System.Threading.CancellationToken ct = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<Datapoint.Mediator.Authorization.AuthorizationDecision!>
+Datapoint.Mediator.Authorization.AuthorizationDecision
+Datapoint.Mediator.Authorization.AuthorizationDecision.Details.get -> object?
+Datapoint.Mediator.Authorization.AuthorizationDecision.IsAllowed.get -> bool
+static Datapoint.Mediator.Authorization.AuthorizationDecision.Allow(object? details = null) -> Datapoint.Mediator.Authorization.AuthorizationDecision!
+static Datapoint.Mediator.Authorization.AuthorizationDecision.AllowIf(bool condition) -> Datapoint.Mediator.Authorization.AuthorizationDecision!
+static Datapoint.Mediator.Authorization.AuthorizationDecision.Deny(object? details = null) -> Datapoint.Mediator.Authorization.AuthorizationDecision!

@@ -149,6 +149,23 @@ public sealed class EndpointTests
     }
 
     [Fact]
+    public async Task DenialWithDetails_Returns403_WithoutTheDetails()
+    {
+        await using var app = await TestApp.StartAsync(
+            configureMediator: o => o.AddAuthorizationBehavior(),
+            configureServices: s => s
+                .AddSingleton<IPrincipalAccessor>(new FixedPrincipalAccessor(SignedIn()))
+                .AddSingleton<IAuthorizer<ArchiveInvoice>, DenyWithDetails<ArchiveInvoice>>());
+
+        var response = await app.Client.PostAsJsonAsync("/api/invoices/archive", new { id = 1 }, Ct);
+        var body = await response.Content.ReadAsStringAsync(Ct);
+
+        Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
+        Assert.DoesNotContain("42", body);
+        Assert.DoesNotContain("TOP-SECRET", body);
+    }
+
+    [Fact]
     public async Task DeniedStreamQuery_Returns403_NotABroken200()
     {
         await using var app = await StartWithAuthorizationAsync(SignedIn());

@@ -41,31 +41,31 @@ public sealed class VoidInvoiceHandler(Recorder recorder) : ICommandHandler<Void
 // Declared out of name order on purpose, to check that scanning sorts them.
 public sealed class ZetaApproveAuthorizer : IAuthorizer<ApproveInvoice>
 {
-    public ValueTask<bool> IsAuthorizedAsync(ApproveInvoice action, ClaimsPrincipal principal, CancellationToken ct = default) =>
-        new(principal.IsInRole("Finance"));
+    public ValueTask<AuthorizationDecision> AuthorizeAsync(ApproveInvoice action, ClaimsPrincipal principal, CancellationToken ct = default) =>
+        new(AuthorizationDecision.AllowIf(principal.IsInRole("Finance")));
 }
 
 internal sealed class AlphaApproveAuthorizer : IAuthorizer<ApproveInvoice>
 {
-    public ValueTask<bool> IsAuthorizedAsync(ApproveInvoice action, ClaimsPrincipal principal, CancellationToken ct = default) =>
-        new(action.Amount <= 1000);
+    public ValueTask<AuthorizationDecision> AuthorizeAsync(ApproveInvoice action, ClaimsPrincipal principal, CancellationToken ct = default) =>
+        new(AuthorizationDecision.AllowIf(action.Amount <= 1000));
 }
 
 public sealed class InvoiceAuthorizer : IAuthorizer<ApproveInvoice>, IAuthorizer<ArchiveInvoice>
 {
-    public ValueTask<bool> IsAuthorizedAsync(ApproveInvoice action, ClaimsPrincipal principal, CancellationToken ct = default) => new(true);
+    public ValueTask<AuthorizationDecision> AuthorizeAsync(ApproveInvoice action, ClaimsPrincipal principal, CancellationToken ct = default) => new(AuthorizationDecision.Allow());
 
-    public ValueTask<bool> IsAuthorizedAsync(ArchiveInvoice action, ClaimsPrincipal principal, CancellationToken ct = default) => new(true);
+    public ValueTask<AuthorizationDecision> AuthorizeAsync(ArchiveInvoice action, ClaimsPrincipal principal, CancellationToken ct = default) => new(AuthorizationDecision.Allow());
 }
 
 public abstract class AbstractAuthorizer : IAuthorizer<ArchiveInvoice>
 {
-    public abstract ValueTask<bool> IsAuthorizedAsync(ArchiveInvoice action, ClaimsPrincipal principal, CancellationToken ct = default);
+    public abstract ValueTask<AuthorizationDecision> AuthorizeAsync(ArchiveInvoice action, ClaimsPrincipal principal, CancellationToken ct = default);
 }
 
 public sealed class GenericAuthorizer<T> : IAuthorizer<T>
 {
-    public ValueTask<bool> IsAuthorizedAsync(T action, ClaimsPrincipal principal, CancellationToken ct = default) => new(true);
+    public ValueTask<AuthorizationDecision> AuthorizeAsync(T action, ClaimsPrincipal principal, CancellationToken ct = default) => new(AuthorizationDecision.Allow());
 }
 
 public sealed class OtherBehavior : IBehavior;

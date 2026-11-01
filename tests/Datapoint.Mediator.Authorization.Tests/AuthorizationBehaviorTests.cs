@@ -165,6 +165,29 @@ public sealed class AuthorizationBehaviorTests
     }
 
     [Fact]
+    public async Task AuthorizerReturnsNull_DeniesAccess()
+    {
+        var behavior = CreateBehavior(Principals.SignedIn(), s => s.AddSingleton<IAuthorizer<DeleteInvoice>>(new NullAuthorizer<DeleteInvoice>()));
+
+        await Assert.ThrowsAsync<AccessDeniedException>(
+            async () => await behavior.HandleAsync(new DeleteInvoice(1), Next, TestContext.Current.CancellationToken));
+
+        Assert.False(_nextCalled);
+    }
+
+    [Fact]
+    public async Task DenialDetails_AreNotInTheExceptionMessage()
+    {
+        var behavior = CreateBehavior(Principals.SignedIn(), s => s.AddSingleton<IAuthorizer<DeleteInvoice>>(
+            new TestAuthorizer<DeleteInvoice>("deny", AuthorizationDecision.Deny("label TOP-SECRET"), _log)));
+
+        var exception = await Assert.ThrowsAsync<AccessDeniedException>(
+            async () => await behavior.HandleAsync(new DeleteInvoice(1), Next, TestContext.Current.CancellationToken));
+
+        Assert.DoesNotContain("TOP-SECRET", exception.Message);
+    }
+
+    [Fact]
     public async Task SeveralAuthorizers_AllMustAllow_AndStopAtFirstRefusal()
     {
         var behavior = CreateBehavior(Principals.SignedIn(), s => s

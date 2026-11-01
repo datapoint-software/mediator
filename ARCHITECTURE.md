@@ -116,7 +116,7 @@ Exception messages are never recorded. When nothing listens, the dispatch isn't 
 
 Any change must keep these true. Tests cover each one, and the linked records explain why.
 
-- **Authorization fails closed:** an action with no authorizer is denied, and no user means `AuthenticationRequiredException` ([0007](docs/adr/0007-authorization-fails-closed.md)).
+- **Authorization fails closed:** an action with no authorizer is denied, and no user means `AuthenticationRequiredException` ([0018](docs/adr/0018-authorizers-return-decisions.md)).
 - **Messages are not authorized,** and can never be actions ([0008](docs/adr/0008-messages-are-not-authorized.md)).
 - **Hidden actions are indistinguishable from unknown ones** ([0011](docs/adr/0011-named-actions.md)).
 - **No adapter echoes input or exception details,** and telemetry never records exception messages ([0012](docs/adr/0012-adapters-never-echo-input-or-exceptions.md)).

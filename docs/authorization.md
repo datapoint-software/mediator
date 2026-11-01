@@ -8,20 +8,50 @@ dotnet add package Datapoint.Mediator.Authorization.DependencyInjection --prerel
 
 ## Authorizers
 
-An authorizer decides whether a user may run one action. Write it in your business layer:
+An authorizer decides whether a user may run one action, and returns an `AuthorizationDecision`. Write it in your business layer:
 
 ```csharp
 public sealed class InvoiceAuthorizer : IAuthorizer<CreateInvoice>, IAuthorizer<GetInvoice>
 {
-    public ValueTask<bool> IsAuthorizedAsync(CreateInvoice action, ClaimsPrincipal principal, CancellationToken ct = default) =>
-        new(principal.IsInRole("Finance"));
+    public ValueTask<AuthorizationDecision> AuthorizeAsync(CreateInvoice action, ClaimsPrincipal principal, CancellationToken ct = default) =>
+        new(AuthorizationDecision.AllowIf(principal.IsInRole("Finance")));
 
-    public ValueTask<bool> IsAuthorizedAsync(GetInvoice action, ClaimsPrincipal principal, CancellationToken ct = default) =>
-        new(true);   // any signed-in user
+    public ValueTask<AuthorizationDecision> AuthorizeAsync(GetInvoice action, ClaimsPrincipal principal, CancellationToken ct = default) =>
+        new(AuthorizationDecision.Allow());   // any signed-in user
 }
 ```
 
-An authorizer receives the action itself, so it can decide on its arguments, such as "only amounts up to 1000", and it can use injected services, such as a database, to check ownership.
+An authorizer receives the action itself, so it can decide on its arguments, such as "only amounts up to 1000", and it can use injected services, such as a database, to check ownership. Authorizers only read: they must not change data, because they can run inside the command's transaction.
+
+### Decisions and their details
+
+A decision can carry **details**: any object of yours that explains it, such as the share, role or label rule that applied, or the constraints the handler must respect:
+
+```csharp
+public sealed record ReadGrant(string ShareId, string Role, bool BrowseOnly, bool Watermark);
+
+public sealed class DownloadItemAuthorizer(FileShareDbContext db) : IAuthorizer<DownloadItem>
+{
+    public async ValueTask<AuthorizationDecision> AuthorizeAsync(DownloadItem action, ClaimsPrincipal principal, CancellationToken ct = default)
+    {
+        var share = await db.Shares.AsNoTracking()
+            .Where(s => s.ItemId == action.ItemId && s.UserId == principal.FindFirstValue("sub"))
+            .FirstOrDefaultAsync(ct);
+
+        return share is null
+            ? AuthorizationDecision.Deny(new NoShare(action.ItemId))
+            : AuthorizationDecision.Allow(new ReadGrant(share.Id, share.Role, share.BrowseOnly, share.Watermark));
+    }
+}
+```
+
+| Create it with | Meaning |
+|---|---|
+| `AuthorizationDecision.Allow(details)` | allowed; `details` is optional |
+| `AuthorizationDecision.Deny(details)` | denied; `details` is optional |
+| `AuthorizationDecision.AllowIf(condition)` | allowed when `condition` is `true`, without details |
+
+> **Security:** details are for your application and its audit log. They **never** reach the caller: the exception's message doesn't include them, and the API, CLI and MCP adapters only say 401 or 403. Don't copy them into your own error responses either. They can be sensitive, such as a classification label, so protect them wherever you store them.
 
 Register the authorizers, the current user and the behaviour:
 
@@ -42,12 +72,13 @@ Authorization **fails closed**: when in doubt, it refuses.
 |---|---|
 | No current user, or a user without an authenticated identity | `AuthenticationRequiredException` (HTTP 401, CLI exit code 3) |
 | The action has **no authorizer** | `AccessDeniedException` (HTTP 403, CLI exit code 4) |
-| Any of the action's authorizers returns `false` | `AccessDeniedException` |
-| Every authorizer returns `true` | the action runs |
+| Any of the action's authorizers denies it, or returns `null` | `AccessDeniedException` |
+| An authorizer throws | its exception propagates, and the action doesn't run |
+| Every authorizer allows it | the action runs |
 | The action is marked `[AllowAnonymousAccess]` | the action runs, without any check |
 
 - Forgetting an authorizer denies the action, rather than exposing it. You find out in development, not from a leak.
-- When an action has several authorizers, such as one for roles and one for ownership, all of them must allow it.
+- When an action has several authorizers, such as one for roles and one for ownership, all of them must allow it. They run in registration order and stop at the first denial.
 - Commands, queries and stream queries are authorized. For stream queries, the check runs before the first result.
 - `[AllowAnonymousAccess]` isn't inherited: a derived type must be marked too.
 

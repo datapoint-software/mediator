@@ -45,8 +45,8 @@ public async Task CreateInvoice_RequiresFinanceRole()
 {
     var authorizer = new InvoiceAuthorizer();
 
-    Assert.True(await authorizer.IsAuthorizedAsync(new CreateInvoice("Ana", 1m), User("ana", "Finance")));
-    Assert.False(await authorizer.IsAuthorizedAsync(new CreateInvoice("Ana", 1m), User("rui")));
+    Assert.True((await authorizer.AuthorizeAsync(new CreateInvoice("Ana", 1m), User("ana", "Finance"))).IsAllowed);
+    Assert.False((await authorizer.AuthorizeAsync(new CreateInvoice("Ana", 1m), User("rui"))).IsAllowed);
 }
 
 static ClaimsPrincipal User(string name, params string[] roles) =>

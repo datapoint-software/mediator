@@ -191,6 +191,22 @@ public sealed class CommandTests
     }
 
     [Fact]
+    public async Task DenialWithDetails_ExitsWithAccessDenied_WithoutTheDetails()
+    {
+        await using var cli = new Cli(
+            configureMediator: o => o.AddAuthorizationBehavior(),
+            configureServices: s => s
+                .AddSingleton<IPrincipalAccessor>(new FixedPrincipalAccessor(new ClaimsPrincipal(new ClaimsIdentity([new Claim(ClaimTypes.Name, "ana")], "test"))))
+                .AddSingleton<IAuthorizer<ArchiveInvoice>, DenyWithDetails<ArchiveInvoice>>());
+
+        var denied = await cli.RunAsync("invoices", "archive", "--id", "1");
+
+        Assert.Equal(ActionExitCodes.AccessDenied, denied.ExitCode);
+        Assert.DoesNotContain("TOP-SECRET", denied.Error);
+        Assert.DoesNotContain("TOP-SECRET", denied.Output);
+    }
+
+    [Fact]
     public async Task UnexpectedError_PrintsNoDetails()
     {
         await using var cli = new Cli();

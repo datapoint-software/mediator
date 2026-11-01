@@ -82,5 +82,14 @@ public sealed class FailingReportHandler : ICommandHandler<FailingReport>
 
 public sealed class AllowAll<TAction> : IAuthorizer<TAction>
 {
-    public ValueTask<bool> IsAuthorizedAsync(TAction action, ClaimsPrincipal principal, CancellationToken ct = default) => new(true);
+    public ValueTask<AuthorizationDecision> AuthorizeAsync(TAction action, ClaimsPrincipal principal, CancellationToken ct = default) => new(AuthorizationDecision.Allow());
+}
+
+// Denies with details that must never reach the caller.
+public sealed class DenyWithDetails<TAction> : IAuthorizer<TAction>
+{
+    public const string Secret = "share 42 revoked by label rule TOP-SECRET";
+
+    public ValueTask<AuthorizationDecision> AuthorizeAsync(TAction action, ClaimsPrincipal principal, CancellationToken ct = default) =>
+        new(AuthorizationDecision.Deny(Secret));
 }

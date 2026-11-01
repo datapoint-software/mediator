@@ -27,17 +27,29 @@ public sealed record ListPrices : IStreamQuery<int>;
 
 public sealed record DerivedFromAnonymous : AnonymousBase;
 
-// Allows or refuses as configured, logging its name and recording what it received.
-public sealed class TestAuthorizer<TAction>(string name, bool allow, List<string> log) : IAuthorizer<TAction>
+// Returns the configured decision, logging its name and recording what it received.
+public sealed class TestAuthorizer<TAction>(string name, AuthorizationDecision decision, List<string> log) : IAuthorizer<TAction>
 {
+    public TestAuthorizer(string name, bool allow, List<string> log)
+        : this(name, AuthorizationDecision.AllowIf(allow), log)
+    {
+    }
+
     public List<(TAction Action, ClaimsPrincipal Principal, CancellationToken Token)> Calls { get; } = [];
 
-    public ValueTask<bool> IsAuthorizedAsync(TAction action, ClaimsPrincipal principal, CancellationToken ct = default)
+    public ValueTask<AuthorizationDecision> AuthorizeAsync(TAction action, ClaimsPrincipal principal, CancellationToken ct = default)
     {
         log.Add(name);
         Calls.Add((action, principal, ct));
-        return new(allow);
+        return new(decision);
     }
+}
+
+// Returns null, as a careless implementation might.
+public sealed class NullAuthorizer<TAction> : IAuthorizer<TAction>
+{
+    public ValueTask<AuthorizationDecision> AuthorizeAsync(TAction action, ClaimsPrincipal principal, CancellationToken ct = default) =>
+        new((AuthorizationDecision)null!);
 }
 
 public sealed class DelegateServiceProvider(Func<Type, object?> getService) : IServiceProvider

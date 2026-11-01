@@ -12,7 +12,7 @@ Each record follows [Michael Nygard's format](https://cognitect.com/blog/2011/11
 | [0004](0004-package-split.md) | Separate packages for contracts, implementation and DI registration | Accepted |
 | [0005](0005-one-behavior-interface.md) | One `IBehavior` with an overload per kind | Accepted |
 | [0006](0006-cached-generic-dispatchers.md) | Cached generic dispatchers, allocation-free without behaviours | Accepted |
-| [0007](0007-authorization-fails-closed.md) | Authorization fails closed | Accepted |
+| [0007](0007-authorization-fails-closed.md) | Authorization fails closed | Superseded by [0018](0018-authorizers-return-decisions.md) |
 | [0008](0008-messages-are-not-authorized.md) | Messages are not authorized | Accepted |
 | [0009](0009-messages-run-in-the-callers-transaction.md) | Messages run immediately, inside the caller's transaction | Accepted |
 | [0010](0010-transaction-retries-and-nesting.md) | `TransactionBehavior` retries the whole command, and nested commands join | Accepted |
@@ -23,5 +23,6 @@ Each record follows [Michael Nygard's format](https://cognitect.com/blog/2011/11
 | [0015](0015-versioning.md) | 4.0.0 is the first public version, versioned with MinVer | Accepted |
 | [0016](0016-full-line-coverage.md) | 100% line coverage, enforced in CI | Accepted |
 | [0017](0017-cli-parses-with-the-invariant-culture.md) | The CLI parses numbers and dates with the invariant culture | Accepted |
+| [0018](0018-authorizers-return-decisions.md) | Authorizers return decisions with details | Accepted |
 
 To add a record, copy the structure of an existing one, use the next number, and add it to this table.

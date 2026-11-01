@@ -51,7 +51,10 @@ internal sealed class ActionAuthorization<TAction> : ActionAuthorization
 
         foreach (var authorizer in authorizers)
         {
-            if (!await authorizer.IsAuthorizedAsync(typedAction, principal, ct).ConfigureAwait(false))
+            // A null decision, from a careless implementation, is treated as a denial.
+            var decision = await authorizer.AuthorizeAsync(typedAction, principal, ct).ConfigureAwait(false);
+
+            if (decision is not { IsAllowed: true })
             {
                 throw new AccessDeniedException($"Access to '{typeof(TAction)}' is denied.");
             }

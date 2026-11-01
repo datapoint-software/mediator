@@ -146,8 +146,8 @@ public sealed class ApproveInvoiceHandler(Recorder recorder, IPrincipalAccessor 
 
 public sealed class ApproveInvoiceAuthorizer : IAuthorizer<ApproveInvoice>
 {
-    public ValueTask<bool> IsAuthorizedAsync(ApproveInvoice action, ClaimsPrincipal principal, CancellationToken ct = default) =>
-        new(true);
+    public ValueTask<AuthorizationDecision> AuthorizeAsync(ApproveInvoice action, ClaimsPrincipal principal, CancellationToken ct = default) =>
+        new(AuthorizationDecision.Allow());
 }
 
 // Signs in the user named in a request header, so tests can choose the user without real credentials.

@@ -109,7 +109,7 @@ public sealed class PingHandler : ICommandHandler<Ping>
 
 public sealed class AllowAll<TAction> : IAuthorizer<TAction>
 {
-    public ValueTask<bool> IsAuthorizedAsync(TAction action, ClaimsPrincipal principal, CancellationToken ct = default) => new(true);
+    public ValueTask<AuthorizationDecision> AuthorizeAsync(TAction action, ClaimsPrincipal principal, CancellationToken ct = default) => new(AuthorizationDecision.Allow());
 }
 
 public sealed class ScheduleReportHandler(Recorder recorder) : ICommandHandler<ScheduleReport>
@@ -121,4 +121,13 @@ public sealed class ScheduleReportHandler(Recorder recorder) : ICommandHandler<S
             $"schedule {command.Day:O} {(command.Threshold?.ToString(CultureInfo.InvariantCulture) ?? "-")} {(command.NotifyAt?.ToString("O", CultureInfo.InvariantCulture) ?? "-")}"));
         return default;
     }
+}
+
+// Denies with details that must never reach the caller.
+public sealed class DenyWithDetails<TAction> : IAuthorizer<TAction>
+{
+    public const string Secret = "share 42 revoked by label rule TOP-SECRET";
+
+    public ValueTask<AuthorizationDecision> AuthorizeAsync(TAction action, ClaimsPrincipal principal, CancellationToken ct = default) =>
+        new(AuthorizationDecision.Deny(Secret));
 }

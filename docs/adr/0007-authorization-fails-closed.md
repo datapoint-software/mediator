@@ -1,6 +1,6 @@
 # 7. Authorization fails closed
 
-- **Status:** Accepted
+- **Status:** Superseded by [0018](0018-authorizers-return-decisions.md)
 - **Date:** 2026-10-31
 
 ## Context
