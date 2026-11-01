@@ -3,15 +3,18 @@ namespace Datapoint.Mediator.CommandLine;
 /// <summary>
 /// The exit codes of commands added for actions.
 /// </summary>
-/// <remarks>
-/// An invalid command line exits with 1, System.CommandLine's own code.
-/// </remarks>
 public static class ActionExitCodes
 {
     /// <summary>
     /// The action succeeded.
     /// </summary>
     public const int Success = 0;
+
+    /// <summary>
+    /// The command line is not valid, such as a missing required option or a value of the wrong type. This is
+    /// System.CommandLine's own code, and the action does not run.
+    /// </summary>
+    public const int InvalidCommandLine = 1;
 
     /// <summary>
     /// The arguments are not valid, or the action failed with a message from

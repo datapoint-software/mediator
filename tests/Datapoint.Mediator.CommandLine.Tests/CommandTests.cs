@@ -105,7 +105,7 @@ public sealed class CommandTests
 
         var (exitCode, _, error) = await cli.RunAsync("invoices", "create", "--amount", "100");
 
-        Assert.Equal(1, exitCode);
+        Assert.Equal(ActionExitCodes.InvalidCommandLine, exitCode);
         Assert.Contains("--customer", error);
         Assert.Empty(cli.Recorder.Log);
     }
@@ -117,7 +117,7 @@ public sealed class CommandTests
 
         var (exitCode, _, error) = await cli.RunAsync("invoices", "create", "--customer", "Ana", "--amount", "lots");
 
-        Assert.Equal(1, exitCode);
+        Assert.Equal(ActionExitCodes.InvalidCommandLine, exitCode);
         Assert.Contains("--amount", error);
     }
 
@@ -139,7 +139,7 @@ public sealed class CommandTests
 
         var (exitCode, _, error) = await cli.RunAsync("invoices", "get", "--id", "1", "--json", "{}");
 
-        Assert.Equal(1, exitCode);
+        Assert.Equal(ActionExitCodes.InvalidCommandLine, exitCode);
         Assert.Contains("--json", error);
     }
 

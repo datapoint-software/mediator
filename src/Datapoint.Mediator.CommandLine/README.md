@@ -31,7 +31,7 @@ mytool invoices create --customer Ana --amount 100
 | Code | `ActionExitCodes` | Meaning |
 |---|---|---|
 | 0 | `Success` | The action succeeded. |
-| 1 | — | Invalid command line, such as a missing or mistyped option. |
+| 1 | `InvalidCommandLine` | Invalid command line, such as a missing or mistyped option. |
 | 2 | `InvalidArguments` | Invalid arguments, or a message from `options.ErrorMessage`, such as validation errors. |
 | 3 | `AuthenticationRequired` | No signed-in user. |
 | 4 | `AccessDenied` | The user may not run the action. |
