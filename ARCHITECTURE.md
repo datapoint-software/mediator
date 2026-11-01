@@ -108,7 +108,7 @@ The adapters recognise the authorization exceptions by their full type name, so 
 `MediatorTelemetry` owns an `ActivitySource` and a `Meter`, both named `Datapoint.Mediator`. Each dispatch:
 - produces a span named after the operation and the action type, such as `send CreateInvoice`;
 - records its duration in a histogram;
-- tags `datapoint.mediator.action` with the action's full type name, and on failure, `error.type` with the exception's full type name.
+- tags `datapoint.mediator.operation` (`send`, `query`, `stream` or `publish`), `datapoint.mediator.action` with the action's full type name, and on failure, `error.type` with the exception's full type name.
 
 Exception messages are never recorded. When nothing listens, the dispatch isn't wrapped at all.
 

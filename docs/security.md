@@ -1,0 +1,42 @@
+# Security
+
+Every security consideration in this manual, as one checklist. Each item links to the guide that explains it. To report a vulnerability in the library itself, follow [SECURITY.md](../SECURITY.md).
+
+## Authorization
+
+- [ ] **The authorization behaviour is registered,** before validation and transactions. → [Behaviours](behaviors.md#order)
+- [ ] **Every action has an authorizer,** or is deliberately marked `[AllowAnonymousAccess]`. Authorization fails closed, so a missing authorizer denies the action, but a test catches it earlier. → [Testing](testing.md#every-action-has-an-authorizer)
+- [ ] **Authorizers check the action's arguments** where it matters, such as ownership of the invoice being cancelled, not just the user's role. → [Authorization](authorization.md#authorizers)
+- [ ] **Exactly one `IPrincipalAccessor`** fits the host: HTTP for APIs and remote MCP servers, fixed for CLIs and local MCP servers. → [Authorization](authorization.md#the-current-user)
+- [ ] **Messages are never built from user input.** They aren't authorized. Send a command, and publish the message from its handler. → [Authorization](authorization.md#messages)
+
+## Errors and data exposure
+
+- [ ] **Validation errors are reported without `AttemptedValue`,** only the property name and message. → [Validation](validation.md#reporting-errors-safely)
+- [ ] **Error hooks (`MapException`, `ErrorMessage`) return only messages you wrote,** never an exception's own message for exceptions you don't control.
+- [ ] **ASP.NET Core uses `UseExceptionHandler` in production,** so unhandled exceptions become a `500` without details. → [ASP.NET Core](hosts/aspnetcore.md#errors)
+- [ ] **Behaviours and logs record type names, not requests or results,** which can contain personal data. → [Behaviours](behaviors.md#writing-a-behaviour)
+- [ ] **Action names and descriptions reveal nothing internal.** They're visible to every caller, in OpenAPI, CLI help and MCP tool lists. Use `Hidden = true` for internal actions. → [Actions](actions.md#hidden-actions)
+
+## Hosts
+
+- [ ] **API endpoints require authentication** with `RequireAuthorization()` on the action group, as defence in depth. → [ASP.NET Core](hosts/aspnetcore.md#the-current-user)
+- [ ] **A CLI doesn't hold credentials users can read.** Otherwise the rules only apply while users go through the CLI. → [Command line](hosts/command-line.md#the-current-user)
+- [ ] **AI agents get no more permissions than their user,** ideally fewer, and `Filter` offers only the tools they need. → [Model Context Protocol](hosts/model-context-protocol.md#security)
+- [ ] **A remote MCP server authenticates every request** with `app.MapMcp().RequireAuthorization()`. → [Model Context Protocol](hosts/model-context-protocol.md#transports)
+
+## Transactions and side effects
+
+- [ ] **External calls inside transactional commands are idempotent,** or moved to `[NonTransactional]` commands, because retries and rollbacks don't undo them. → [Transactions](transactions.md#side-effects-and-retries)
+- [ ] **Important records have unique constraints,** so a retry after an ambiguous commit fails instead of duplicating data. → [Transactions](transactions.md#side-effects-and-retries)
+
+## What the library guarantees
+
+These hold whatever your configuration, and are covered by the library's tests:
+- An action with no authorizer is denied.
+- Hidden and unknown actions fail the same way, so they can't be discovered.
+- The host adapters never echo the caller's input, or the message of an exception they don't recognise.
+- Telemetry never records exception messages, requests or results.
+- Invalid action configurations, such as a message marked as an action, fail at startup.
+
+The reasons behind each are in the [decision records](adr/README.md).
