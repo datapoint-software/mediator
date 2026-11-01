@@ -9,7 +9,6 @@ All notable changes to the Datapoint.Mediator packages are documented in this fi
 
 The format is based on [Keep a Changelog 1.1.0](https://keepachangelog.com/en/1.1.0/), and the packages follow \
 [Semantic Versioning 2.0.0](https://semver.org/spec/v2.0.0.html).
-
 """
 body = """
 {% if version %}\
@@ -26,9 +25,9 @@ body = """
 {{ commit.message | upper_first }} \
 ([{{ commit.id | truncate(length=7, end="") }}](https://github.com/datapoint-software/mediator/commit/{{ commit.id }}))
 {% endfor %}\
-{% endfor %}
+{% endfor %}\
 """
-trim = true
+trim = false
 
 [git]
 conventional_commits = true
