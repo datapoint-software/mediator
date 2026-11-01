@@ -2,9 +2,15 @@
 
 ## Mediator
 
-This project is a NuGet package that implements the Mediator pattern. It lets components send requests and publish notifications through a single mediator, instead of referencing each other's handlers directly.
+This project is a set of NuGet packages that implement the Mediator pattern for .NET. Components send commands and queries and publish messages through a single mediator, instead of referencing each other's handlers directly. Named actions let one business layer be offered from an HTTP API, a CLI and an MCP server, with the same authorization, validation and transactions.
 
-The package will be used in Datapoint's existing and future projects, so it needs to be easy to adopt and stable over time.
+The packages are used in Datapoint's existing and future projects, so they need to be easy to adopt and stable over time.
+
+Where to find things:
+- [CONTRIBUTING.md](CONTRIBUTING.md): build, test, coverage, benchmarks, code conventions, commits, public API, versioning and releasing. Follow it; this file doesn't repeat it.
+- [ARCHITECTURE.md](ARCHITECTURE.md): how the code is organised, and the invariants every change must keep.
+- [docs/adr/](docs/adr/README.md): why things are the way they are.
+- [docs/](docs/README.md): the user manual. [samples/](samples/README.md): runnable apps that use the packages.
 
 ## Working with the contributor
 
@@ -18,6 +24,7 @@ Assume the contributor is a junior developer. Your job is to help them reach sou
 - Raise risks the contributor may not see, such as performance, thread safety or breaking changes, even when they didn't ask.
 - Highlight security issues as soon as you find them, even when they are outside the current task. Explain the risk, how it could be exploited, and how to fix it.
 - If an answer conflicts with an earlier decision or a best practice, say so and explain the consequence before acting on it.
+- Before proposing to change a decided behaviour, read its record in `docs/adr/`. If it's still worth changing, say which record it reverses and why. A new or reversed decision gets a new record that supersedes the old one; accepted records are never rewritten.
 
 ### Tools
 
@@ -30,52 +37,58 @@ Assume the contributor is a junior developer. Your job is to help them reach sou
 - After each change, say what changed, how you verified it, and what you couldn't verify.
 - Keep explanations short and concrete. Use a small code example when it's clearer than prose.
 
-## Branches, commits and pull requests
+## Commits, pushes and releases
 
-- Write branch names, commit messages and pull requests in English.
-- `main` is the only long-lived branch.
-- Name branches following [Conventional Branch 1.1.0](https://conventionalbranch.org/): `<type>/<description>`, using lowercase letters, digits and hyphens only.
-- Write commit messages following [Conventional Commits 1.0.0](https://www.conventionalcommits.org/en/v1.0.0/): `<type>[optional scope][!]: <description>`, with an optional body and footers.
-- Commit often, one commit per self-contained change.
-- Do not include attribution trailers, such as `Co-Authored-By`, in commit messages.
-- Do not include attribution lines, such as "Generated with Claude Code", in pull request descriptions.
+- Follow the branch, commit and pull request rules in [CONTRIBUTING.md](CONTRIBUTING.md#branches-commits-and-pull-requests): English, Conventional Branch 1.1.0, Conventional Commits 1.0.0, `main` as the only long-lived branch.
+- Commit often, one commit per self-contained change, with its tests and documentation.
+- Commit only when the build and the test command themselves exit with code 0. Never decide from filtered output, such as the result of `grep`.
+- Do not include attribution trailers, such as `Co-Authored-By`, in commit messages, or attribution lines, such as "Generated with Claude Code", in pull request descriptions.
+- Never push, tag or release without the contributor asking. A published version is permanent.
+- After pushing, check that CI passes on the pushed commit.
 
-## Versioning
+## Rules for every change
 
-- Version the package following [Semantic Versioning 2.0.0](https://semver.org/spec/v2.0.0.html), independently of .NET's version numbers.
-- Derive the version bump from the Conventional Commits since the last release: `fix` is a patch, `feat` is a minor, and any breaking change (`!` or a `BREAKING CHANGE` footer) is a major.
-- Release from `main`. Do not create release branches per version or per target framework.
-- Adding a target framework is a minor bump. Dropping one is a breaking change, so it is a major bump.
-- The package currently targets `net10.0` only.
+### Tests and coverage
 
-### Public API
+- New or changed behaviour comes with tests in the same commit. Each test project tests one `src` project.
+- Line coverage must stay at 100% ([ADR 0016](docs/adr/0016-full-line-coverage.md)). Prefer a test of a real situation. Exclude code only when it genuinely can't be tested, with `[ExcludeFromCodeCoverage(Justification = "...")]` and a comment. Never exclude code to make CI pass.
+- For security-relevant behaviour, such as authorization or error mapping, check that a test fails when the behaviour is broken: break it temporarily, run the tests, and restore it.
 
-- Each `src` project lists its public API in `PublicAPI.Shipped.txt` (released) and `PublicAPI.Unshipped.txt` (since the last release). The build fails when the public API and these files disagree.
-- When you change a public API, update `PublicAPI.Unshipped.txt` in the same commit, so the change is visible in review. A removed or changed line from `PublicAPI.Shipped.txt` is a breaking change.
-- On release, move the entries from `PublicAPI.Unshipped.txt` to `PublicAPI.Shipped.txt`.
-- [Package validation](https://learn.microsoft.com/dotnet/fundamentals/apicompat/package-validation/overview) runs on `dotnet pack`. It has no baseline during the `4.0.0` pre-releases, because they may break the API. Once `4.0.0` is released, set `PackageValidationBaselineVersion` to `4.0.0` in `src/Directory.Build.props`, so the pack fails on any binary break that isn't released as a new major version.
+### Public API and versioning
 
-### Releasing
+- Update `PublicAPI.Unshipped.txt` in the same commit as any public API change. Removing or changing a shipped line is a breaking change.
+- Say when a change is breaking, before making it. During the `4.0.0` pre-releases, breaking changes are allowed but must be visible in review. After `4.0.0`, they need a new major version.
+- Follow the [versioning](CONTRIBUTING.md#versioning) and [releasing](CONTRIBUTING.md#releasing) steps in CONTRIBUTING.md. The next releases are `4.0.0-beta.N`; release `4.0.0` once the packages have been used in a real project.
 
-- Versions come from git tags via [MinVer](https://github.com/adamralph/minver). Tags have no prefix: `4.0.0-alpha.1`, not `v4.0.0-alpha.1`. Untagged builds get a pre-release version such as `4.0.0-alpha.0.12`.
-- The current series is `4.0.0-alpha.N`. Release `4.0.0` once the package has been used in a real project. Versions `3.0.0` and below already exist on nuget.org and can never be reused.
-- `CHANGELOG.md` follows [Keep a Changelog 1.1.0](https://keepachangelog.com/en/1.1.0/) and is generated from the Conventional Commits by [git-cliff](https://git-cliff.org/) (`brew install git-cliff`), configured in `cliff.toml`. `feat`, `fix`, `perf` and `docs` commits are listed, as are breaking changes of any type. There is no public history before `4.0.0-alpha.1`.
-- To release:
-  1. Move the public API entries to `PublicAPI.Shipped.txt`.
-  2. Add the version's section to the changelog: `git cliff --unreleased --tag <version> --prepend CHANGELOG.md`. Review it, then commit both changes.
-  3. Tag that commit on `main` and push the tag. The `Release` workflow builds, tests and publishes to nuget.org with Trusted Publishing, after approval in the `nuget` environment, then creates the GitHub release with the same notes.
-- Never tag or push without the contributor asking. A published version is permanent.
+### Documentation
 
-## Tests and coverage
+Documentation is part of the change, in the same commit:
+- A change to public behaviour updates its guide in `docs/`, the XML docs, and the package README if its quick start changes.
+- A change to the public API updates the samples, if they use it. The samples must keep building, because CI builds them.
+- A new package follows the [checklist](CONTRIBUTING.md#adding-a-package) in CONTRIBUTING.md.
+- A change to how the code works inside updates ARCHITECTURE.md.
+- Package READMEs link to the manual with full GitHub URLs, because nuget.org can't follow relative links.
 
-- New or changed behaviour comes with tests in the same change. Each test project tests one `src` project.
-- CI fails when line coverage, across all packages combined, is below 100%, and reports coverage to Codecov. Branch coverage is reported but not gated, because some branches depend on test timing.
-- Prefer a test that checks a real situation. When code genuinely can't be tested, exclude it with `[ExcludeFromCodeCoverage(Justification = "...")]` and a comment explaining why, so the exclusion is visible in review. Never exclude code just to make CI pass.
-- To measure coverage locally, as CI does:
+### Security invariants
 
-  ```bash
-  dotnet tool restore
-  dotnet build Datapoint.Mediator.slnx -c Release
-  dotnet test Datapoint.Mediator.slnx -c Release --no-build --results-directory coverage/raw --coverlet --coverlet-output-format cobertura --coverlet-include "[Datapoint.Mediator*]*" --coverlet-exclude "[*.Tests.Fixtures]*"
-  dotnet reportgenerator -reports:"coverage/raw/*.cobertura.*.xml" -targetdir:coverage -reporttypes:"Html;TextSummary"
-  ```
+These must hold after every change. Each has tests, and a record explaining why:
+- Authorization fails closed: an action without an authorizer is denied ([ADR 0007](docs/adr/0007-authorization-fails-closed.md)).
+- Messages aren't authorized and can never be actions, so they must never be built from user input ([ADR 0008](docs/adr/0008-messages-are-not-authorized.md)).
+- Hidden and unknown actions fail the same way ([ADR 0011](docs/adr/0011-named-actions.md)).
+- Host adapters never echo the caller's input or the message of an exception they don't recognise, and telemetry never records exception messages ([ADR 0012](docs/adr/0012-adapters-never-echo-input-or-exceptions.md)).
+- Every host adapter maps `AuthenticationRequiredException` and `AccessDeniedException` by their full type names ([ADR 0013](docs/adr/0013-adapters-match-authorization-exceptions-by-name.md)).
+- Only one `IPrincipalAccessor` can be registered ([ADR 0014](docs/adr/0014-one-principal-accessor.md)).
+
+A new host adapter needs a regression test proving it doesn't leak exception details.
+
+### Performance
+
+- Dispatch without behaviours must stay allocation-free ([ADR 0006](docs/adr/0006-cached-generic-dispatchers.md)). Measure changes to dispatch with the benchmarks, before and after, and report the `Allocated` column.
+- Cache reflection per type, in `static` fields, never per dispatch.
+
+### Dependencies and CI
+
+- Package versions live in `Directory.Packages.props`. After changing one, restore and commit the updated `packages.lock.json` files, because CI restores in locked mode.
+- Choose dependency versions released at least two weeks ago.
+- Pin GitHub Actions to a full commit SHA, with the version in a comment.
+- Treat secrets in workflows as environment variables, never interpolated into scripts, and give each job the least permissions it needs.
