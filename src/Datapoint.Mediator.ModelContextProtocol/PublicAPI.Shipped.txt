@@ -1,1 +1,13 @@
 #nullable enable
+Datapoint.Mediator.ModelContextProtocol.MediatorMcpOptions
+Datapoint.Mediator.ModelContextProtocol.MediatorMcpOptions.ErrorMessage.get -> System.Func<System.Exception!, string?>?
+Datapoint.Mediator.ModelContextProtocol.MediatorMcpOptions.ErrorMessage.set -> void
+Datapoint.Mediator.ModelContextProtocol.MediatorMcpOptions.Filter.get -> System.Func<Datapoint.Mediator.ActionDescriptor!, bool>?
+Datapoint.Mediator.ModelContextProtocol.MediatorMcpOptions.Filter.set -> void
+Datapoint.Mediator.ModelContextProtocol.MediatorMcpOptions.MaxStreamResults.get -> int
+Datapoint.Mediator.ModelContextProtocol.MediatorMcpOptions.MaxStreamResults.set -> void
+Datapoint.Mediator.ModelContextProtocol.MediatorMcpOptions.MediatorMcpOptions() -> void
+Datapoint.Mediator.ModelContextProtocol.MediatorMcpOptions.SerializerOptions.get -> System.Text.Json.JsonSerializerOptions?
+Datapoint.Mediator.ModelContextProtocol.MediatorMcpOptions.SerializerOptions.set -> void
+Microsoft.Extensions.DependencyInjection.MediatorMcpServerBuilderExtensions
+static Microsoft.Extensions.DependencyInjection.MediatorMcpServerBuilderExtensions.WithMediatorActions(this Microsoft.Extensions.DependencyInjection.IMcpServerBuilder! builder, System.Action<Datapoint.Mediator.ModelContextProtocol.MediatorMcpOptions!>? configure = null) -> Microsoft.Extensions.DependencyInjection.IMcpServerBuilder!

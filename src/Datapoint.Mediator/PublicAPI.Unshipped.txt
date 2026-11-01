@@ -1,13 +1,1 @@
 #nullable enable
-Datapoint.Mediator.ActionCatalog
-Datapoint.Mediator.ActionCatalog.ActionCatalog(System.Collections.Generic.IEnumerable<System.Type!>! actionTypes) -> void
-Datapoint.Mediator.ActionCatalog.Actions.get -> System.Collections.Generic.IReadOnlyList<Datapoint.Mediator.ActionDescriptor!>!
-Datapoint.Mediator.ActionCatalog.TryGetAction(string! name, out Datapoint.Mediator.ActionDescriptor? action) -> bool
-Datapoint.Mediator.ActionDispatcher
-Datapoint.Mediator.ActionDispatcher.ActionDispatcher(Datapoint.Mediator.IMediator! mediator, Datapoint.Mediator.IActionCatalog! catalog) -> void
-Datapoint.Mediator.ActionDispatcher.DispatchAsync(string! name, System.Text.Json.JsonElement arguments, System.Text.Json.JsonSerializerOptions? options = null, System.Threading.CancellationToken ct = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<object?>
-Datapoint.Mediator.ActionDispatcher.StreamAsync(string! name, System.Text.Json.JsonElement arguments, System.Text.Json.JsonSerializerOptions? options = null, System.Threading.CancellationToken ct = default(System.Threading.CancellationToken)) -> System.Collections.Generic.IAsyncEnumerable<object?>!
-Datapoint.Mediator.Mediator.StreamAsync<TResult>(Datapoint.Mediator.IStreamQuery<TResult>! query, System.Threading.CancellationToken ct = default(System.Threading.CancellationToken)) -> System.Collections.Generic.IAsyncEnumerable<TResult>!
-Datapoint.Mediator.MediatorTelemetry
-const Datapoint.Mediator.MediatorTelemetry.MeterName = "Datapoint.Mediator" -> string!
-const Datapoint.Mediator.MediatorTelemetry.SourceName = "Datapoint.Mediator" -> string!

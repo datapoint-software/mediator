@@ -1,11 +1,1 @@
 #nullable enable
-Datapoint.Mediator.AspNetCore.MediatorEndpointOptions
-Datapoint.Mediator.AspNetCore.MediatorEndpointOptions.Filter.get -> System.Func<Datapoint.Mediator.ActionDescriptor!, bool>?
-Datapoint.Mediator.AspNetCore.MediatorEndpointOptions.Filter.set -> void
-Datapoint.Mediator.AspNetCore.MediatorEndpointOptions.MapException.get -> System.Func<System.Exception!, Microsoft.AspNetCore.Http.IResult?>?
-Datapoint.Mediator.AspNetCore.MediatorEndpointOptions.MapException.set -> void
-Datapoint.Mediator.AspNetCore.MediatorEndpointOptions.MediatorEndpointOptions() -> void
-Datapoint.Mediator.AspNetCore.MediatorEndpointOptions.SerializerOptions.get -> System.Text.Json.JsonSerializerOptions?
-Datapoint.Mediator.AspNetCore.MediatorEndpointOptions.SerializerOptions.set -> void
-Microsoft.AspNetCore.Builder.ActionEndpointRouteBuilderExtensions
-static Microsoft.AspNetCore.Builder.ActionEndpointRouteBuilderExtensions.MapActions(this Microsoft.AspNetCore.Routing.IEndpointRouteBuilder! endpoints, string! prefix = "", System.Action<Datapoint.Mediator.AspNetCore.MediatorEndpointOptions!>? configure = null) -> Microsoft.AspNetCore.Routing.RouteGroupBuilder!

@@ -1,18 +1,1 @@
 #nullable enable
-Datapoint.Mediator.CommandLine.ActionExitCodes
-Datapoint.Mediator.CommandLine.MediatorCommandLineOptions
-Datapoint.Mediator.CommandLine.MediatorCommandLineOptions.ErrorMessage.get -> System.Func<System.Exception!, string?>?
-Datapoint.Mediator.CommandLine.MediatorCommandLineOptions.ErrorMessage.set -> void
-Datapoint.Mediator.CommandLine.MediatorCommandLineOptions.Filter.get -> System.Func<Datapoint.Mediator.ActionDescriptor!, bool>?
-Datapoint.Mediator.CommandLine.MediatorCommandLineOptions.Filter.set -> void
-Datapoint.Mediator.CommandLine.MediatorCommandLineOptions.MediatorCommandLineOptions() -> void
-Datapoint.Mediator.CommandLine.MediatorCommandLineOptions.SerializerOptions.get -> System.Text.Json.JsonSerializerOptions?
-Datapoint.Mediator.CommandLine.MediatorCommandLineOptions.SerializerOptions.set -> void
-System.CommandLine.ActionCommandExtensions
-const Datapoint.Mediator.CommandLine.ActionExitCodes.AccessDenied = 4 -> int
-const Datapoint.Mediator.CommandLine.ActionExitCodes.AuthenticationRequired = 3 -> int
-const Datapoint.Mediator.CommandLine.ActionExitCodes.InvalidArguments = 2 -> int
-const Datapoint.Mediator.CommandLine.ActionExitCodes.Success = 0 -> int
-const Datapoint.Mediator.CommandLine.ActionExitCodes.UnexpectedError = 70 -> int
-static System.CommandLine.ActionCommandExtensions.AddActions<TCommand>(this TCommand! command, System.IServiceProvider! services, System.Action<Datapoint.Mediator.CommandLine.MediatorCommandLineOptions!>? configure = null) -> TCommand!
-const Datapoint.Mediator.CommandLine.ActionExitCodes.InvalidCommandLine = 1 -> int

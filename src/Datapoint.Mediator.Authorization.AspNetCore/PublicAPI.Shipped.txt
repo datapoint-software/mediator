@@ -1,1 +1,6 @@
 #nullable enable
+Datapoint.Mediator.Authorization.AspNetCore.HttpPrincipalAccessor
+Datapoint.Mediator.Authorization.AspNetCore.HttpPrincipalAccessor.HttpPrincipalAccessor(Microsoft.AspNetCore.Http.IHttpContextAccessor! httpContextAccessor) -> void
+Datapoint.Mediator.Authorization.AspNetCore.HttpPrincipalAccessor.Principal.get -> System.Security.Claims.ClaimsPrincipal?
+Microsoft.Extensions.DependencyInjection.HttpPrincipalAccessorServiceCollectionExtensions
+static Microsoft.Extensions.DependencyInjection.HttpPrincipalAccessorServiceCollectionExtensions.AddHttpPrincipalAccessor(this Microsoft.Extensions.DependencyInjection.IServiceCollection! services) -> Microsoft.Extensions.DependencyInjection.IServiceCollection!

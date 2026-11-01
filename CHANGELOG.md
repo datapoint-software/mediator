@@ -4,6 +4,60 @@ All notable changes to the Datapoint.Mediator packages are documented in this fi
 
 The format is based on [Keep a Changelog 1.1.0](https://keepachangelog.com/en/1.1.0/), and the packages follow [Semantic Versioning 2.0.0](https://semver.org/spec/v2.0.0.html).
 
+## [4.0.0-beta.1](https://github.com/datapoint-software/mediator/releases/tag/4.0.0-beta.1) - 2026-11-01
+
+### Added
+
+- **Breaking:** Add stream queries ([7d25acb](https://github.com/datapoint-software/mediator/commit/7d25acb90e8faacaf6742d2dfe2d9fa508433a4d))
+- **dependency-injection:** Register stream query handlers ([439c7f7](https://github.com/datapoint-software/mediator/commit/439c7f7225f148b7ffb25409e0029a71b72313ef))
+- **fluent-validation:** Validate stream queries ([765aec1](https://github.com/datapoint-software/mediator/commit/765aec18302adf1c387041671c281b36b70bdaa8))
+- **mediator:** Add tracing and metrics ([91f8e79](https://github.com/datapoint-software/mediator/commit/91f8e7902d8dbf578d0bc5bba0a20d7fad2d68e5))
+- **authorization:** Add AuthorizationBehavior ([4ffeb5d](https://github.com/datapoint-software/mediator/commit/4ffeb5d6e0dfc3e850ac9dd239fcec5ad8b6aa78))
+- **authorization:** Add AddAuthorizationBehavior and authorizer scanning ([abad703](https://github.com/datapoint-software/mediator/commit/abad7037e76eebc6ab9247aecb09a95eb096f193))
+- **entity-framework-core:** Add TransactionBehavior ([479d094](https://github.com/datapoint-software/mediator/commit/479d0945a442aacd192e54d45875f3b80839d093))
+- **entity-framework-core:** Add AddTransactionBehavior ([9047def](https://github.com/datapoint-software/mediator/commit/9047deffc002ee6b7cb0b2ddefe5fe5c1f157cf4))
+- **abstractions:** Add action naming and catalog contracts ([1c6abe4](https://github.com/datapoint-software/mediator/commit/1c6abe4d6a9e99e84178ebffa4bd04842f6e8628))
+- **mediator:** Add action catalog and dispatcher ([c1bbc6b](https://github.com/datapoint-software/mediator/commit/c1bbc6bcfb3052dfd0f9c9045295bbf24ae9f0b8))
+- **dependency-injection:** Build the action catalog from registered handlers ([fa24aba](https://github.com/datapoint-software/mediator/commit/fa24aba4a70ac0fef522a39db9d18cf5ecda8342))
+- **mediator:** Restrict action names to dots and hyphens ([ed64d2d](https://github.com/datapoint-software/mediator/commit/ed64d2d7ffee0517d453e708209e469010c00049))
+- **model-context-protocol:** Offer actions as MCP tools ([e2669ee](https://github.com/datapoint-software/mediator/commit/e2669ee0dbb492af5fd0fb244f79b8324d754060))
+- **aspnetcore:** Map actions as HTTP endpoints ([515472f](https://github.com/datapoint-software/mediator/commit/515472f1428f724c03405e36fdc5e5659709335c))
+- **command-line:** Add actions as CLI commands ([5e33020](https://github.com/datapoint-software/mediator/commit/5e33020d8fb6cd9ea94b901017a8fd6c3993f413))
+- **authorization:** Add FixedPrincipalAccessor ([2f3f186](https://github.com/datapoint-software/mediator/commit/2f3f186e3d73a1b004d8bf75f64047b75ead4f98))
+- **authorization:** Add AddFixedPrincipalAccessor ([7760535](https://github.com/datapoint-software/mediator/commit/7760535ac5d84528bbd3693f62c607985970c00f))
+- **authorization-aspnetcore:** Add HttpPrincipalAccessor ([4e2336e](https://github.com/datapoint-software/mediator/commit/4e2336e8aad70202463d7fe85916d7eda229a112))
+- **command-line:** Add ActionExitCodes.InvalidCommandLine ([e83c47e](https://github.com/datapoint-software/mediator/commit/e83c47ebb40a611a022a8331a491667974398809))
+
+### Fixed
+
+- **command-line:** Parse numbers and dates with the invariant culture ([c406a99](https://github.com/datapoint-software/mediator/commit/c406a998481a9713a73420044775e3768d9f0ac2))
+
+### Documentation
+
+- Document stream queries and telemetry ([229c074](https://github.com/datapoint-software/mediator/commit/229c0741ae22e16687f3c12c8c0c75a7c92ec147))
+- Document new packages and behaviour order ([5a7264b](https://github.com/datapoint-software/mediator/commit/5a7264bd4348482065e9088a0f6e2efae5a3ac76))
+- Add README badges ([9c45401](https://github.com/datapoint-software/mediator/commit/9c45401616cbbf3cca33a271955a7d97183c01b7))
+- Add coverage badge and policy ([08b4a5e](https://github.com/datapoint-software/mediator/commit/08b4a5e23e2603a10f8cf5823f4e5ba99b20265d))
+- Add security policy ([aeac45f](https://github.com/datapoint-software/mediator/commit/aeac45f3684efc02f468cbf161edcfb11bbb0af2))
+- **authorization:** Warn against publishing messages from user input ([5ec7fbd](https://github.com/datapoint-software/mediator/commit/5ec7fbd1896ac6d6ce995b64b5f1b37f1f8dba7b))
+- Document actions ([4f3c183](https://github.com/datapoint-software/mediator/commit/4f3c1831a723277d2556c8bc9f614b0c8925bc59))
+- Document the MCP adapter ([b3f8381](https://github.com/datapoint-software/mediator/commit/b3f83815c5a0cb6e5cf1efd3111d58e7713357aa))
+- Document the ASP.NET Core and CLI adapters ([52b8a2a](https://github.com/datapoint-software/mediator/commit/52b8a2a2dfb140cfc0797d75becedbd2a4d84aa6))
+- **entity-framework-core:** Document retry and nesting caveats ([99ab3b9](https://github.com/datapoint-software/mediator/commit/99ab3b957324271623a49ea8c7d3bf37d00ef2bc))
+- Add a changelog generated with git-cliff ([cf6c74c](https://github.com/datapoint-software/mediator/commit/cf6c74cc9d4cc88f23f3f3f4220f6d9349cf2ead))
+- Document the ready-made principal accessors ([3cd42bb](https://github.com/datapoint-software/mediator/commit/3cd42bb0c87196b44982db9037c03f754e5821eb))
+- Add architecture decision records ([ecf0500](https://github.com/datapoint-software/mediator/commit/ecf0500d7d65b98a4af33d69dbe9ba7e97169b55))
+- Add the architecture overview ([ecadbc1](https://github.com/datapoint-software/mediator/commit/ecadbc1eb5688f4d38f90eac29df74e5b7cf598c))
+- Add the contributing guide ([26f48e9](https://github.com/datapoint-software/mediator/commit/26f48e98bec376976e7443dc0b96e27982d3f830))
+- **samples:** Add invoicing samples for API, CLI and MCP ([8ff3ca6](https://github.com/datapoint-software/mediator/commit/8ff3ca6f2310100f8059d154490dc25ee1fb97f2))
+- Add the getting started, concepts and pipeline guides ([9cd7560](https://github.com/datapoint-software/mediator/commit/9cd756066c717c4a08f0c380e299cb3b7bf3c9de))
+- Add the feature guides ([1584379](https://github.com/datapoint-software/mediator/commit/158437955dad97888dd9db84233c3c1ea172b2fd))
+- Add the host guides ([7d91822](https://github.com/datapoint-software/mediator/commit/7d918224c62ff10226e32360ecc50faae03d0102))
+- Add the telemetry, testing, security and use case guides ([98d70b0](https://github.com/datapoint-software/mediator/commit/98d70b06e5c0a069d183447621347d9826bc6294))
+- Shorten package READMEs and link to the manual ([824b2a2](https://github.com/datapoint-software/mediator/commit/824b2a23bb18d3964913d19c3e8d3c7709fe1b34))
+- Add maintenance rules to CLAUDE.md ([1a981c6](https://github.com/datapoint-software/mediator/commit/1a981c6a09bfe8553078cbbac63f474eeb54a06f))
+- Record and document invariant culture parsing in the CLI ([9d566a1](https://github.com/datapoint-software/mediator/commit/9d566a19d7c5c7955108929fa169d5ee8fa64ac5))
+
 ## [4.0.0-alpha.1](https://github.com/datapoint-software/mediator/releases/tag/4.0.0-alpha.1) - 2026-10-31
 
 Initial public release.
