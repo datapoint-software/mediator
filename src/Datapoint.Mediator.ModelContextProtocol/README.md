@@ -32,7 +32,7 @@ Authorization failures and invalid arguments are reported with fixed, safe messa
 
 Register an `IPrincipalAccessor` (from Datapoint.Mediator.Authorization) for the MCP host:
 
-- **HTTP:** return `IHttpContextAccessor.HttpContext?.User`, after authenticating the MCP endpoint, for example with `app.MapMcp().RequireAuthorization()`.
-- **stdio:** the server runs on the user's machine, so return a principal for the local user, or for a service account.
+- **HTTP:** `services.AddHttpPrincipalAccessor()`, from Datapoint.Mediator.Authorization.AspNetCore, after authenticating the MCP endpoint, for example with `app.MapMcp().RequireAuthorization()`.
+- **stdio:** the server runs on the user's machine, so use `services.AddFixedPrincipalAccessor(principal)`, from Datapoint.Mediator.Authorization.DependencyInjection, with a principal for the local user or a service account.
 
 > **Security:** an AI agent acts on behalf of a user, so it must never receive more permissions than that user. Consider giving agents a narrower principal, for example read-only, and remember that every tool you offer can be called with any arguments the agent chooses.

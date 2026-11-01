@@ -39,6 +39,6 @@ mytool invoices create --customer Ana --amount 100
 
 ## The current user
 
-Register an `IPrincipalAccessor` (from Datapoint.Mediator.Authorization) that returns the signed-in user, for example after an OAuth device-code sign-in, or a service account.
+Register the signed-in user with `services.AddFixedPrincipalAccessor(principal)`, from Datapoint.Mediator.Authorization.DependencyInjection: for example after an OAuth device-code sign-in, or a service account. Pass `null` when no one is signed in, so actions that need a user exit with code 3.
 
 > **Security:** if the CLI connects to the database with credentials the user can read, these rules only apply while the user goes through the CLI. For real enforcement, keep the credentials server-side, for example by having the CLI call your API.

@@ -30,14 +30,10 @@ app.MapActions("/api", o => o.MapException = e => e is ValidationException v
 
 ## The current user
 
-Register an `IPrincipalAccessor` (from Datapoint.Mediator.Authorization) that reads the request's user:
+To authorize actions for the request's user, add [Datapoint.Mediator.Authorization.AspNetCore](https://www.nuget.org/packages/Datapoint.Mediator.Authorization.AspNetCore):
 
 ```csharp
-builder.Services.AddHttpContextAccessor();
-builder.Services.AddScoped<IPrincipalAccessor, HttpPrincipalAccessor>();
-
-public sealed class HttpPrincipalAccessor(IHttpContextAccessor http) : IPrincipalAccessor
-{
-    public ClaimsPrincipal? Principal => http.HttpContext?.User;
-}
+builder.Services.AddHttpPrincipalAccessor();
+// ...
+app.UseAuthentication();
 ```

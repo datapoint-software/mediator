@@ -19,7 +19,8 @@ A NuGet package that implements the Mediator pattern for .NET. It lets component
 | `Datapoint.Mediator.FluentValidation` | A behaviour that validates commands and queries with FluentValidation. |
 | `Datapoint.Mediator.FluentValidation.DependencyInjection` | `options.AddValidationBehavior()`. |
 | `Datapoint.Mediator.Authorization` | A behaviour that authorizes commands and queries for the current user, denying access by default. Reference it from your domain layer. |
-| `Datapoint.Mediator.Authorization.DependencyInjection` | `options.AddAuthorizationBehavior()` and `services.AddAuthorizersFromAssembly(...)`. |
+| `Datapoint.Mediator.Authorization.DependencyInjection` | `options.AddAuthorizationBehavior()`, `services.AddAuthorizersFromAssembly(...)` and `services.AddFixedPrincipalAccessor(...)` for CLIs. |
+| `Datapoint.Mediator.Authorization.AspNetCore` | `services.AddHttpPrincipalAccessor()`: authorizes for the ASP.NET Core request's user. |
 | `Datapoint.Mediator.EntityFrameworkCore` | A behaviour that runs each command in an EF Core transaction and saves once, at the end. |
 | `Datapoint.Mediator.EntityFrameworkCore.DependencyInjection` | `options.AddTransactionBehavior<TDbContext>()`. |
 | `Datapoint.Mediator.ModelContextProtocol` | Offers actions as MCP tools for AI agents: `services.AddMcpServer().WithMediatorActions()`. |

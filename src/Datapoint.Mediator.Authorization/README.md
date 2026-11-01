@@ -26,23 +26,19 @@ public sealed record GetPublicPrices : IQuery<PriceList>;
 
 ## The current user, in each host
 
-Each host registers an `IPrincipalAccessor` as a scoped service:
+Each host registers one `IPrincipalAccessor`. Two are ready-made:
 
 ```csharp
-// API: the request's user (after ASP.NET Core authentication).
-public sealed class HttpPrincipalAccessor(IHttpContextAccessor http) : IPrincipalAccessor
-{
-    public ClaimsPrincipal? Principal => http.HttpContext?.User;
-}
+// API, or MCP server over HTTP: the request's user, after ASP.NET Core authentication.
+// From Datapoint.Mediator.Authorization.AspNetCore.
+services.AddHttpPrincipalAccessor();
 
-// CLI, or MCP over stdio: the user signed in at startup (for example with an OAuth device code), or a service account.
-public sealed class FixedPrincipalAccessor(ClaimsPrincipal principal) : IPrincipalAccessor
-{
-    public ClaimsPrincipal? Principal => principal;
-}
+// CLI, or MCP server over stdio: the user signed in at startup (for example with an OAuth device code), a service
+// account, or null when no one is signed in. From Datapoint.Mediator.Authorization.DependencyInjection.
+services.AddFixedPrincipalAccessor(principal);
 ```
 
-An MCP server over HTTP reads the user from the authenticated request, like an API.
+Registering a second accessor throws `InvalidOperationException`, so a misconfiguration can't silently change who the current user is. For anything else, implement `IPrincipalAccessor` and register it as a scoped service.
 
 > **Security:** a CLI that connects to the database with credentials the user can read only enforces these rules as long as the user goes through the CLI. For real enforcement, keep the credentials server-side: have the CLI call your API, or run it where users can't read its configuration. An AI agent acting through an MCP server should never receive more permissions than the user it acts for.
 
