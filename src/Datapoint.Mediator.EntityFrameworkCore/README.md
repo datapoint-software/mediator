@@ -21,7 +21,9 @@ public sealed record SendInvoiceEmail(int InvoiceId) : ICommand;
 ```
 
 - Every command runs in a transaction, unless it is marked `[NonTransactional]`. Queries, stream queries and messages are not affected.
-- A command sent from another command's handler joins the outer transaction.
+- A command sent from another command's handler joins the outer transaction, even if it is marked `[NonTransactional]`.
 - Messages published from a command's handler run inside its transaction.
 
-> **Retries:** with a retrying execution strategy, such as `EnableRetryOnFailure`, a transient failure runs the **whole command again, handler included**. Make handlers safe to repeat, and keep side effects such as emails in `[NonTransactional]` commands.
+> **Retries:** with a retrying execution strategy, such as `EnableRetryOnFailure`, a transient failure runs the **whole command again, handler and message handlers included**. Its database changes are rolled back first, but external calls, such as HTTP requests, emails or queue messages, are not, so they happen again. Make those calls idempotent, for example with an idempotency key, or move them to a `[NonTransactional]` command sent from the host, which saves before calling out.
+>
+> In the rare case where the connection drops while committing, the commit may have succeeded on the server, and the retry saves the same changes again. A unique constraint, such as on an idempotency key, turns that into an error instead of a duplicate.

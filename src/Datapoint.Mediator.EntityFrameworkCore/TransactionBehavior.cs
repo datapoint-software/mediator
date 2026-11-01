@@ -25,9 +25,14 @@ namespace Datapoint.Mediator.EntityFrameworkCore;
 /// </para>
 /// <para>
 /// The transaction runs through the context's execution strategy. With a retrying strategy, such as
-/// <c>EnableRetryOnFailure</c>, a transient failure runs the <b>whole command again, handler included</b>, after
-/// clearing the change tracker. Handlers must then be safe to run more than once: perform side effects that cannot be
-/// repeated, such as sending emails, in <see cref="NonTransactionalAttribute"/> commands or after the commit.
+/// <c>EnableRetryOnFailure</c>, a transient failure runs the <b>whole command again, handler and message handlers
+/// included</b>, after rolling back and clearing the change tracker. External calls, such as HTTP requests or emails,
+/// are not rolled back and happen again. Make them idempotent, or perform them in a
+/// <see cref="NonTransactionalAttribute"/> command sent from the host.
+/// </para>
+/// <para>
+/// If the connection drops while committing, the commit may have succeeded on the server, and the retry saves the same
+/// changes again. A unique constraint, such as on an idempotency key, turns that into an error instead of a duplicate.
 /// </para>
 /// <para>
 /// Register this behaviour after authorization and validation, so that a transaction is only opened for commands that

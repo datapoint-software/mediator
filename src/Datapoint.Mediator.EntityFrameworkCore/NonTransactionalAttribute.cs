@@ -7,8 +7,9 @@ namespace Datapoint.Mediator.EntityFrameworkCore;
 /// </summary>
 /// <remarks>
 /// Use it for commands whose handlers have side effects that cannot be undone or repeated, such as sending an email, or
-/// that manage their own transactions. Their handlers must call <c>SaveChangesAsync</c> themselves. The attribute is
-/// not inherited, so a type derived from a non-transactional command runs in a transaction unless it is marked too.
+/// that manage their own transactions. Their handlers must call <c>SaveChangesAsync</c> themselves. The attribute has
+/// no effect when the command is sent from inside another command's transaction, which it joins. The attribute is not
+/// inherited, so a type derived from a non-transactional command runs in a transaction unless it is marked too.
 /// </remarks>
 [AttributeUsage(AttributeTargets.Class, Inherited = false, AllowMultiple = false)]
 public sealed class NonTransactionalAttribute : Attribute;
