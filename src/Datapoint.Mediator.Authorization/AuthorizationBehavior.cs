@@ -1,7 +1,9 @@
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Linq;
 using System.Runtime.CompilerServices;
+using System.Security.Claims;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -26,18 +28,26 @@ namespace Datapoint.Mediator.Authorization;
 /// <see cref="AccessDeniedException"/> is thrown.
 /// </description></item>
 /// <item><description>
-/// The authorizers run one after another. If any of them refuses, an <see cref="AccessDeniedException"/> is thrown.
+/// The authorizers run one after another, and stop at the first denial. If any of them denies the action, or returns
+/// <see langword="null"/>, an <see cref="AccessDeniedException"/> is thrown, without the decision's details. If one
+/// throws, its exception propagates.
+/// </description></item>
+/// <item><description>
+/// Every registered <see cref="IAuthorizationObserver"/> is told the outcome, allowed or not, before the action runs
+/// or the exception is thrown. If an observer throws, the action does not run.
 /// </description></item>
 /// </list>
 /// <para>
-/// The handler only runs when the action is allowed. A stream query is authorized when its results are first
+/// The handler only runs when the action is allowed, and can read the decision from <see cref="IAuthorizationContext"/>.
+/// A stream query is authorized when its results are first
 /// enumerated. Messages are not authorized, because they are published by the application itself. Never publish a
 /// message built directly from user input: send an authorized command instead, and publish the message from its
 /// handler.
 /// </para>
 /// <para>
 /// Register this behaviour before a validation behaviour, so that users who may not run an action cannot learn its
-/// validation rules. Create it from the current scope, so that scoped services are resolved from it.
+/// validation rules. To authorize commands inside their database transaction, register it after the transaction
+/// behaviour. Create it from the current scope, so that scoped services are resolved from it.
 /// </para>
 /// </remarks>
 public sealed class AuthorizationBehavior : IBehavior
@@ -63,7 +73,7 @@ public sealed class AuthorizationBehavior : IBehavior
     /// <exception cref="AuthenticationRequiredException">There is no signed-in user.</exception>
     /// <exception cref="AccessDeniedException">The user may not run the command.</exception>
     public ValueTask HandleAsync(ICommand command, Func<CancellationToken, ValueTask> next, CancellationToken ct = default) =>
-        IsAnonymous(command) ? next(ct) : AuthorizeThenHandleAsync(command, next, ct);
+        IsAnonymous(command) ? HandleAnonymousAsync(next, ct) : AuthorizeThenHandleAsync(command, next, ct);
 
     /// <inheritdoc/>
     /// <exception cref="AuthenticationRequiredException">There is no signed-in user.</exception>
@@ -72,7 +82,7 @@ public sealed class AuthorizationBehavior : IBehavior
         ICommand<TResult> command,
         Func<CancellationToken, ValueTask<TResult>> next,
         CancellationToken ct = default) =>
-        IsAnonymous(command) ? next(ct) : AuthorizeThenHandleAsync(command, next, ct);
+        IsAnonymous(command) ? HandleAnonymousAsync(next, ct) : AuthorizeThenHandleAsync(command, next, ct);
 
     /// <inheritdoc/>
     /// <exception cref="AuthenticationRequiredException">There is no signed-in user.</exception>
@@ -81,7 +91,7 @@ public sealed class AuthorizationBehavior : IBehavior
         IQuery<TResult> query,
         Func<CancellationToken, ValueTask<TResult>> next,
         CancellationToken ct = default) =>
-        IsAnonymous(query) ? next(ct) : AuthorizeThenHandleAsync(query, next, ct);
+        IsAnonymous(query) ? HandleAnonymousAsync(next, ct) : AuthorizeThenHandleAsync(query, next, ct);
 
     /// <inheritdoc/>
     /// <exception cref="AuthenticationRequiredException">
@@ -94,16 +104,40 @@ public sealed class AuthorizationBehavior : IBehavior
         IStreamQuery<TResult> query,
         Func<CancellationToken, IAsyncEnumerable<TResult>> next,
         CancellationToken ct = default) =>
-        IsAnonymous(query) ? next(ct) : AuthorizeThenStreamAsync(query, next, ct);
+        IsAnonymous(query)
+            ? AuthorizationContext.Result is null ? next(ct) : AuthorizeThenStreamAsync(null, next, ct)
+            : AuthorizeThenStreamAsync(query, next, ct);
 
     private static bool IsAnonymous(object action) =>
         AnonymousActions.GetOrAdd(
             action.GetType(),
             static type => type.IsDefined(typeof(AllowAnonymousAccessAttribute), inherit: false));
 
+    // An anonymous action sent from an authorized one must not see the outer decision.
+    private static ValueTask HandleAnonymousAsync(Func<CancellationToken, ValueTask> next, CancellationToken ct) =>
+        AuthorizationContext.Result is null ? next(ct) : HandleWithoutDecisionAsync(next, ct);
+
+    private static ValueTask<TResult> HandleAnonymousAsync<TResult>(Func<CancellationToken, ValueTask<TResult>> next, CancellationToken ct) =>
+        AuthorizationContext.Result is null ? next(ct) : HandleWithoutDecisionAsync(next, ct);
+
+    // The decision set in an async method flows into next, and is restored for the caller when the method returns.
+    private static async ValueTask HandleWithoutDecisionAsync(Func<CancellationToken, ValueTask> next, CancellationToken ct)
+    {
+        AuthorizationContext.Result = null;
+        await next(ct).ConfigureAwait(false);
+    }
+
+    private static async ValueTask<TResult> HandleWithoutDecisionAsync<TResult>(
+        Func<CancellationToken, ValueTask<TResult>> next,
+        CancellationToken ct)
+    {
+        AuthorizationContext.Result = null;
+        return await next(ct).ConfigureAwait(false);
+    }
+
     private async ValueTask AuthorizeThenHandleAsync(object action, Func<CancellationToken, ValueTask> next, CancellationToken ct)
     {
-        await AuthorizeAsync(action, ct).ConfigureAwait(false);
+        AuthorizationContext.Result = await AuthorizeAsync(action, ct).ConfigureAwait(false);
         await next(ct).ConfigureAwait(false);
     }
 
@@ -112,36 +146,115 @@ public sealed class AuthorizationBehavior : IBehavior
         Func<CancellationToken, ValueTask<TResult>> next,
         CancellationToken ct)
     {
-        await AuthorizeAsync(action, ct).ConfigureAwait(false);
+        AuthorizationContext.Result = await AuthorizeAsync(action, ct).ConfigureAwait(false);
         return await next(ct).ConfigureAwait(false);
     }
 
+    // Authorizes the stream query when one is passed; an anonymous one streams without a decision.
     private async IAsyncEnumerable<TResult> AuthorizeThenStreamAsync<TResult>(
-        object action,
+        object? action,
         Func<CancellationToken, IAsyncEnumerable<TResult>> next,
         [EnumeratorCancellation] CancellationToken ct)
     {
-        await AuthorizeAsync(action, ct).ConfigureAwait(false);
+        var result = action is null ? null : await AuthorizeAsync(action, ct).ConfigureAwait(false);
 
-        await foreach (var result in next(ct).ConfigureAwait(false))
+        AuthorizationContext.Result = result;
+        await using var results = next(ct).ConfigureAwait(false).GetAsyncEnumerator();
+
+        while (true)
         {
-            yield return result;
+            // An async iterator restores its consumer's context on every MoveNextAsync, so set the decision each time.
+            AuthorizationContext.Result = result;
+
+            if (!await results.MoveNextAsync())
+            {
+                yield break;
+            }
+
+            yield return results.Current;
         }
     }
 
-    private ValueTask AuthorizeAsync(object action, CancellationToken ct)
+    private async ValueTask<AuthorizationResult> AuthorizeAsync(object action, CancellationToken ct)
     {
         var accessor = _serviceProvider.GetService(typeof(IPrincipalAccessor)) as IPrincipalAccessor
             ?? throw new InvalidOperationException(
                 $"No '{typeof(IPrincipalAccessor)}' is registered. Register one that returns the current user.");
 
         var principal = accessor.Principal;
+        var observers = GetObservers();
 
         if (principal?.Identity?.IsAuthenticated != true)
         {
+            await ObserveAsync(observers, action, principal, AuthorizationOutcome.AuthenticationRequired, null, null, ct)
+                .ConfigureAwait(false);
+
             throw new AuthenticationRequiredException($"Authentication is required to run '{action.GetType()}'.");
         }
 
-        return ActionAuthorization.Get(action.GetType()).AuthorizeAsync(action, principal, _serviceProvider, ct);
+        AuthorizationResult result;
+
+        try
+        {
+            result = await ActionAuthorization.Get(action.GetType())
+                .AuthorizeAsync(action, principal, _serviceProvider, ct)
+                .ConfigureAwait(false);
+        }
+        catch (Exception exception) when (observers.Length > 0)
+        {
+            // The authorizer's exception propagates unchanged, so a bug isn't hidden as a denial.
+            await ObserveAsync(observers, action, principal, AuthorizationOutcome.Failed, null, exception, ct)
+                .ConfigureAwait(false);
+
+            throw;
+        }
+
+        var outcome = result.IsAllowed ? AuthorizationOutcome.Allowed : AuthorizationOutcome.Denied;
+        await ObserveAsync(observers, action, principal, outcome, result, null, ct).ConfigureAwait(false);
+
+        // Fail closed: an action that nobody wrote a rule for is not allowed. The message never includes the details.
+        if (result.Decisions.Count == 0)
+        {
+            throw new AccessDeniedException($"No authorizer is registered for '{action.GetType()}', so access is denied.");
+        }
+
+        if (!result.IsAllowed)
+        {
+            throw new AccessDeniedException($"Access to '{action.GetType()}' is denied.");
+        }
+
+        return result;
+    }
+
+    private IAuthorizationObserver[] GetObservers() =>
+        // Containers other than Microsoft's may return null or a non-array enumerable.
+        _serviceProvider.GetService(typeof(IEnumerable<IAuthorizationObserver>)) switch
+        {
+            IAuthorizationObserver[] array => array,
+            IEnumerable<IAuthorizationObserver> enumerable => enumerable.ToArray(),
+            _ => [],
+        };
+
+    // Every observer runs, in order. If one throws, the action doesn't run: it can't be audited.
+    private static async ValueTask ObserveAsync(
+        IAuthorizationObserver[] observers,
+        object action,
+        ClaimsPrincipal? principal,
+        AuthorizationOutcome outcome,
+        AuthorizationResult? result,
+        Exception? exception,
+        CancellationToken ct)
+    {
+        if (observers.Length == 0)
+        {
+            return;
+        }
+
+        var authorization = new AuthorizationEvent(action, principal, outcome, result, exception);
+
+        foreach (var observer in observers)
+        {
+            await observer.OnAuthorizedAsync(authorization, ct).ConfigureAwait(false);
+        }
     }
 }

@@ -74,6 +74,7 @@ Authorization **fails closed**: when in doubt, it refuses.
 | The action has **no authorizer** | `AccessDeniedException` (HTTP 403, CLI exit code 4) |
 | Any of the action's authorizers denies it, or returns `null` | `AccessDeniedException` |
 | An authorizer throws | its exception propagates, and the action doesn't run |
+| An [observer](#auditing-every-decision) throws | its exception propagates, and the action doesn't run, even if it was allowed |
 | Every authorizer allows it | the action runs |
 | The action is marked `[AllowAnonymousAccess]` | the action runs, without any check |
 
@@ -86,6 +87,105 @@ Authorization **fails closed**: when in doubt, it refuses.
 [AllowAnonymousAccess]
 public sealed record GetExchangeRates : IQuery<IReadOnlyList<ExchangeRate>>;
 ```
+
+## Reading the decision in a handler
+
+A handler can read the decision that allowed it, with its details, instead of evaluating the rules again. Register the context once:
+
+```csharp
+services.AddAuthorizationContext();
+```
+
+```csharp
+public sealed class DownloadItemHandler(IAuthorizationContext authorization, FileStore files)
+    : IQueryHandler<DownloadItem, FileDownload>
+{
+    public async ValueTask<FileDownload> HandleAsync(DownloadItem query, CancellationToken ct = default)
+    {
+        // Fail closed: without a grant, don't guess the constraints.
+        if (authorization.Current?.TryGetDetails<ReadGrant>(out var grant) != true)
+        {
+            throw new InvalidOperationException("DownloadItem was not authorized with a ReadGrant.");
+        }
+
+        return grant.BrowseOnly ? FileDownload.PreviewOnly(query.ItemId) : await files.OpenAsync(query.ItemId, grant.Watermark, ct);
+    }
+}
+```
+
+- `Current` is an `AuthorizationResult`: `IsAllowed`, the `Decisions` of each authorizer (its type and its decision), and `TryGetDetails<T>`, which returns the first details of type `T`.
+- The decision flows with the call, like `IHttpContextAccessor`: a command sent from a handler sees its own decision, then the outer one again; parallel dispatches see their own.
+- Behaviours registered after authorization see it too. Message handlers see the decision of the action that published the message.
+- `[AllowAnonymousAccess]` actions see `null`.
+
+## Auditing every decision
+
+An `IAuthorizationObserver` is told every outcome, allowed or not, with the reasons:
+
+```csharp
+public sealed class AuthorizationAuditor(AuditLog audit) : IAuthorizationObserver
+{
+    public async ValueTask OnAuthorizedAsync(AuthorizationEvent authorization, CancellationToken ct = default)
+    {
+        await audit.WriteAsync(new AuditEntry(
+            Action: authorization.Action.GetType().Name,              // the type, never the action's contents
+            User: authorization.Principal?.FindFirstValue("sub"),
+            Outcome: authorization.Outcome.ToString(),
+            Reasons: authorization.Result?.Decisions.Select(d => new AuditReason(d.AuthorizerType.Name, d.Decision.IsAllowed, d.Decision.Details)).ToArray() ?? [],
+            Error: authorization.Exception?.GetType().FullName), ct);
+    }
+}
+```
+
+```csharp
+services.AddAuthorizationObserver<AuthorizationAuditor>();
+```
+
+| `Outcome` | When | `Result` |
+|---|---|---|
+| `Allowed` | every authorizer allowed it | every decision |
+| `Denied` | an authorizer denied it, or it has none | the decisions up to the denial; empty with no authorizer |
+| `AuthenticationRequired` | no signed-in user | `null` |
+| `Failed` | an authorizer threw; `Exception` holds it | `null` |
+
+- Observers run in registration order, after the authorizers and before the action runs or the exception is thrown.
+- **If an observer throws, the action doesn't run**, even when it was allowed: an action that can't be audited doesn't run. If you prefer availability, catch and log inside your observer.
+- `[AllowAnonymousAccess]` actions aren't authorized, so they aren't observed.
+- Don't log `Action` as it is: it holds the caller's input, which can be personal data.
+
+## Explaining access
+
+To show a user why they can or can't do something, run the authorizers yourself in a query of your own. Give that query its own authorizer, because explanations reveal your rules:
+
+```csharp
+public sealed record ExplainDownload(Guid ItemId) : IQuery<AccessExplanation>;
+
+public sealed class ExplainDownloadHandler(IEnumerable<IAuthorizer<DownloadItem>> authorizers, IPrincipalAccessor user)
+    : IQueryHandler<ExplainDownload, AccessExplanation>
+{
+    public async ValueTask<AccessExplanation> HandleAsync(ExplainDownload query, CancellationToken ct = default)
+    {
+        var reasons = new List<object?>();
+        var allowed = false;
+
+        foreach (var authorizer in authorizers)
+        {
+            var decision = await authorizer.AuthorizeAsync(new DownloadItem(query.ItemId), user.Principal!, ct);
+            reasons.Add(decision.Details);
+            allowed = decision.IsAllowed;
+
+            if (!allowed)
+            {
+                break;   // like the behaviour: stop at the first denial
+            }
+        }
+
+        return new AccessExplanation(allowed, reasons);   // no authorizer: allowed stays false
+    }
+}
+```
+
+Keep the same rules as the behaviour: no authorizer means denied, and all must allow. Translate details into messages that are safe for that user to see.
 
 ## Messages
 

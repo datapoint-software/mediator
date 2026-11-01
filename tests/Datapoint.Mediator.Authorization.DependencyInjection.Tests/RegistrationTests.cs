@@ -41,6 +41,47 @@ public sealed class RegistrationTests
     }
 
     [Fact]
+    public void AddAuthorizationContext_NullServices_Throws()
+    {
+        Assert.Equal("services", Assert.Throws<ArgumentNullException>(
+            () => ((IServiceCollection)null!).AddAuthorizationContext()).ParamName);
+    }
+
+    [Fact]
+    public void AddAuthorizationContext_RegistersOneSingleton()
+    {
+        var services = new ServiceCollection();
+
+        Assert.Same(services, services.AddAuthorizationContext().AddAuthorizationContext());
+
+        var descriptor = Assert.Single(services, d => d.ServiceType == typeof(IAuthorizationContext));
+        Assert.Equal(typeof(AuthorizationContext), descriptor.ImplementationType);
+        Assert.Equal(ServiceLifetime.Singleton, descriptor.Lifetime);
+    }
+
+    [Fact]
+    public void AddAuthorizationObserver_NullServices_Throws()
+    {
+        Assert.Equal("services", Assert.Throws<ArgumentNullException>(
+            () => ((IServiceCollection)null!).AddAuthorizationObserver<AuditObserver>()).ParamName);
+    }
+
+    [Fact]
+    public void AddAuthorizationObserver_RegistersEachObserverOnce_WithTheGivenLifetime()
+    {
+        var services = new ServiceCollection();
+
+        Assert.Same(services, services
+            .AddAuthorizationObserver<AuditObserver>()
+            .AddAuthorizationObserver<AuditObserver>()
+            .AddAuthorizationObserver<MetricsObserver>(ServiceLifetime.Singleton));
+
+        var descriptors = services.Where(d => d.ServiceType == typeof(IAuthorizationObserver)).ToArray();
+        Assert.Equal([typeof(AuditObserver), typeof(MetricsObserver)], descriptors.Select(d => d.ImplementationType));
+        Assert.Equal([ServiceLifetime.Scoped, ServiceLifetime.Singleton], descriptors.Select(d => d.Lifetime));
+    }
+
+    [Fact]
     public void AddAuthorizersFromAssembly_NullArguments_Throw()
     {
         Assert.Equal("services", Assert.Throws<ArgumentNullException>(

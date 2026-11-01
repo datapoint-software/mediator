@@ -69,3 +69,13 @@ public sealed class GenericAuthorizer<T> : IAuthorizer<T>
 }
 
 public sealed class OtherBehavior : IBehavior;
+
+public sealed class AuditObserver : IAuthorizationObserver
+{
+    public ValueTask OnAuthorizedAsync(AuthorizationEvent authorization, CancellationToken ct = default) => default;
+}
+
+public sealed class MetricsObserver : IAuthorizationObserver
+{
+    public ValueTask OnAuthorizedAsync(AuthorizationEvent authorization, CancellationToken ct = default) => default;
+}

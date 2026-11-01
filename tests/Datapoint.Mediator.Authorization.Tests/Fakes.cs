@@ -67,3 +67,24 @@ public static class Principals
     // An identity without an authentication type is not authenticated.
     public static ClaimsPrincipal Anonymous() => new(new ClaimsIdentity());
 }
+
+// Records every event, logging its name; throws when configured to.
+public sealed class RecordingObserver(string name, List<string> log, Exception? toThrow = null) : IAuthorizationObserver
+{
+    public List<AuthorizationEvent> Events { get; } = [];
+
+    public ValueTask OnAuthorizedAsync(AuthorizationEvent authorization, CancellationToken ct = default)
+    {
+        log.Add(name);
+        Events.Add(authorization);
+        return toThrow is null ? default : ValueTask.FromException(toThrow);
+    }
+}
+
+public sealed class ThrowingAuthorizer<TAction>(Exception exception) : IAuthorizer<TAction>
+{
+    public ValueTask<AuthorizationDecision> AuthorizeAsync(TAction action, ClaimsPrincipal principal, CancellationToken ct = default) =>
+        ValueTask.FromException<AuthorizationDecision>(exception);
+}
+
+public sealed record ReadGrant(string Role, bool Watermark);

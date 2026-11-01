@@ -24,5 +24,6 @@ Each record follows [Michael Nygard's format](https://cognitect.com/blog/2011/11
 | [0016](0016-full-line-coverage.md) | 100% line coverage, enforced in CI | Accepted |
 | [0017](0017-cli-parses-with-the-invariant-culture.md) | The CLI parses numbers and dates with the invariant culture | Accepted |
 | [0018](0018-authorizers-return-decisions.md) | Authorizers return decisions with details | Accepted |
+| [0019](0019-decisions-are-available-and-observed.md) | Authorization decisions are available to the dispatch, and observed | Accepted |
 
 To add a record, copy the structure of an existing one, use the next number, and add it to this table.

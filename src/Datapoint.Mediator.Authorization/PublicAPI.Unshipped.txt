@@ -7,3 +7,32 @@ Datapoint.Mediator.Authorization.AuthorizationDecision.IsAllowed.get -> bool
 static Datapoint.Mediator.Authorization.AuthorizationDecision.Allow(object? details = null) -> Datapoint.Mediator.Authorization.AuthorizationDecision!
 static Datapoint.Mediator.Authorization.AuthorizationDecision.AllowIf(bool condition) -> Datapoint.Mediator.Authorization.AuthorizationDecision!
 static Datapoint.Mediator.Authorization.AuthorizationDecision.Deny(object? details = null) -> Datapoint.Mediator.Authorization.AuthorizationDecision!
+Datapoint.Mediator.Authorization.AuthorizationContext
+Datapoint.Mediator.Authorization.AuthorizationContext.AuthorizationContext() -> void
+Datapoint.Mediator.Authorization.AuthorizationContext.Current.get -> Datapoint.Mediator.Authorization.AuthorizationResult?
+Datapoint.Mediator.Authorization.AuthorizationEvent
+Datapoint.Mediator.Authorization.AuthorizationEvent.Action.get -> object!
+Datapoint.Mediator.Authorization.AuthorizationEvent.AuthorizationEvent(object! action, System.Security.Claims.ClaimsPrincipal? principal, Datapoint.Mediator.Authorization.AuthorizationOutcome outcome, Datapoint.Mediator.Authorization.AuthorizationResult? result, System.Exception? exception) -> void
+Datapoint.Mediator.Authorization.AuthorizationEvent.Exception.get -> System.Exception?
+Datapoint.Mediator.Authorization.AuthorizationEvent.Outcome.get -> Datapoint.Mediator.Authorization.AuthorizationOutcome
+Datapoint.Mediator.Authorization.AuthorizationEvent.Principal.get -> System.Security.Claims.ClaimsPrincipal?
+Datapoint.Mediator.Authorization.AuthorizationEvent.Result.get -> Datapoint.Mediator.Authorization.AuthorizationResult?
+Datapoint.Mediator.Authorization.AuthorizationOutcome
+Datapoint.Mediator.Authorization.AuthorizationOutcome.Allowed = 0 -> Datapoint.Mediator.Authorization.AuthorizationOutcome
+Datapoint.Mediator.Authorization.AuthorizationOutcome.AuthenticationRequired = 2 -> Datapoint.Mediator.Authorization.AuthorizationOutcome
+Datapoint.Mediator.Authorization.AuthorizationOutcome.Denied = 1 -> Datapoint.Mediator.Authorization.AuthorizationOutcome
+Datapoint.Mediator.Authorization.AuthorizationOutcome.Failed = 3 -> Datapoint.Mediator.Authorization.AuthorizationOutcome
+Datapoint.Mediator.Authorization.AuthorizationResult
+Datapoint.Mediator.Authorization.AuthorizationResult.ActionType.get -> System.Type!
+Datapoint.Mediator.Authorization.AuthorizationResult.AuthorizationResult(System.Type! actionType, System.Collections.Generic.IReadOnlyList<Datapoint.Mediator.Authorization.AuthorizerDecision!>! decisions) -> void
+Datapoint.Mediator.Authorization.AuthorizationResult.Decisions.get -> System.Collections.Generic.IReadOnlyList<Datapoint.Mediator.Authorization.AuthorizerDecision!>!
+Datapoint.Mediator.Authorization.AuthorizationResult.IsAllowed.get -> bool
+Datapoint.Mediator.Authorization.AuthorizationResult.TryGetDetails<T>(out T details) -> bool
+Datapoint.Mediator.Authorization.AuthorizerDecision
+Datapoint.Mediator.Authorization.AuthorizerDecision.AuthorizerDecision(System.Type! authorizerType, Datapoint.Mediator.Authorization.AuthorizationDecision! decision) -> void
+Datapoint.Mediator.Authorization.AuthorizerDecision.AuthorizerType.get -> System.Type!
+Datapoint.Mediator.Authorization.AuthorizerDecision.Decision.get -> Datapoint.Mediator.Authorization.AuthorizationDecision!
+Datapoint.Mediator.Authorization.IAuthorizationContext
+Datapoint.Mediator.Authorization.IAuthorizationContext.Current.get -> Datapoint.Mediator.Authorization.AuthorizationResult?
+Datapoint.Mediator.Authorization.IAuthorizationObserver
+Datapoint.Mediator.Authorization.IAuthorizationObserver.OnAuthorizedAsync(Datapoint.Mediator.Authorization.AuthorizationEvent! authorization, System.Threading.CancellationToken ct = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask

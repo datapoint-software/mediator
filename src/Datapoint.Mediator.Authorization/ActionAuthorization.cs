@@ -18,7 +18,8 @@ internal abstract class ActionAuthorization
             actionType,
             static type => (ActionAuthorization)Activator.CreateInstance(typeof(ActionAuthorization<>).MakeGenericType(type))!);
 
-    public abstract ValueTask AuthorizeAsync(
+    // Returns the combined decision. A denied result has no decisions when the action has no authorizer.
+    public abstract ValueTask<AuthorizationResult> AuthorizeAsync(
         object action,
         ClaimsPrincipal principal,
         IServiceProvider serviceProvider,
@@ -27,7 +28,7 @@ internal abstract class ActionAuthorization
 
 internal sealed class ActionAuthorization<TAction> : ActionAuthorization
 {
-    public override async ValueTask AuthorizeAsync(
+    public override async ValueTask<AuthorizationResult> AuthorizeAsync(
         object action,
         ClaimsPrincipal principal,
         IServiceProvider serviceProvider,
@@ -41,23 +42,25 @@ internal sealed class ActionAuthorization<TAction> : ActionAuthorization
             _ => [],
         };
 
-        // Fail closed: an action that nobody wrote a rule for is not allowed.
-        if (authorizers.Length == 0)
-        {
-            throw new AccessDeniedException($"No authorizer is registered for '{typeof(TAction)}', so access is denied.");
-        }
-
+        var decisions = new List<AuthorizerDecision>(authorizers.Length);
         var typedAction = (TAction)action;
 
         foreach (var authorizer in authorizers)
         {
             // A null decision, from a careless implementation, is treated as a denial.
-            var decision = await authorizer.AuthorizeAsync(typedAction, principal, ct).ConfigureAwait(false);
+            var decision = await authorizer.AuthorizeAsync(typedAction, principal, ct).ConfigureAwait(false)
+                ?? AuthorizationDecision.Deny();
 
-            if (decision is not { IsAllowed: true })
+            decisions.Add(new AuthorizerDecision(authorizer.GetType(), decision));
+
+            // Stop at the first denial, so a refused action causes no further queries.
+            if (!decision.IsAllowed)
             {
-                throw new AccessDeniedException($"Access to '{typeof(TAction)}' is denied.");
+                break;
             }
         }
+
+        // Fail closed: with no decisions, the result is denied.
+        return new AuthorizationResult(typeof(TAction), decisions);
     }
 }

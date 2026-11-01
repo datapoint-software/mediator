@@ -45,7 +45,7 @@ All package names start with `Datapoint.Mediator.`, except the implementation, w
 | `Mediator` | `Mediator`, the dispatchers, `ActionCatalog`, `ActionDispatcher` and `MediatorTelemetry`. | none |
 | `DependencyInjection` | `AddMediator`, `MediatorOptions`, handler scanning, and building the action catalog. | `Microsoft.Extensions.DependencyInjection.Abstractions` |
 | `FluentValidation` | `ValidationBehavior`. | FluentValidation |
-| `Authorization` | `AuthorizationBehavior`, `IAuthorizer<T>`, `IPrincipalAccessor`, `FixedPrincipalAccessor`, `[AllowAnonymousAccess]` and the two exceptions. | none |
+| `Authorization` | `AuthorizationBehavior`, `IAuthorizer<T>` and its decisions, `IAuthorizationContext`, `IAuthorizationObserver`, `IPrincipalAccessor`, `FixedPrincipalAccessor`, `[AllowAnonymousAccess]` and the two exceptions. | none |
 | `Authorization.AspNetCore` | `HttpPrincipalAccessor` and `AddHttpPrincipalAccessor`. | ASP.NET Core (framework reference) |
 | `EntityFrameworkCore` | `TransactionBehavior<TDbContext>` and `[NonTransactional]`. | EF Core |
 | `*.DependencyInjection` | The `Add…Behavior()` and `Add…Accessor()` registration methods for each feature. | — |
@@ -86,6 +86,14 @@ Stream queries return an `IAsyncEnumerable<T>`. The handler is resolved when `St
 
 Behaviours that read attributes, such as `[AllowAnonymousAccess]` or `[NonTransactional]`, cache the result per type in a static `ConcurrentDictionary`. Behaviours that need services per action type, such as `IAuthorizer<T>` or `IValidator<T>`, take `IServiceProvider` and resolve them on each dispatch.
 
+### Authorization
+
+`AuthorizationBehavior` gets the user from `IPrincipalAccessor`, then runs the action's authorizers through a cached `ActionAuthorization<TAction>`, stopping at the first denial. The combined `AuthorizationResult` goes to every `IAuthorizationObserver`, then either an exception is thrown or the result is stored in `AuthorizationContext`'s static `AsyncLocal` before `next` runs ([ADR 0019](docs/adr/0019-decisions-are-available-and-observed.md)):
+- The value is set inside an `async` method, so it flows into `next` and the caller gets its own value back when the method returns. Don't set it from a non-`async` method.
+- Anonymous actions clear it, so they never see an outer decision.
+- For stream queries, the behaviour enumerates `next` itself and sets the value before every `MoveNextAsync`, because an async iterator runs each step in its consumer's context.
+- Decision details never go into exception messages.
+
 ## Actions
 
 Actions let hosts dispatch commands and queries by name, with JSON arguments ([ADR 0011](docs/adr/0011-named-actions.md)).
@@ -116,7 +124,8 @@ Exception messages are never recorded. When nothing listens, the dispatch isn't 
 
 Any change must keep these true. Tests cover each one, and the linked records explain why.
 
-- **Authorization fails closed:** an action with no authorizer is denied, and no user means `AuthenticationRequiredException` ([0018](docs/adr/0018-authorizers-return-decisions.md)).
+- **Authorization fails closed:** an action with no authorizer is denied, a `null` decision is a denial, and no user means `AuthenticationRequiredException` ([0018](docs/adr/0018-authorizers-return-decisions.md)).
+- **Decision details never reach the caller:** they're not in exception messages, and an observer that throws stops the action ([0018](docs/adr/0018-authorizers-return-decisions.md), [0019](docs/adr/0019-decisions-are-available-and-observed.md)).
 - **Messages are not authorized,** and can never be actions ([0008](docs/adr/0008-messages-are-not-authorized.md)).
 - **Hidden actions are indistinguishable from unknown ones** ([0011](docs/adr/0011-named-actions.md)).
 - **No adapter echoes input or exception details,** and telemetry never records exception messages ([0012](docs/adr/0012-adapters-never-echo-input-or-exceptions.md)).
