@@ -37,3 +37,7 @@ Datapoint.Mediator.InvalidActionArgumentsException
 Datapoint.Mediator.InvalidActionArgumentsException.InvalidActionArgumentsException() -> void
 Datapoint.Mediator.InvalidActionArgumentsException.InvalidActionArgumentsException(string! message) -> void
 Datapoint.Mediator.InvalidActionArgumentsException.InvalidActionArgumentsException(string! message, System.Exception! innerException) -> void
+*REMOVED*Datapoint.Mediator.IQueryHandler<TQuery, TQueryResult>
+*REMOVED*Datapoint.Mediator.IQueryHandler<TQuery, TQueryResult>.HandleAsync(TQuery query, System.Threading.CancellationToken ct = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<TQueryResult>
+Datapoint.Mediator.IQueryHandler<TQuery, TResult>
+Datapoint.Mediator.IQueryHandler<TQuery, TResult>.HandleAsync(TQuery query, System.Threading.CancellationToken ct = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<TResult>

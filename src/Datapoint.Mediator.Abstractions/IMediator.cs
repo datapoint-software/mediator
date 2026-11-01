@@ -27,7 +27,7 @@ public interface IMediator
     ValueTask<TResult> SendAsync<TResult>(ICommand<TResult> command, CancellationToken ct = default);
 
     /// <summary>
-    /// Sends a query to its <see cref="IQueryHandler{TQuery, TQueryResult}"/>.
+    /// Sends a query to its <see cref="IQueryHandler{TQuery, TResult}"/>.
     /// </summary>
     /// <typeparam name="TResult">The type of the query's result.</typeparam>
     /// <param name="query">The query to send.</param>
