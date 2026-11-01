@@ -26,6 +26,7 @@ Each record follows [Michael Nygard's format](https://cognitect.com/blog/2011/11
 | [0018](0018-authorizers-return-decisions.md) | Authorizers return decisions with details | Superseded by [0025](0025-decisions-bound-to-their-request.md) |
 | [0019](0019-decisions-are-available-and-observed.md) | Authorization decisions are available to the dispatch, and observed | Superseded by [0025](0025-decisions-bound-to-their-request.md) |
 | [0025](0025-decisions-bound-to-their-request.md) | Authorization decisions are bound to their request | Accepted |
+| [0026](0026-transaction-context-in-abstractions.md) | The transaction state is a contract in Abstractions | Accepted |
 | [0027](0027-startup-checks.md) | Startup checks, and behaviours with settings are registered once | Accepted |
 
 To add a record, copy the structure of an existing one, use the next number, and add it to this table.

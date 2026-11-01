@@ -1,1 +1,7 @@
 #nullable enable
+Datapoint.Mediator.ITransactionContext
+Datapoint.Mediator.ITransactionContext.Attempt.get -> int
+Datapoint.Mediator.ITransactionContext.AttemptId.get -> System.Guid
+Datapoint.Mediator.ITransactionContext.IsActive.get -> bool
+Datapoint.Mediator.ITransactionContext.IsJoined.get -> bool
+Datapoint.Mediator.ITransactionContext.IsReadOnly.get -> bool

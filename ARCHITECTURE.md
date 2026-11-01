@@ -41,7 +41,7 @@ All package names start with `Datapoint.Mediator.`, except the implementation, w
 
 | Project | Role | External dependencies |
 |---|---|---|
-| `Abstractions` | Commands, queries, messages, handlers, `IBehavior`, `IMediator`, and the action contracts (`[Action]`, `IActionCatalog`, `IActionDispatcher`, their exceptions). Domain layers reference only this. | none |
+| `Abstractions` | Commands, queries, messages, handlers, `IBehavior`, `IMediator`, `ITransactionContext`, and the action contracts (`[Action]`, `IActionCatalog`, `IActionDispatcher`, their exceptions). Domain layers reference only this. | none |
 | `Mediator` | `Mediator`, the dispatchers, `ActionCatalog`, `ActionDispatcher` and `MediatorTelemetry`. | none |
 | `DependencyInjection` | `AddMediator`, `MediatorOptions`, handler scanning, and building the action catalog. | `Microsoft.Extensions.DependencyInjection.Abstractions` |
 | `FluentValidation` | `ValidationBehavior`. | FluentValidation |
