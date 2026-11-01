@@ -15,7 +15,7 @@ Each record follows [Michael Nygard's format](https://cognitect.com/blog/2011/11
 | [0007](0007-authorization-fails-closed.md) | Authorization fails closed | Superseded by [0018](0018-authorizers-return-decisions.md) |
 | [0008](0008-messages-are-not-authorized.md) | Messages are not authorized | Accepted |
 | [0009](0009-messages-run-in-the-callers-transaction.md) | Messages run immediately, inside the caller's transaction | Accepted |
-| [0010](0010-transaction-retries-and-nesting.md) | `TransactionBehavior` retries the whole command, and nested commands join | Accepted |
+| [0010](0010-transaction-retries-and-nesting.md) | `TransactionBehavior` retries the whole command, and nested commands join | Superseded by [0024](0024-read-only-query-transactions.md) |
 | [0011](0011-named-actions.md) | Actions are named by `[Action]`, and hidden actions look unknown | Accepted |
 | [0012](0012-adapters-never-echo-input-or-exceptions.md) | Adapters never echo input or exception details | Accepted |
 | [0013](0013-adapters-match-authorization-exceptions-by-name.md) | Adapters recognise authorization exceptions by type name | Accepted |
@@ -25,6 +25,10 @@ Each record follows [Michael Nygard's format](https://cognitect.com/blog/2011/11
 | [0017](0017-cli-parses-with-the-invariant-culture.md) | The CLI parses numbers and dates with the invariant culture | Accepted |
 | [0018](0018-authorizers-return-decisions.md) | Authorizers return decisions with details | Superseded by [0025](0025-decisions-bound-to-their-request.md) |
 | [0019](0019-decisions-are-available-and-observed.md) | Authorization decisions are available to the dispatch, and observed | Superseded by [0025](0025-decisions-bound-to-their-request.md) |
+| [0021](0021-transaction-behavior-options.md) | `TransactionBehavior` is configured with options | Accepted |
+| [0022](0022-transaction-initializers.md) | Transaction initializers run after BEGIN, on every attempt and on join | Accepted |
+| [0023](0023-whoever-begins-a-transaction-commits-it.md) | Whoever begins a transaction saves and commits it | Accepted |
+| [0024](0024-read-only-query-transactions.md) | Queries can run in read-only transactions, opt-in | Accepted |
 | [0025](0025-decisions-bound-to-their-request.md) | Authorization decisions are bound to their request | Accepted |
 | [0026](0026-transaction-context-in-abstractions.md) | The transaction state is a contract in Abstractions | Accepted |
 | [0027](0027-startup-checks.md) | Startup checks, and behaviours with settings are registered once | Accepted |

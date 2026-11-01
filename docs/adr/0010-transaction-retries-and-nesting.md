@@ -1,6 +1,6 @@
 # 10. `TransactionBehavior` retries the whole command, and nested commands join
 
-- **Status:** Accepted
+- **Status:** Superseded by [0024](0024-read-only-query-transactions.md)
 - **Date:** 2026-10-31
 
 ## Context

@@ -102,6 +102,8 @@ public sealed class TransactionBehaviorTests : IAsyncLifetime
     private static ServiceProvider BuildProvider(Action<DbContextOptionsBuilder> configureDb) =>
         new ServiceCollection()
             .AddSingleton<Recorder>()
+            .AddSingleton(new Gate(1))
+            .AddTransactionContext()
             .AddDbContext<AppDbContext>(configureDb)
             .AddMediator(o => o.AddHandlersFromAssemblyContaining<TransactionBehaviorTests>().AddTransactionBehavior<AppDbContext>())
             .BuildServiceProvider(new ServiceProviderOptions { ValidateScopes = true, ValidateOnBuild = true });

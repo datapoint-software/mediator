@@ -47,7 +47,7 @@ All package names start with `Datapoint.Mediator.`, except the implementation, w
 | `FluentValidation` | `ValidationBehavior`. | FluentValidation |
 | `Authorization` | `AuthorizationBehavior`, `IAuthorizer<T>` and its decisions, `IAuthorizationContext`, `IAuthorizationObserver`, `IPrincipalAccessor`, `FixedPrincipalAccessor`, `[AllowAnonymousAccess]` and the two exceptions. | none |
 | `Authorization.AspNetCore` | `HttpPrincipalAccessor` and `AddHttpPrincipalAccessor`. | ASP.NET Core (framework reference) |
-| `EntityFrameworkCore` | `TransactionBehavior<TDbContext>` and `[NonTransactional]`. | EF Core |
+| `EntityFrameworkCore` | `TransactionBehavior<TDbContext>`, its options, `ITransactionInitializer<TDbContext>`, `TransactionContext` and `[NonTransactional]`. | EF Core (relational) |
 | `*.DependencyInjection` | The `Add…Behavior()` and `Add…Accessor()` registration methods for each feature. | — |
 | `AspNetCore` | `MapActions`: one `POST` endpoint per action. | ASP.NET Core (framework reference) |
 | `CommandLine` | `AddActions`: one command per action. | System.CommandLine |
@@ -82,7 +82,7 @@ Stream queries return an `IAsyncEnumerable<T>`. The handler is resolved when `St
 |---|---|---|---|---|
 | `AuthorizationBehavior` | ✓ | ✓ | ✓ | not authorized ([ADR 0008](docs/adr/0008-messages-are-not-authorized.md)); only clears the decision |
 | `ValidationBehavior` | ✓ | ✓ | ✓ | — |
-| `TransactionBehavior<TDbContext>` | ✓ | — | — | — |
+| `TransactionBehavior<TDbContext>` | ✓ | opt-in, read-only | opt-in, read-only | — |
 
 Behaviours that read attributes, such as `[AllowAnonymousAccess]` or `[NonTransactional]`, cache the result per type in a static `ConcurrentDictionary`. Behaviours that need services per action type, such as `IAuthorizer<T>` or `IValidator<T>`, take `IServiceProvider` and resolve them on each dispatch.
 
@@ -93,6 +93,13 @@ Behaviours that read attributes, such as `[AllowAnonymousAccess]` or `[NonTransa
 - Anonymous actions and messages clear it, so they never see an outer decision. Handlers read it with `For(action)`, which checks that the decision was made for that instance.
 - For stream queries, the behaviour enumerates `next` itself and sets the value before every `MoveNextAsync`, because an async iterator runs each step in its consumer's context.
 - Decision details never go into exception messages.
+
+### Transactions
+
+`TransactionBehavior<TDbContext>` begins a transaction for each command (and, when switched on, each query) inside the context's execution strategy, then runs the read-only statement, the initializers and `next`, and saves and commits, or rolls back for queries ([ADR 0024](docs/adr/0024-read-only-query-transactions.md)):
+- The state of the current transaction is a `TransactionState` in `TransactionContext`'s static `AsyncLocal`, set inside `async` methods like the authorization decision, so nested and parallel requests see their own. It records the context instance that began the transaction, so a behaviour for another context doesn't mistake it for its own.
+- When `Database.CurrentTransaction` is set, the request joins: if the state belongs to this context, initializers run with `IsJoined`; otherwise the transaction is foreign, and is joined as it is or refused ([ADR 0023](docs/adr/0023-whoever-begins-a-transaction-commits-it.md)).
+- Stream queries begin their transaction at first enumeration, set the state before every `MoveNextAsync`, and rely on disposing the uncommitted transaction to roll it back. A retrying strategy refuses them.
 
 ## Actions
 

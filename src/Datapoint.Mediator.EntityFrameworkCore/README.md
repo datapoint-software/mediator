@@ -9,4 +9,6 @@ public sealed record SendInvoiceEmail(Guid InvoiceId) : ICommand;
 
 > **Retries:** with a retrying execution strategy, such as `EnableRetryOnFailure`, a transient failure runs the **whole command again**, handler and message handlers included. Database changes are rolled back first, but external calls, such as HTTP requests or emails, happen again. Make them idempotent, or move them to a `[NonTransactional]` command.
 
+Optionally, set isolation levels, run queries in read-only transactions, and prepare each transaction with an `ITransactionInitializer<TDbContext>`, for example for PostgreSQL row-level security.
+
 **Documentation:** [Transactions](https://github.com/datapoint-software/mediator/blob/main/docs/transactions.md)
