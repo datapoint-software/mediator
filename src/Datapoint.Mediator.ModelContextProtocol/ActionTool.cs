@@ -1,5 +1,7 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
+using System.Reflection;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using System.Text.RegularExpressions;
@@ -19,12 +21,14 @@ internal sealed partial class ActionTool : McpServerTool
     private readonly ActionDescriptor _action;
     private readonly MediatorMcpOptions _options;
     private readonly JsonSerializerOptions _serializerOptions;
+    private readonly HashSet<string> _hostProvided;
 
     public ActionTool(ActionDescriptor action, MediatorMcpOptions options)
     {
         _action = action;
         _options = options;
         _serializerOptions = options.SerializerOptions ?? JsonSerializerOptions.Web;
+        _hostProvided = HostProvidedJsonNames(action, _serializerOptions);
 
         // Many AI model APIs only accept tool names made of letters, digits, underscores and hyphens. Action names
         // can't contain underscores, so replacing dots with underscores can't make two tools share a name.
@@ -42,7 +46,7 @@ internal sealed partial class ActionTool : McpServerTool
         {
             Name = name,
             Description = action.Description,
-            InputSchema = AIJsonUtilities.CreateJsonSchema(action.ActionType, serializerOptions: _serializerOptions),
+            InputSchema = WithoutHostProvided(AIJsonUtilities.CreateJsonSchema(action.ActionType, serializerOptions: _serializerOptions)),
             Annotations = new ToolAnnotations
             {
                 ReadOnlyHint = readOnly,
@@ -61,6 +65,13 @@ internal sealed partial class ActionTool : McpServerTool
     {
         var services = request.Services
             ?? throw new InvalidOperationException("The MCP request has no service provider to resolve the action dispatcher from.");
+
+        // Checked before the dispatcher is resolved, so a decorator of the dispatcher can still set the value.
+        if (FindHostProvided(request.Params?.Arguments) is { } name)
+        {
+            throw new McpException($"'{name}' is set by the server and cannot be given.");
+        }
+
         var dispatcher = services.GetRequiredService<IActionDispatcher>();
         var arguments = JsonSerializer.SerializeToElement(
             request.Params?.Arguments ?? new Dictionary<string, JsonElement>(),
@@ -109,6 +120,72 @@ internal sealed partial class ActionTool : McpServerTool
         }
 
         return new JsonObject { ["items"] = items, ["truncated"] = truncated };
+    }
+
+    // The JSON names the serializer binds host-provided properties to, including [JsonPropertyName]. They're compared
+    // with OrdinalIgnoreCase, like System.Text.Json's case-insensitive binding, so "TenantId" can't slip past "tenantId".
+    private static HashSet<string> HostProvidedJsonNames(ActionDescriptor action, JsonSerializerOptions options)
+    {
+        var names = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+        if (action.HostProvidedProperties.Count > 0)
+        {
+            foreach (var property in options.GetTypeInfo(action.ActionType).Properties)
+            {
+                if (property.AttributeProvider is PropertyInfo member && action.HostProvidedProperties.Any(p => p.Name == member.Name))
+                {
+                    names.Add(property.Name);
+                }
+            }
+        }
+
+        return names;
+    }
+
+    // Host-provided properties are left out of the schema, so an agent is never asked for them.
+    private JsonElement WithoutHostProvided(JsonElement schema)
+    {
+        if (_hostProvided.Count == 0)
+        {
+            return schema;
+        }
+
+        var json = JsonObject.Create(schema)!;
+
+        if (json["properties"] is JsonObject properties)
+        {
+            foreach (var key in properties.Select(p => p.Key).Where(_hostProvided.Contains).ToList())
+            {
+                properties.Remove(key);
+            }
+        }
+
+        if (json["required"] is JsonArray required)
+        {
+            foreach (var item in required.Where(r => _hostProvided.Contains(r!.GetValue<string>())).ToList())
+            {
+                required.Remove(item);
+            }
+        }
+
+        return JsonSerializer.SerializeToElement(json, AIJsonUtilities.DefaultOptions);
+    }
+
+    // Returns the contract's spelling of the name, never the agent's, so the error doesn't echo input.
+    private string? FindHostProvided(IDictionary<string, JsonElement>? arguments)
+    {
+        if (arguments is not null)
+        {
+            foreach (var key in arguments.Keys)
+            {
+                if (_hostProvided.TryGetValue(key, out var name))
+                {
+                    return name;
+                }
+            }
+        }
+
+        return null;
     }
 
     // Only messages known to be safe reach the agent. Anything else is rethrown, and the MCP SDK reports a generic

@@ -43,6 +43,19 @@ Over stdio, standard output carries the protocol, so send all logs to standard e
 
 Stream queries are collected into one result, because a tool call returns once. They stop at `MaxStreamResults` (100 by default), and `truncated` tells the agent there's more.
 
+### Host-provided properties
+
+A property marked [`[HostProvided]`](../actions.md#host-provided-properties), such as the tenant of the user's session, is left out of the tool's input schema, so the agent is never asked for it. A tool call that gives it anyway, in any letter case, is refused with `'tenantId' is set by the server and cannot be given.`, and the action doesn't run. It's refused rather than silently dropped, so neither the agent nor the user believes they chose the value, and an agent steered into choosing it is visible.
+
+The MCP server dispatches in-process, so it must set the value itself, in a [decorator of `IActionDispatcher`](../actions.md#filling-the-value). The tool checks the agent's arguments first, and only then calls the dispatcher, so the decorator's value is never refused:
+
+1. The tool refuses arguments that contain a host-provided property.
+2. It calls `IActionDispatcher`, which is your decorator.
+3. The decorator sets the value from the session, replacing any value in the arguments.
+4. The inner `ActionDispatcher` deserializes the action and sends it.
+
+> **Don't write host-provided values into `tools/call` arguments,** for example in MCP middleware: the tool would refuse every call. Set them in the decorator instead.
+
 ## Options
 
 ```csharp
