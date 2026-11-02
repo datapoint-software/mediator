@@ -27,7 +27,8 @@ public sealed class TestApp : IAsyncDisposable
         Action<MediatorEndpointOptions>? configureEndpoints = null,
         Action<MediatorOptions>? configureMediator = null,
         Action<IServiceCollection>? configureServices = null,
-        Action<RouteGroupBuilder>? configureGroup = null)
+        Action<RouteGroupBuilder>? configureGroup = null,
+        Action<WebApplication>? configureApp = null)
     {
         var builder = WebApplication.CreateSlimBuilder();
         builder.WebHost.UseTestServer();
@@ -45,6 +46,7 @@ public sealed class TestApp : IAsyncDisposable
         });
 
         var app = builder.Build();
+        configureApp?.Invoke(app);
         var group = app.MapActions("/api", configureEndpoints);
         configureGroup?.Invoke(group);
         await app.StartAsync();

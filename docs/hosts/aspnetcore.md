@@ -56,6 +56,37 @@ app.MapActions("/api")
 
 Each endpoint carries its name (the action's name), its summary (the action's description), a tag (the first segment of the name, such as `invoices`), its request type, and its response types, including `400`, `401` and `403` problem responses. With `builder.Services.AddOpenApi()` and `app.MapOpenApi()`, every action is documented at `/openapi/v1.json`.
 
+## Host-provided properties
+
+A property marked [`[HostProvided]`](../actions.md#host-provided-properties), such as the tenant of the user's session, is bound from the body like any other: this adapter doesn't hide or refuse it. **The app must overwrite it** before `MapActions` reads the body, for example in middleware that replaces the body's `tenantId` with the tenant of the verified session, and must never trust the value the caller sent.
+
+In OpenAPI, mark it `readOnly`, which means "not sent in requests", and take it out of `required`. This package doesn't depend on `Microsoft.AspNetCore.OpenApi`, so add this schema transformer to your app:
+
+```csharp
+builder.Services.AddOpenApi(o => o.AddSchemaTransformer((schema, context, ct) =>
+{
+    var catalog = context.ApplicationServices.GetRequiredService<IActionCatalog>();
+    var action = catalog.Actions.FirstOrDefault(a => a.ActionType == context.JsonTypeInfo.Type);
+
+    foreach (var property in action is null ? [] : context.JsonTypeInfo.Properties)
+    {
+        if (property.AttributeProvider is PropertyInfo member
+            && action!.HostProvidedProperties.Any(p => p.Name == member.Name)
+            && schema.Properties is { } properties
+            && properties.TryGetValue(property.Name, out var propertySchema)
+            && propertySchema is OpenApiSchema inline)
+        {
+            inline.ReadOnly = true;
+            schema.Required?.Remove(property.Name);
+        }
+    }
+
+    return Task.CompletedTask;
+}));
+```
+
+The property stays in the schema, so the document still describes the type exactly. Clients that send it anyway are harmless, as long as the app overwrites it.
+
 ## Options
 
 ```csharp
