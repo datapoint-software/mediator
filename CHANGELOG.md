@@ -4,6 +4,30 @@ All notable changes to the Datapoint.Mediator packages are documented in this fi
 
 The format is based on [Keep a Changelog 1.1.0](https://keepachangelog.com/en/1.1.0/), and the packages follow [Semantic Versioning 2.0.0](https://semver.org/spec/v2.0.0.html).
 
+## [4.0.0-beta.3](https://github.com/datapoint-software/mediator/releases/tag/4.0.0-beta.3) - 2026-11-02
+
+### Added
+
+- **abstractions:** Add HostProvidedAttribute ([b490ebe](https://github.com/datapoint-software/mediator/commit/b490ebe1a66cad30624f61d36db53df7298c19db))
+- **command-line:** Hide and refuse host-provided properties ([00149ca](https://github.com/datapoint-software/mediator/commit/00149ca90c317f5cb52381cd40a2d722f532abed))
+- **model-context-protocol:** Hide and refuse host-provided properties ([d2f94d4](https://github.com/datapoint-software/mediator/commit/d2f94d47a2ab2128482964432f9bc679e356ccee))
+
+### Documentation
+
+- Use a neutral DbContext name in examples ([f86460b](https://github.com/datapoint-software/mediator/commit/f86460ba6de81ccf391e38cce88f96b4bb68799b))
+- **aspnetcore:** Mark host-provided properties read-only in OpenAPI ([be16a72](https://github.com/datapoint-software/mediator/commit/be16a722b33767491c4759ed63d41c9e0abb321c))
+
+### Migrating from 4.0.0-beta.2
+
+No breaking changes: adopt `4.0.0-beta.3` as is. To stop asking callers for values the host supplies, such as the tenant of the caller's session:
+
+- Mark those properties, or record parameters, `[HostProvided]`. The CLI then adds no option for them, MCP tools leave them out of their input schema, and both refuse a value a caller gives for them.
+- The host must still set or overwrite the value: hiding it is presentation only. An API overwrites it in the request body; a CLI or MCP server that dispatches in-process sets it in a decorator of `IActionDispatcher`.
+- A host that writes those values into the caller's CLI or MCP arguments, for example in MCP middleware that edits `tools/call` arguments, must move that into the decorator, or every call is refused.
+- For OpenAPI, add the schema transformer from the [ASP.NET Core guide](https://github.com/datapoint-software/mediator/blob/main/docs/hosts/aspnetcore.md#host-provided-properties).
+
+See [ADR 0028](https://github.com/datapoint-software/mediator/blob/main/docs/adr/0028-host-provided-properties.md) for the decision.
+
 ## [4.0.0-beta.2](https://github.com/datapoint-software/mediator/releases/tag/4.0.0-beta.2) - 2026-11-01
 
 ### Added

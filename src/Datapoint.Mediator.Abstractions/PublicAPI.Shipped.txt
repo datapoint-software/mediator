@@ -10,6 +10,7 @@ Datapoint.Mediator.ActionDescriptor
 Datapoint.Mediator.ActionDescriptor.ActionDescriptor(string! name, string? description, Datapoint.Mediator.ActionKind kind, System.Type! actionType, System.Type? resultType) -> void
 Datapoint.Mediator.ActionDescriptor.ActionType.get -> System.Type!
 Datapoint.Mediator.ActionDescriptor.Description.get -> string?
+Datapoint.Mediator.ActionDescriptor.HostProvidedProperties.get -> System.Collections.Generic.IReadOnlyList<System.Reflection.PropertyInfo!>!
 Datapoint.Mediator.ActionDescriptor.Kind.get -> Datapoint.Mediator.ActionKind
 Datapoint.Mediator.ActionDescriptor.Name.get -> string!
 Datapoint.Mediator.ActionDescriptor.ResultType.get -> System.Type?
@@ -22,6 +23,10 @@ Datapoint.Mediator.ActionNotFoundException
 Datapoint.Mediator.ActionNotFoundException.ActionNotFoundException() -> void
 Datapoint.Mediator.ActionNotFoundException.ActionNotFoundException(string! message) -> void
 Datapoint.Mediator.ActionNotFoundException.ActionNotFoundException(string! message, System.Exception! innerException) -> void
+Datapoint.Mediator.HostProvidedAttribute
+Datapoint.Mediator.HostProvidedAttribute.HostProvidedAttribute() -> void
+Datapoint.Mediator.HostProvidedAttribute.Reason.get -> string?
+Datapoint.Mediator.HostProvidedAttribute.Reason.init -> void
 Datapoint.Mediator.IActionCatalog
 Datapoint.Mediator.IActionCatalog.Actions.get -> System.Collections.Generic.IReadOnlyList<Datapoint.Mediator.ActionDescriptor!>!
 Datapoint.Mediator.IActionCatalog.TryGetAction(string! name, out Datapoint.Mediator.ActionDescriptor? action) -> bool
