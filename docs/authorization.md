@@ -30,7 +30,7 @@ A decision can carry **details**: any object of yours that explains it, such as 
 ```csharp
 public sealed record ReadGrant(string ShareId, string Role, bool BrowseOnly, bool Watermark);
 
-public sealed class DownloadItemAuthorizer(FileShareDbContext db) : IAuthorizer<DownloadItem>
+public sealed class DownloadItemAuthorizer(AppDbContext db) : IAuthorizer<DownloadItem>
 {
     public async ValueTask<AuthorizationDecision> AuthorizeAsync(DownloadItem action, ClaimsPrincipal principal, CancellationToken ct = default)
     {

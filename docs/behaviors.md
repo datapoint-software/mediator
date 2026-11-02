@@ -35,7 +35,7 @@ services.AddMediator(o => o
 services.AddMediator(o => o
     .AddHandlersFromAssemblyContaining<DownloadItemHandler>()
     .AddAuthenticationBehavior()                                          // refuse anonymous callers before BEGIN
-    .AddTransactionBehavior<FileShareDbContext>(t =>
+    .AddTransactionBehavior<AppDbContext>(t =>
     {
         t.IsolationLevel = IsolationLevel.ReadCommitted;                  // plus your own row locks
         t.Queries = QueryTransactions.ReadOnly;                           // queries in transactions too

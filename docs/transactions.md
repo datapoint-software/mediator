@@ -94,7 +94,7 @@ These trade-offs are deliberate: see [ADR 0009](adr/0009-messages-run-in-the-cal
 Pass settings when you register the behaviour:
 
 ```csharp
-.AddTransactionBehavior<FileShareDbContext>(t =>
+.AddTransactionBehavior<AppDbContext>(t =>
 {
     t.IsolationLevel = IsolationLevel.ReadCommitted;          // commands; default: the database's
     t.Queries = QueryTransactions.ReadOnly;                   // queries too; default: None
@@ -115,9 +115,9 @@ Being inside a transaction doesn't make every read consistent: at `READ COMMITTE
 An `ITransactionInitializer<TDbContext>` runs right after the transaction begins, before anything else runs in it: authorization, validation and the handler. For example, for PostgreSQL row-level security with a transaction-local setting:
 
 ```csharp
-public sealed class TenantInitializer(IPrincipalAccessor principals) : ITransactionInitializer<FileShareDbContext>
+public sealed class TenantInitializer(IPrincipalAccessor principals) : ITransactionInitializer<AppDbContext>
 {
-    public async ValueTask InitializeAsync(FileShareDbContext db, TransactionInitialization transaction, CancellationToken ct = default)
+    public async ValueTask InitializeAsync(AppDbContext db, TransactionInitialization transaction, CancellationToken ct = default)
     {
         if (transaction.IsJoined)
         {
@@ -136,7 +136,7 @@ public sealed class TenantInitializer(IPrincipalAccessor principals) : ITransact
 ```
 
 ```csharp
-services.AddTransactionInitializer<FileShareDbContext, TenantInitializer>();
+services.AddTransactionInitializer<AppDbContext, TenantInitializer>();
 ```
 
 - Initializers run in registration order, after `ReadOnlyStatement`, and **again on every retry**.
