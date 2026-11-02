@@ -52,6 +52,88 @@ public sealed record PurgeCancelledInvoices : ICommand;
 
 An unknown action and a hidden one fail the same way, with `ActionNotFoundException` and the same message, so callers can't discover internal actions by guessing names.
 
+## Host-provided properties
+
+Some properties are filled in by the host, never by the caller, such as the tenant of the caller's session. Mark them `[HostProvided]`, on the property or on the record parameter:
+
+```csharp
+[Action("invoices.list", Description = "Lists the invoices of the signed-in user's tenant.")]
+public sealed record ListInvoices(
+    [HostProvided(Reason = "The tenant of the caller's session.")] Guid TenantId,
+    string? Customer) : IQuery<IReadOnlyList<InvoiceSummary>>;
+```
+
+| Host | The property | A value from the caller |
+|---|---|---|
+| Command line | has no option, and is never required | in `--json`: refused, exit code 2 |
+| MCP server | isn't in the tool's input schema | refused, as a tool error |
+| ASP.NET Core | is `readOnly` in OpenAPI, with [a schema transformer](hosts/aspnetcore.md#host-provided-properties) | accepted, so the host must overwrite it |
+| `IActionDispatcher`, `IMediator` | is an ordinary property | accepted, so the host must set it |
+
+The refusal reads `'tenantId' is set by the server and cannot be given.` It matches the property's JSON name ignoring case, as System.Text.Json does when binding, so `"TenantId"` is refused too. Only the action's own properties count, not properties of nested objects.
+
+> **Hiding is presentation only.** The host must set or overwrite the value before the action is dispatched, and must never trust a value that came from the caller. A host that forgets dispatches the default value, such as `Guid.Empty`, so make your handlers or authorizers refuse a default tenant.
+
+### Filling the value
+
+An API can overwrite the property in middleware, before `MapActions` reads the body. Hosts that dispatch in-process, such as an MCP server or a CLI that runs the actions itself, set it in a decorator of `IActionDispatcher`. The adapters refuse the caller's value **before** they call the dispatcher, so the decorator's value never trips the refusal:
+
+1. The adapter refuses arguments that contain a host-provided property.
+2. It calls `IActionDispatcher`, which is your decorator.
+3. The decorator sets the value, replacing any value in the arguments.
+4. The inner `ActionDispatcher` deserializes the action and sends it.
+
+```csharp
+// Sets every action's TenantId from the caller's session, after the host has refused any tenant from the caller.
+public sealed class TenantDispatcher(ActionDispatcher inner, IActionCatalog catalog, IPrincipalAccessor principals)
+    : IActionDispatcher
+{
+    public ValueTask<object?> DispatchAsync(
+        string name, JsonElement arguments, JsonSerializerOptions? options = null, CancellationToken ct = default) =>
+        inner.DispatchAsync(name, WithTenant(name, arguments, options), options, ct);
+
+    public IAsyncEnumerable<object?> StreamAsync(
+        string name, JsonElement arguments, JsonSerializerOptions? options = null, CancellationToken ct = default) =>
+        inner.StreamAsync(name, WithTenant(name, arguments, options), options, ct);
+
+    private JsonElement WithTenant(string name, JsonElement arguments, JsonSerializerOptions? options)
+    {
+        if (!catalog.TryGetAction(name, out var action)
+            || !action.HostProvidedProperties.Any(p => p.Name == "TenantId")
+            || arguments.ValueKind is not (JsonValueKind.Object or JsonValueKind.Undefined))
+        {
+            return arguments;   // unknown actions and invalid arguments fail in the inner dispatcher, as usual
+        }
+
+        var json = arguments.ValueKind == JsonValueKind.Object ? JsonObject.Create(arguments)! : new JsonObject();
+        var key = (options ?? JsonSerializerOptions.Web).PropertyNamingPolicy?.ConvertName("TenantId") ?? "TenantId";
+
+        // Replace, never add only if missing: remove the caller's value in any letter case.
+        foreach (var existing in json.Select(p => p.Key).Where(k => k.Equals(key, StringComparison.OrdinalIgnoreCase)).ToList())
+        {
+            json.Remove(existing);
+        }
+
+        if (principals.Principal?.FindFirstValue("tenant_id") is { } tenantId)
+        {
+            json[key] = tenantId;   // otherwise the default, which the authorizer refuses
+        }
+
+        return JsonSerializer.SerializeToElement(json);
+    }
+}
+```
+
+`AddMediator` registers `ActionDispatcher` only if no `IActionDispatcher` is registered, so register the decorator after it:
+
+```csharp
+services.AddMediator(...);
+services.AddScoped<ActionDispatcher>();
+services.Replace(ServiceDescriptor.Scoped<IActionDispatcher, TenantDispatcher>());
+```
+
+Don't write host-provided values into the caller's arguments before the adapter sees them, for example in MCP middleware that edits `tools/call` arguments: the adapter would refuse every call.
+
 ## The catalog and the dispatcher
 
 Hosts use two services. You only need them to build your own host:
@@ -82,4 +164,5 @@ await foreach (var item in dispatcher.StreamAsync("invoices.list", default, ct: 
 When building a host on `IActionDispatcher`, follow the same rules as the built-in ones:
 - Map `InvalidActionArgumentsException`, `ActionNotFoundException`, `AuthenticationRequiredException` and `AccessDeniedException` to fixed, safe responses.
 - Never return or print any other exception's message, or the caller's input.
+- Don't offer the properties in `ActionDescriptor.HostProvidedProperties` to callers, and refuse a caller's value for one, matching its JSON name with `StringComparer.OrdinalIgnoreCase`.
 - Create a DI scope per call, and pass the caller's cancellation token.

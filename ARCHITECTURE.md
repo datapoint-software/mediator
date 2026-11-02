@@ -108,7 +108,7 @@ Actions let hosts dispatch commands and queries by name, with JSON arguments ([A
 
 1. **Registration.** `AddMediator` collects the request types of every registered handler and adds them to an `ActionCatalogBuilder`. That builder is a singleton instance kept in the service collection, so every `AddMediator` call adds to the same catalog. Each `Add` builds a new `ActionCatalog`, which validates everything at that moment: name pattern and length, duplicates, messages marked as actions, and types implementing more than one action interface. So **invalid actions fail at startup**.
    After the catalog, the builder runs every startup check registered with `MediatorOptions.AddStartupCheck`, by any `AddMediator` call, over every command, query and stream query so far ([ADR 0027](docs/adr/0027-startup-checks.md)).
-2. **Catalog.** `IActionCatalog` (a singleton) lists the visible actions, with their name, description, kind, action type and result type. Hidden actions aren't listed.
+2. **Catalog.** `IActionCatalog` (a singleton) lists the visible actions, with their name, description, kind, action type and result type. Hidden actions aren't listed. Each `ActionDescriptor` also finds, once, the properties marked `[HostProvided]` on the property or its record parameter, so every adapter applies the same rule ([ADR 0028](docs/adr/0028-host-provided-properties.md)).
 3. **Dispatch.** `ActionDispatcher` (scoped) looks a name up in the catalog. An unknown name and a hidden one both throw the same `ActionNotFoundException`. It then deserializes the `JsonElement` into the action type, throwing `InvalidActionArgumentsException` without echoing the input, and sends it through `IMediator` with a cached `ActionInvoker` for the action's kind. Every behaviour runs as usual.
 4. **Hosts.** Each adapter reads the catalog when the app starts:
 
@@ -119,6 +119,8 @@ Actions let hosts dispatch commands and queries by name, with JSON arguments ([A
 | `ModelContextProtocol` (`ActionTool`, `ActionToolsSetup`) | a tool per action, named with dots as underscores, with a JSON schema | safe messages, then `ErrorMessage`, then a generic SDK error |
 
 The adapters recognise the authorization exceptions by their full type name, so they don't depend on the authorization package ([ADR 0013](docs/adr/0013-adapters-match-authorization-exceptions-by-name.md)). They never describe any other exception ([ADR 0012](docs/adr/0012-adapters-never-echo-input-or-exceptions.md)).
+
+The CLI and MCP adapters hide host-provided properties, and refuse a caller's value for one, matching JSON names with `StringComparer.OrdinalIgnoreCase`. They check the caller's arguments before resolving `IActionDispatcher`, so an app's decorator of the dispatcher can set the value afterwards. ASP.NET Core and the dispatcher don't treat them differently.
 
 ## Telemetry
 
@@ -137,6 +139,7 @@ Any change must keep these true. Tests cover each one, and the linked records ex
 - **Decisions are bound to their request, and their details never reach the caller:** `For(action)` checks the instance, message handlers see no decision, details are never in exception messages, and an observer that throws stops the action ([0025](docs/adr/0025-decisions-bound-to-their-request.md)).
 - **Messages are not authorized,** and can never be actions ([0008](docs/adr/0008-messages-are-not-authorized.md)).
 - **Hidden actions are indistinguishable from unknown ones** ([0011](docs/adr/0011-named-actions.md)).
+- **The CLI and MCP adapters never take a host-provided value from the caller:** they hide the property and refuse a value for it, in any letter case ([0028](docs/adr/0028-host-provided-properties.md)).
 - **No adapter echoes input or exception details,** and telemetry never records exception messages ([0012](docs/adr/0012-adapters-never-echo-input-or-exceptions.md)).
 - **Every adapter maps both authorization exceptions** by their full type names ([0013](docs/adr/0013-adapters-match-authorization-exceptions-by-name.md)).
 - **One `IPrincipalAccessor` per app:** the registration methods refuse a second one ([0014](docs/adr/0014-one-principal-accessor.md)).

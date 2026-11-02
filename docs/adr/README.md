@@ -33,5 +33,6 @@ Each record follows [Michael Nygard's format](https://cognitect.com/blog/2011/11
 | [0025](0025-decisions-bound-to-their-request.md) | Authorization decisions are bound to their request | Accepted |
 | [0026](0026-transaction-context-in-abstractions.md) | The transaction state is a contract in Abstractions | Accepted |
 | [0027](0027-startup-checks.md) | Startup checks, and behaviours with settings are registered once | Accepted |
+| [0028](0028-host-provided-properties.md) | Host-provided properties are hidden and refused by the CLI and MCP adapters | Accepted |
 
 To add a record, copy the structure of an existing one, use the next number, and add it to this table.

@@ -1,1 +1,6 @@
 #nullable enable
+Datapoint.Mediator.ActionDescriptor.HostProvidedProperties.get -> System.Collections.Generic.IReadOnlyList<System.Reflection.PropertyInfo!>!
+Datapoint.Mediator.HostProvidedAttribute
+Datapoint.Mediator.HostProvidedAttribute.HostProvidedAttribute() -> void
+Datapoint.Mediator.HostProvidedAttribute.Reason.get -> string?
+Datapoint.Mediator.HostProvidedAttribute.Reason.init -> void
