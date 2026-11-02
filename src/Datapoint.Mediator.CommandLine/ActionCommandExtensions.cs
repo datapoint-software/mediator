@@ -28,6 +28,11 @@ public static class ActionCommandExtensions
     /// actions with nested objects or collections.
     /// </para>
     /// <para>
+    /// Properties marked with <see cref="HostProvidedAttribute"/> get no option, and <c>--json</c> arguments that contain
+    /// one, in any letter case, are refused with <see cref="ActionExitCodes.InvalidArguments"/>. The host must set their
+    /// values itself, for example in a decorator of <see cref="IActionDispatcher"/>.
+    /// </para>
+    /// <para>
     /// Each invocation runs in its own DI scope, and Ctrl+C cancels it. Results are written to the invocation's output
     /// as JSON; a stream query writes one JSON value per line as results arrive. Errors are written to the error output,
     /// with the exit codes in <see cref="ActionExitCodes"/>. Unexpected errors print no details.

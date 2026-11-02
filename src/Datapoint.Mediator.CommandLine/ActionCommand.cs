@@ -27,6 +27,7 @@ internal sealed class ActionCommand
     private readonly MediatorCommandLineOptions _options;
     private readonly JsonSerializerOptions _serializerOptions;
     private readonly List<(string JsonName, Option Option, bool Required)> _properties = [];
+    private readonly HashSet<string> _hostProvided;
     private readonly Option<string> _json = new("--json")
     {
         Description = "The action's arguments as a JSON object, instead of the individual options.",
@@ -38,6 +39,7 @@ internal sealed class ActionCommand
         _services = services;
         _options = options;
         _serializerOptions = options.SerializerOptions ?? JsonSerializerOptions.Web;
+        _hostProvided = HostProvidedJsonNames(action, _serializerOptions);
     }
 
     public static Command Create(string name, ActionDescriptor action, IServiceProvider services, MediatorCommandLineOptions options) =>
@@ -54,7 +56,8 @@ internal sealed class ActionCommand
 
         foreach (var property in _action.ActionType.GetProperties(BindingFlags.Public | BindingFlags.Instance))
         {
-            if (property.GetIndexParameters().Length > 0)
+            // Host-provided properties get no option, so the user can never believe they chose the value.
+            if (property.GetIndexParameters().Length > 0 || _action.HostProvidedProperties.Any(p => p.Name == property.Name))
             {
                 continue;
             }
@@ -164,6 +167,43 @@ internal sealed class ActionCommand
         return false;
     }
 
+    // The JSON names the serializer binds host-provided properties to, including [JsonPropertyName]. They're compared
+    // with OrdinalIgnoreCase, like System.Text.Json's case-insensitive binding, so "TenantId" can't slip past "tenantId".
+    private static HashSet<string> HostProvidedJsonNames(ActionDescriptor action, JsonSerializerOptions options)
+    {
+        var names = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+        if (action.HostProvidedProperties.Count > 0)
+        {
+            foreach (var property in options.GetTypeInfo(action.ActionType).Properties)
+            {
+                if (property.AttributeProvider is PropertyInfo member && action.HostProvidedProperties.Any(p => p.Name == member.Name))
+                {
+                    names.Add(property.Name);
+                }
+            }
+        }
+
+        return names;
+    }
+
+    // Returns the contract's spelling of the name, never the caller's, so the message doesn't echo input.
+    private string? FindHostProvided(JsonElement arguments)
+    {
+        if (_hostProvided.Count > 0 && arguments.ValueKind == JsonValueKind.Object)
+        {
+            foreach (var argument in arguments.EnumerateObject())
+            {
+                if (_hostProvided.TryGetValue(argument.Name, out var name))
+                {
+                    return name;
+                }
+            }
+        }
+
+        return null;
+    }
+
     private static bool IsNullable(PropertyInfo property, NullabilityInfoContext nullability) =>
         property.PropertyType.IsValueType
             ? Nullable.GetUnderlyingType(property.PropertyType) is not null
@@ -186,6 +226,13 @@ internal sealed class ActionCommand
             catch (JsonException)
             {
                 await error.WriteLineAsync("The --json value is not valid JSON.").ConfigureAwait(false);
+                return ActionExitCodes.InvalidArguments;
+            }
+
+            // Checked before the dispatcher is resolved, so a decorator of the dispatcher can still set the value.
+            if (FindHostProvided(arguments) is { } name)
+            {
+                await error.WriteLineAsync($"'{name}' is set by the server and cannot be given.").ConfigureAwait(false);
                 return ActionExitCodes.InvalidArguments;
             }
         }
