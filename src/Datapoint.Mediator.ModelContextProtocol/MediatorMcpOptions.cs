@@ -9,8 +9,13 @@ namespace Datapoint.Mediator.ModelContextProtocol;
 public sealed class MediatorMcpOptions
 {
     /// <summary>
-    /// Gets or sets which actions to offer as tools, or <see langword="null"/> to offer every action in the catalog.
+    /// Gets or sets which actions to offer as tools, or <see langword="null"/> to offer every action marked with
+    /// <see cref="ModelContextProtocolAttribute"/>.
     /// </summary>
+    /// <remarks>
+    /// The filter only sees actions marked with <see cref="ModelContextProtocolAttribute"/>, so it can narrow them but
+    /// never add others.
+    /// </remarks>
     public Func<ActionDescriptor, bool>? Filter { get; set; }
 
     /// <summary>

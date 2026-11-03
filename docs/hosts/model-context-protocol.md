@@ -32,7 +32,7 @@ Over stdio, standard output carries the protocol, so send all logs to standard e
 
 ## Tools
 
-- Each action becomes a tool, named with dots replaced by underscores, such as `invoices_create`, because many AI model APIs don't accept dots in tool names.
+- Each action marked `[ModelContextProtocol]` becomes a tool, named with dots replaced by underscores, such as `invoices_create`, because many AI model APIs don't accept dots in tool names. An action without `[ModelContextProtocol]` isn't listed, and calling it fails like calling an unknown tool. See [Where an action is offered](../actions.md#where-an-action-is-offered).
 - The tool's description is the action's `Description`, and its input schema comes from the action's type, including `[Description]` on its properties. **These are what the agent reads to choose a tool and fill its arguments,** so write them carefully.
 - Queries and stream queries are marked read-only. Commands are marked as possibly destructive, so MCP clients can ask the user before running them.
 
@@ -61,7 +61,7 @@ The MCP server dispatches in-process, so it must set the value itself, in a [dec
 ```csharp
 .WithMediatorActions(o =>
 {
-    o.Filter = a => a.Name.StartsWith("invoices.");   // offer only some actions
+    o.Filter = a => a.Name.StartsWith("invoices.");   // offer only some of the [ModelContextProtocol] actions
     o.MaxStreamResults = 50;
     o.SerializerOptions = mySerializerOptions;         // default: web defaults (camelCase)
     o.ErrorMessage = ...;                              // see Errors
@@ -98,7 +98,7 @@ The messages Mediator writes never contain argument values, .NET type names, sta
 
 ## Security
 
-> **Security:** an AI agent acts for a user, so it must never get more permissions than that user. Consider giving agents a narrower principal, for example without permission to cancel invoices, and use `Filter` to offer only the tools they need.
+> **Security:** an AI agent acts for a user, so it must never get more permissions than that user. Consider giving agents a narrower principal, for example without permission to cancel invoices, and mark `[ModelContextProtocol]` only the actions they need.
 
 > **Security:** text an agent reads, including tool results and error messages, can steer its behaviour. That's why this adapter never echoes input or exception details, and why your `ErrorMessage` hook must not either.
 

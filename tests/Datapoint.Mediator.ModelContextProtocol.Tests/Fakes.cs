@@ -34,6 +34,12 @@ public sealed record FailingReport : ICommand;
 [Action("reports.reject", "A test action.")]
 public sealed record RejectedReport : ICommand;
 
+// Offered by the other hosts, never as an MCP tool.
+[Api]
+[CommandLine]
+[Action("invoices.export", "A test action.")]
+public sealed record ExportInvoices : ICommand;
+
 public sealed class Recorder
 {
     public List<string> Log { get; } = [];
@@ -47,6 +53,15 @@ public sealed class CreateInvoiceHandler(Recorder recorder) : ICommandHandler<Cr
     {
         recorder.Log.Add($"create {command.Customer} {command.Amount}");
         return new(Id);
+    }
+}
+
+public sealed class ExportInvoicesHandler(Recorder recorder) : ICommandHandler<ExportInvoices>
+{
+    public ValueTask HandleAsync(ExportInvoices command, CancellationToken ct = default)
+    {
+        recorder.Log.Add("export");
+        return default;
     }
 }
 

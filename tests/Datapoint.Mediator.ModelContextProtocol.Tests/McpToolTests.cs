@@ -44,6 +44,32 @@ public sealed class McpToolTests
     }
 
     [Fact]
+    public async Task ActionNotMarkedForMcp_IsNotOfferedAndFailsLikeAnUnknownTool()
+    {
+        await using var mcp = await McpHarness.StartAsync();
+
+        var tools = await mcp.Client.ListToolsAsync(cancellationToken: Ct);
+        var notOffered = await Record.ExceptionAsync(async () => await mcp.Client.CallToolAsync("invoices_export", cancellationToken: Ct));
+        var unknown = await Record.ExceptionAsync(async () => await mcp.Client.CallToolAsync("invoices_unknown", cancellationToken: Ct));
+
+        Assert.DoesNotContain("invoices_export", tools.Select(t => t.ProtocolTool.Name));
+        Assert.NotNull(notOffered);
+        Assert.Equal(unknown!.GetType(), notOffered.GetType());
+        Assert.Equal(unknown.Message.Replace("invoices_unknown", "invoices_export"), notOffered.Message);
+        Assert.DoesNotContain("export", mcp.Recorder.Log);
+    }
+
+    [Fact]
+    public async Task Filter_CannotOfferAnActionNotMarkedForMcp()
+    {
+        await using var mcp = await McpHarness.StartAsync(o => o.Filter = _ => true);
+
+        var tools = await mcp.Client.ListToolsAsync(cancellationToken: Ct);
+
+        Assert.DoesNotContain("invoices_export", tools.Select(t => t.ProtocolTool.Name));
+    }
+
+    [Fact]
     public async Task Filter_LimitsTheOfferedTools()
     {
         await using var mcp = await McpHarness.StartAsync(o => o.Filter = a => a.Kind == ActionKind.Query);

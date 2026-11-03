@@ -27,7 +27,7 @@ Every security consideration in this manual, as one checklist. Each item links t
 
 - [ ] **API endpoints require authentication** with `RequireAuthorization()` on the action group, as defence in depth. → [ASP.NET Core](hosts/aspnetcore.md#the-current-user)
 - [ ] **A CLI doesn't hold credentials users can read.** Otherwise the rules only apply while users go through the CLI. → [Command line](hosts/command-line.md#the-current-user)
-- [ ] **AI agents get no more permissions than their user,** ideally fewer, and `Filter` offers only the tools they need. → [Model Context Protocol](hosts/model-context-protocol.md#security)
+- [ ] **AI agents get no more permissions than their user,** ideally fewer, and only the actions they need are marked `[ModelContextProtocol]`. → [Model Context Protocol](hosts/model-context-protocol.md#security)
 - [ ] **A remote MCP server authenticates every request** with `app.MapMcp().RequireAuthorization()`. → [Model Context Protocol](hosts/model-context-protocol.md#transports)
 
 ## Transactions and side effects

@@ -3,7 +3,7 @@ using Microsoft.Extensions.Options;
 
 namespace Datapoint.Mediator.ModelContextProtocol;
 
-// Adds a tool per catalog action when the MCP server's options are built, so it doesn't matter whether
+// Adds a tool per catalog action marked [ModelContextProtocol] when the MCP server's options are built, so it doesn't matter whether
 // WithMediatorActions is called before or after AddMediator.
 internal sealed class ActionToolsSetup(IActionCatalog catalog, MediatorMcpOptions options) : IConfigureOptions<McpServerOptions>
 {
@@ -13,7 +13,7 @@ internal sealed class ActionToolsSetup(IActionCatalog catalog, MediatorMcpOption
 
         foreach (var action in catalog.Actions)
         {
-            if (options.Filter?.Invoke(action) ?? true)
+            if (action.IsOfferedBy<ModelContextProtocolAttribute>() && (options.Filter?.Invoke(action) ?? true))
             {
                 var tool = new ActionTool(action, options);
                 tools.TryAdd(tool);

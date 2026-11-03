@@ -45,7 +45,8 @@ public sealed class McpHarness : IAsyncDisposable
                 .AddHandler<GetInvoiceHandler>()
                 .AddHandler<ListInvoicesHandler>()
                 .AddHandler<FailingReportHandler>()
-                .AddHandler<RejectedReportHandler>();
+                .AddHandler<RejectedReportHandler>()
+                .AddHandler<ExportInvoicesHandler>();
             configureMediator?.Invoke(o);
         });
         services.AddMcpServer().WithMediatorActions(configureMcp);
