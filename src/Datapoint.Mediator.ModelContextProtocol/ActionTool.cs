@@ -69,7 +69,7 @@ internal sealed partial class ActionTool : McpServerTool
         // Checked before the dispatcher is resolved, so a decorator of the dispatcher can still set the value.
         if (FindHostProvided(request.Params?.Arguments) is { } name)
         {
-            throw new McpException($"'{name}' is set by the server and cannot be given.");
+            return Error($"'{name}' is set by the server and cannot be given.");
         }
 
         var dispatcher = services.GetRequiredService<IActionDispatcher>();
@@ -96,9 +96,14 @@ internal sealed partial class ActionTool : McpServerTool
                 StructuredContent = structured,
             };
         }
-        catch (Exception exception) when (exception is not OperationCanceledException && SafeMessage(exception) is { } message)
+        catch (Exception exception) when (exception is not OperationCanceledException)
         {
-            throw new McpException(message);
+            if (ErrorResult(exception) is { } error)
+            {
+                return error;
+            }
+
+            throw;
         }
     }
 
@@ -187,6 +192,31 @@ internal sealed partial class ActionTool : McpServerTool
 
         return null;
     }
+
+    // Errors are returned as results, not thrown, so the MCP SDK doesn't prefix their text. Content from the app's hook
+    // is sent both as structured content and as its JSON text, as MCP recommends for clients that only read text.
+    private CallToolResult? ErrorResult(Exception exception)
+    {
+        if (_options.ErrorContent?.Invoke(exception) is { } content)
+        {
+            var structured = JsonSerializer.SerializeToElement(content, content.GetType(), _serializerOptions);
+
+            // Thrown from the catch block, so the MCP SDK reports a generic error without this message.
+            return structured.ValueKind == JsonValueKind.Object
+                ? Error(structured.GetRawText(), structured)
+                : throw new InvalidOperationException("MediatorMcpOptions.ErrorContent must return a value that serializes to a JSON object.");
+        }
+
+        return SafeMessage(exception) is { } message ? Error(message) : null;
+    }
+
+    private static CallToolResult Error(string text, JsonElement? structured = null) =>
+        new()
+        {
+            IsError = true,
+            Content = [new TextContentBlock { Text = text }],
+            StructuredContent = structured,
+        };
 
     // Only messages known to be safe reach the agent. Invalid arguments and authorization failures go to the app's hook
     // first, so it can report them with its own codes. Anything else is rethrown, and the MCP SDK reports a generic

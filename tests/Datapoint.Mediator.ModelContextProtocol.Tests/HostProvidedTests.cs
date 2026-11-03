@@ -146,10 +146,10 @@ public sealed class HostProvidedTests
     private static async Task<JsonElement> SchemaAsync(McpHarness mcp, string tool) =>
         (await mcp.Client.ListToolsAsync(cancellationToken: Ct)).Single(t => t.ProtocolTool.Name == tool).ProtocolTool.InputSchema;
 
-    // The SDK names the tool before the message. The message names the contract's property, never the agent's spelling.
+    // The text is exactly the message, without the SDK's prefix. The message names the contract's property, never the agent's spelling.
     private static void AssertRefused(string expected, string key, string text)
     {
-        Assert.EndsWith(expected, text, StringComparison.Ordinal);
+        Assert.Equal(expected, text);
         Assert.Equal(expected.Contains(key, StringComparison.Ordinal), text.Contains(key, StringComparison.Ordinal));
     }
 

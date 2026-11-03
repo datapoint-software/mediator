@@ -64,7 +64,7 @@ The MCP server dispatches in-process, so it must set the value itself, in a [dec
     o.Filter = a => a.Name.StartsWith("invoices.");   // offer only some of the [ModelContextProtocol] actions
     o.MaxStreamResults = 50;
     o.SerializerOptions = mySerializerOptions;         // default: web defaults (camelCase)
-    o.ErrorMessage = ...;                              // see Errors
+    o.ErrorMessage = ...;                              // or ErrorContent, not both: see Errors
 });
 ```
 
@@ -72,7 +72,7 @@ Offer agents only what they need. Every tool you offer may be called, with any a
 
 ## Errors
 
-Invalid arguments, missing authentication and denied access are reported to the agent with fixed, safe messages. Invalid arguments name the argument that failed, when it's known, so the agent can correct its call:
+Errors are returned as tool results marked with `isError: true`, so their text is exactly the message, with nothing added by the MCP SDK. Invalid arguments, missing authentication and denied access are reported to the agent with fixed, safe messages. Invalid arguments name the argument that failed, when it's known, so the agent can correct its call:
 
 ```text
 The argument 'amount' of action 'invoices.create' is not valid.
@@ -95,6 +95,38 @@ See [Invalid arguments](../actions.md#invalid-arguments) for how the argument is
 ```
 
 Don't say why access was denied, such as a missing role or who owns a resource: that tells an agent how to get in.
+
+### Structured errors
+
+To return JSON that agents can parse, like HTTP callers read `ProblemDetails`, use `ErrorContent` instead of `ErrorMessage`. It receives the same exceptions, and the object it returns, serialized with `SerializerOptions`, becomes the result's `structuredContent` and, as JSON, its text:
+
+```csharp
+.WithMediatorActions(o => o.ErrorContent = e => e switch
+{
+    InvalidActionArgumentsException { Field: { } field } invalid => new
+    {
+        code = "invalid_arguments",
+        errors = new Dictionary<string, string>
+        {
+            [field] = invalid.Reason is InvalidActionArgumentReason.Invalid ? "invalid" : "required",
+        },
+    },
+    ValidationException v => new
+    {
+        code = "validation_failed",
+        errors = v.Errors.ToDictionary(f => f.PropertyName, f => f.ErrorMessage),   // never AttemptedValue
+    },
+    AuthenticationRequiredException => new { code = "authentication_required" },
+    AccessDeniedException => new { code = "access_denied" },
+    _ => null,
+})
+```
+
+```json
+{"code":"invalid_arguments","errors":{"amount":"required"}}
+```
+
+The value must serialize to a JSON object, as MCP requires for structured content; anything else is reported as a generic error. `null` keeps Mediator's text, which has no structured content. Setting both `ErrorMessage` and `ErrorContent` fails at startup.
 
 Good error messages help agents correct themselves: "Amount: must be greater than 0" lets the agent retry with a valid amount.
 

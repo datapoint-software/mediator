@@ -26,7 +26,7 @@ public sealed class ArgumentErrorTests
 
         var text = await CallAsync(mcp, "invoices_create", new() { ["customer"] = "Ana", [sent] = "secret-input" });
 
-        Assert.EndsWith($"The argument '{field}' of action 'invoices.create' is not valid.", text);
+        Assert.Equal($"The argument '{field}' of action 'invoices.create' is not valid.", text);
         AssertNoLeak(text);
     }
 
@@ -37,7 +37,7 @@ public sealed class ArgumentErrorTests
 
         var text = await CallAsync(mcp, "invoices_create", new() { ["customer"] = "Ana" });
 
-        Assert.EndsWith("The argument 'amount' of action 'invoices.create' is required.", text);
+        Assert.Equal("The argument 'amount' of action 'invoices.create' is required.", text);
     }
 
     [Fact]
@@ -47,7 +47,7 @@ public sealed class ArgumentErrorTests
 
         var text = await CallAsync(mcp, "invoices_create", new() { ["customer"] = "Ana", ["amount"] = 1, ["secret-input"] = 1 });
 
-        Assert.EndsWith("The arguments for action 'invoices.create' are not valid.", text);
+        Assert.Equal("The arguments for action 'invoices.create' are not valid.", text);
         AssertNoLeak(text);
     }
 
@@ -63,7 +63,7 @@ public sealed class ArgumentErrorTests
 
         var text = await CallAsync(mcp, "invoices_create", new() { ["customer"] = "Ana", ["amount"] = "secret-input" });
 
-        Assert.EndsWith("invalid: amount", text);
+        Assert.Equal("invalid: amount", text);
         Assert.Equal("invoices.create", received!.ActionName);
         Assert.Equal(InvalidActionArgumentReason.Invalid, received.Reason);
     }
@@ -75,7 +75,7 @@ public sealed class ArgumentErrorTests
 
         var text = await CallAsync(mcp, "invoices_create", new() { ["customer"] = "Ana", ["amount"] = "secret-input" });
 
-        Assert.EndsWith("The argument 'amount' of action 'invoices.create' is not valid.", text);
+        Assert.Equal("The argument 'amount' of action 'invoices.create' is not valid.", text);
     }
 
     [Fact]
@@ -85,7 +85,7 @@ public sealed class ArgumentErrorTests
 
         var text = await CallAsync(mcp, "reports_reject", []);
 
-        Assert.EndsWith("The arguments for action 'reports.reject' are not valid.", text);
+        Assert.Equal("The arguments for action 'reports.reject' are not valid.", text);
         Assert.DoesNotContain("ignore previous instructions", text);
         Assert.DoesNotContain("secret message", text);
     }

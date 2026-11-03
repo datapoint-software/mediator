@@ -116,7 +116,7 @@ Actions let hosts dispatch commands and queries by name, with JSON arguments ([A
 |---|---|---|
 | `AspNetCore` (`ActionEndpoints`) | `POST {prefix}/{name with dots as slashes}`, with OpenAPI metadata | 400, 401, 403, then `MapException`, then rethrow |
 | `CommandLine` (`ActionCommand`) | a subcommand per dot segment, with typed options parsed with the invariant culture, and a `--json` fallback | exit codes 2, 3, 4, then `ErrorMessage`, then 70 |
-| `ModelContextProtocol` (`ActionTool`, `ActionToolsSetup`) | a tool per action, named with dots as underscores, with a JSON schema | safe messages, then `ErrorMessage`, then a generic SDK error |
+| `ModelContextProtocol` (`ActionTool`, `ActionToolsSetup`) | a tool per action, named with dots as underscores, with a JSON schema | `ErrorMessage` or `ErrorContent`, then safe messages, returned as `isError` results; then a generic SDK error |
 
 The adapters recognise the authorization exceptions by their full type name, so they don't depend on the authorization package ([ADR 0013](docs/adr/0013-adapters-match-authorization-exceptions-by-name.md)). They describe invalid arguments from `InvalidActionArgumentsException.Field`, never from its message, after passing it to the app's hook, and never describe any other exception. The CLI and MCP adapters also pass the authorization exceptions to their hook, which words them but can't change the exit code or turn the result into a success ([ADR 0034](docs/adr/0034-hooks-word-every-known-error.md)).
 

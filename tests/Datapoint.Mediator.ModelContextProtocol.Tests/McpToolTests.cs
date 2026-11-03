@@ -178,7 +178,7 @@ public sealed class McpToolTests
 
         Assert.True(result.IsError);
         var text = Text(result);
-        Assert.Contains("The argument 'amount' of action 'invoices.create' is not valid.", text);
+        Assert.Equal("The argument 'amount' of action 'invoices.create' is not valid.", text);
         Assert.DoesNotContain("secret-input", text);
     }
 
@@ -201,7 +201,7 @@ public sealed class McpToolTests
         var result = await mcp.Client.CallToolAsync("reports_fail", cancellationToken: Ct);
 
         Assert.True(result.IsError);
-        Assert.Contains("The report couldn't be generated.", Text(result));
+        Assert.Equal("The report couldn't be generated.", Text(result));
     }
 
     [Fact]
@@ -214,7 +214,7 @@ public sealed class McpToolTests
         var result = await mcp.Client.CallToolAsync("invoices_get", cancellationToken: Ct);
 
         Assert.True(result.IsError);
-        Assert.Contains("Authentication is required.", Text(result));
+        Assert.Equal("Authentication is required.", Text(result));
     }
 
     [Fact]
@@ -233,9 +233,9 @@ public sealed class McpToolTests
         var denied = await signedIn.Client.CallToolAsync("invoices_archive", new Dictionary<string, object?> { ["id"] = 1 }, cancellationToken: Ct);
 
         Assert.True(missing.IsError);
-        Assert.EndsWith("unauthenticated: sign in first", Text(missing));
+        Assert.Equal("unauthenticated: sign in first", Text(missing));
         Assert.True(denied.IsError);
-        Assert.EndsWith("forbidden", Text(denied));
+        Assert.Equal("forbidden", Text(denied));
         Assert.Empty(signedIn.Recorder.Log);
     }
 
@@ -250,7 +250,7 @@ public sealed class McpToolTests
         var result = await mcp.Client.CallToolAsync("invoices_get", cancellationToken: Ct);
 
         Assert.True(result.IsError);
-        Assert.EndsWith("Authentication is required.", Text(result));
+        Assert.Equal("Authentication is required.", Text(result));
     }
 
     [Fact]
@@ -266,7 +266,7 @@ public sealed class McpToolTests
         var allowed = await mcp.Client.CallToolAsync("invoices_get", cancellationToken: Ct);
 
         Assert.True(denied.IsError);
-        Assert.Contains("Access is denied.", Text(denied));
+        Assert.Equal("Access is denied.", Text(denied));
         Assert.Empty(mcp.Recorder.Log);
         Assert.NotEqual(true, allowed.IsError);
     }
@@ -283,7 +283,7 @@ public sealed class McpToolTests
         var denied = await mcp.Client.CallToolAsync("invoices_archive", new Dictionary<string, object?> { ["id"] = 1 }, cancellationToken: Ct);
 
         Assert.True(denied.IsError);
-        Assert.Contains("Access is denied.", Text(denied));
+        Assert.Equal("Access is denied.", Text(denied));
         Assert.DoesNotContain("TOP-SECRET", Text(denied));
     }
 
@@ -318,6 +318,72 @@ public sealed class McpToolTests
     {
         Assert.Equal("builder", Assert.Throws<ArgumentNullException>(() => ((IMcpServerBuilder)null!).WithMediatorActions()).ParamName);
         Assert.Throws<ArgumentOutOfRangeException>(() => new ServiceCollection().AddMcpServer().WithMediatorActions(o => o.MaxStreamResults = 0));
+        Assert.Throws<InvalidOperationException>(() => new ServiceCollection().AddMcpServer().WithMediatorActions(o =>
+        {
+            o.ErrorMessage = _ => "text";
+            o.ErrorContent = _ => new { code = "x" };
+        }));
+    }
+
+    [Fact]
+    public async Task CallTool_ErrorContent_ReturnsStructuredContentAndItsJson()
+    {
+        await using var mcp = await McpHarness.StartAsync(o => o.ErrorContent = e => e switch
+        {
+            InvalidActionArgumentsException { Field: { } field } invalid => new
+            {
+                code = "invalid_arguments",
+                errors = new Dictionary<string, string> { [field] = invalid.Reason is InvalidActionArgumentReason.Invalid ? "invalid" : "required" },
+            },
+            InvalidOperationException => new { code = "report_failed" },
+            _ => null,
+        });
+
+        var invalid = await mcp.Client.CallToolAsync(
+            "invoices_create",
+            new Dictionary<string, object?> { ["customer"] = "Ana", ["amount"] = "secret-input" },
+            cancellationToken: Ct);
+        var failed = await mcp.Client.CallToolAsync("reports_fail", cancellationToken: Ct);
+
+        Assert.True(invalid.IsError);
+        Assert.Equal("""{"code":"invalid_arguments","errors":{"amount":"invalid"}}""", Text(invalid));
+        Assert.Equal(Text(invalid), invalid.StructuredContent!.Value.GetRawText());
+        Assert.True(failed.IsError);
+        Assert.Equal("report_failed", failed.StructuredContent!.Value.GetProperty("code").GetString());
+    }
+
+    [Fact]
+    public async Task CallTool_ErrorContent_ReturningNull_KeepsMediatorsText()
+    {
+        await using var mcp = await McpHarness.StartAsync(
+            o => o.ErrorContent = _ => null,
+            configureMediator: o => o.AddAuthorizationBehavior(),
+            configureServices: s => s.AddSingleton<IPrincipalAccessor>(new FixedPrincipalAccessor(null)));
+
+        var unauthenticated = await mcp.Client.CallToolAsync("invoices_get", cancellationToken: Ct);
+        var failed = await mcp.Client.CallToolAsync("reports_fail", cancellationToken: Ct);
+
+        Assert.True(unauthenticated.IsError);
+        Assert.Equal("Authentication is required.", Text(unauthenticated));
+        Assert.Null(unauthenticated.StructuredContent);
+        Assert.True(failed.IsError);
+        Assert.DoesNotContain("secret internal detail", Text(failed));
+    }
+
+    [Theory]
+    [InlineData("text")]
+    [InlineData(42)]
+    public async Task CallTool_ErrorContent_NotAnObject_ReportsAGenericError(object content)
+    {
+        await using var mcp = await McpHarness.StartAsync(o => o.ErrorContent = _ => content);
+
+        var result = await mcp.Client.CallToolAsync("reports_fail", cancellationToken: Ct);
+
+        Assert.True(result.IsError);
+        Assert.Null(result.StructuredContent);
+        Assert.DoesNotContain("text", Text(result));
+        Assert.DoesNotContain("42", Text(result));
+        Assert.DoesNotContain("secret internal detail", Text(result));
     }
 
     [Fact]

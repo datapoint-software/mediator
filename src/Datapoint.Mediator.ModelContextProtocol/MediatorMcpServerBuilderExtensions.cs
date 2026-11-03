@@ -25,8 +25,9 @@ public static class MediatorMcpServerBuilderExtensions
     /// </para>
     /// <para>
     /// Calls are dispatched through <see cref="IActionDispatcher"/>, so every behaviour runs, including authorization.
-    /// Authorization and argument errors are reported to the agent with fixed, safe messages; other exceptions are
-    /// reported as a generic error, unless <see cref="MediatorMcpOptions.ErrorMessage"/> provides a safe message.
+    /// Errors are returned as tool results marked as errors. Authorization and argument errors are reported to the agent
+    /// with fixed, safe messages; other exceptions are reported as a generic error, unless
+    /// <see cref="MediatorMcpOptions.ErrorMessage"/> or <see cref="MediatorMcpOptions.ErrorContent"/> describes them.
     /// </para>
     /// <para>
     /// The mediator must also be registered with <c>AddMediator</c>. Calling this method more than once doesn't offer
@@ -35,6 +36,9 @@ public static class MediatorMcpServerBuilderExtensions
     /// </remarks>
     /// <exception cref="ArgumentNullException"><paramref name="builder"/> is <see langword="null"/>.</exception>
     /// <exception cref="ArgumentOutOfRangeException"><see cref="MediatorMcpOptions.MaxStreamResults"/> is less than 1.</exception>
+    /// <exception cref="InvalidOperationException">
+    /// Both <see cref="MediatorMcpOptions.ErrorMessage"/> and <see cref="MediatorMcpOptions.ErrorContent"/> are set.
+    /// </exception>
     public static IMcpServerBuilder WithMediatorActions(this IMcpServerBuilder builder, Action<MediatorMcpOptions>? configure = null)
     {
         ArgumentNullException.ThrowIfNull(builder);
@@ -42,6 +46,11 @@ public static class MediatorMcpServerBuilderExtensions
         var options = new MediatorMcpOptions();
         configure?.Invoke(options);
         ArgumentOutOfRangeException.ThrowIfLessThan(options.MaxStreamResults, 1, "options.MaxStreamResults");
+
+        if (options.ErrorMessage is not null && options.ErrorContent is not null)
+        {
+            throw new InvalidOperationException("Set either MediatorMcpOptions.ErrorMessage or ErrorContent, not both.");
+        }
 
         builder.Services.AddSingleton<IConfigureOptions<McpServerOptions>>(
             provider => new ActionToolsSetup(provider.GetRequiredService<IActionCatalog>(), options));

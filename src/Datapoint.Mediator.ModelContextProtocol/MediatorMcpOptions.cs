@@ -31,7 +31,7 @@ public sealed class MediatorMcpOptions
     public JsonSerializerOptions? SerializerOptions { get; set; }
 
     /// <summary>
-    /// Gets or sets a function that turns an exception thrown by an action into a message for the AI agent, or returns
+    /// Gets or sets a function that turns an exception thrown by an action into a text message for the AI agent, or returns
     /// <see langword="null"/> to keep Mediator's message for invalid arguments and authorization failures, or to report a
     /// generic error that reveals nothing about any other exception.
     /// </summary>
@@ -58,4 +58,23 @@ public sealed class MediatorMcpOptions
     /// </para>
     /// </remarks>
     public Func<Exception, string?>? ErrorMessage { get; set; }
+
+    /// <summary>
+    /// Gets or sets a function that turns an exception thrown by an action into structured content for the AI agent, or
+    /// returns <see langword="null"/> to keep Mediator's message, as for <see cref="ErrorMessage"/>.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// The value is serialized with <see cref="SerializerOptions"/> and must serialize to a JSON object, such as an
+    /// anonymous object with an error code and field errors. It's returned as the error result's structured content,
+    /// and its JSON as the result's text, so agents can read it either way. Any other value is reported as a generic
+    /// error.
+    /// </para>
+    /// <para>
+    /// It receives the same exceptions as <see cref="ErrorMessage"/>, follows the same rules, and can't be set together
+    /// with it. The content is sent to the agent, so it must never contain secrets, personal data, internal details or
+    /// attempted values.
+    /// </para>
+    /// </remarks>
+    public Func<Exception, object?>? ErrorContent { get; set; }
 }
