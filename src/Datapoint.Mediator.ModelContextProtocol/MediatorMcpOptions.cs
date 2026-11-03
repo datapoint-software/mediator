@@ -27,12 +27,25 @@ public sealed class MediatorMcpOptions
 
     /// <summary>
     /// Gets or sets a function that turns an exception thrown by an action into a message for the AI agent, or returns
-    /// <see langword="null"/> to report a generic error that reveals nothing about it.
+    /// <see langword="null"/> to keep Mediator's message for invalid arguments, or to report a generic error that reveals
+    /// nothing about any other exception.
     /// </summary>
     /// <remarks>
-    /// The message is sent to the agent, so it must never contain secrets, personal data or internal details. For
-    /// example, to report FluentValidation failures, include only each failure's property name and error message, and
-    /// never its attempted value.
+    /// <para>
+    /// The message is sent to the agent, so it must never contain secrets, personal data or internal details. Write your
+    /// own text: an exception's message is for logs, including your own exceptions'. For example, to report
+    /// FluentValidation failures, include only each failure's property name and error message, and never its attempted
+    /// value.
+    /// </para>
+    /// <para>
+    /// It also receives <see cref="InvalidActionArgumentsException"/>, before Mediator writes its own message, so you can
+    /// report it your own way, from its <c>ActionName</c> and <c>Field</c>. Never return its message or its inner
+    /// exception's message, which can contain .NET type names and property names the caller chose.
+    /// </para>
+    /// <para>
+    /// The messages Mediator writes itself never contain argument values, .NET type names, stack traces or paths. They
+    /// are meant for developers and agents, not for display in a user interface.
+    /// </para>
     /// </remarks>
     public Func<Exception, string?>? ErrorMessage { get; set; }
 }

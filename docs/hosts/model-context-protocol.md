@@ -72,18 +72,29 @@ Offer agents only what they need. Every tool you offer may be called, with any a
 
 ## Errors
 
-Invalid arguments, missing authentication and denied access are reported to the agent with fixed, safe messages. Any other exception is reported as a generic error that reveals nothing, unless `ErrorMessage` returns a safe message for it:
+Invalid arguments, missing authentication and denied access are reported to the agent with fixed, safe messages. Invalid arguments name the argument that failed, when it's known, so the agent can correct its call:
+
+```text
+The argument 'amount' of action 'invoices.create' is not valid.
+```
+
+See [Invalid arguments](../actions.md#invalid-arguments) for how the argument is spelled. Any other exception is reported as a generic error that reveals nothing, unless `ErrorMessage` returns a safe message for it. `ErrorMessage` also receives `InvalidActionArgumentsException` first, so you can report it your own way:
 
 ```csharp
 .WithMediatorActions(o => o.ErrorMessage = e => e switch
 {
+    InvalidActionArgumentsException { Field: { } field } => $"invalid: {field}",
     ValidationException v => string.Join("; ", v.Errors.Select(f => $"{f.PropertyName}: {f.ErrorMessage}")),   // never AttemptedValue
-    InvoiceNotFoundException => e.Message,
+    InvoiceNotFoundException => "The invoice doesn't exist.",
     _ => null,
 })
 ```
 
 Good error messages help agents correct themselves: "Amount: must be greater than 0" lets the agent retry with a valid amount.
+
+The messages Mediator writes never contain argument values, .NET type names, stack traces or paths. They're meant for developers and agents, not for display in a user interface.
+
+> **Security:** return only text you wrote. An exception's `Message` is for logs, including your own exceptions': a message that later gains an id or a value would reach the agent without anyone changing the hook. For invalid arguments, never return `InnerException.Message`, which can contain .NET type names and property names the agent chose.
 
 ## Security
 

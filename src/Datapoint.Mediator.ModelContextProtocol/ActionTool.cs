@@ -188,18 +188,29 @@ internal sealed partial class ActionTool : McpServerTool
         return null;
     }
 
-    // Only messages known to be safe reach the agent. Anything else is rethrown, and the MCP SDK reports a generic
-    // error without the exception's message.
+    // Only messages known to be safe reach the agent. Invalid arguments go to the app's hook first, so it can report
+    // them with its own codes. Anything else is rethrown, and the MCP SDK reports a generic error without the
+    // exception's message.
     private string? SafeMessage(Exception exception) =>
         exception switch
         {
-            InvalidActionArgumentsException => exception.Message,
+            InvalidActionArgumentsException invalid => _options.ErrorMessage?.Invoke(exception) ?? InvalidArguments(invalid),
             _ when exception.GetType().FullName == "Datapoint.Mediator.Authorization.AuthenticationRequiredException" =>
                 "Authentication is required.",
             _ when exception.GetType().FullName == "Datapoint.Mediator.Authorization.AccessDeniedException" =>
                 "Access is denied.",
             _ => _options.ErrorMessage?.Invoke(exception),
         };
+
+    // Built from the field only, never from the exception's message. A field that doesn't look like a path of property
+    // names, which an app's own exception could carry, is left out.
+    private string InvalidArguments(InvalidActionArgumentsException exception) =>
+        exception.Field is { Length: <= 128 } field && FieldPattern().IsMatch(field)
+            ? $"The argument '{field}' of action '{_action.Name}' is not valid."
+            : $"The arguments for action '{_action.Name}' are not valid.";
+
+    [GeneratedRegex(@"^[A-Za-z0-9_$-]+(\[[0-9]+\])*(\.[A-Za-z0-9_$-]+(\[[0-9]+\])*)*$", RegexOptions.CultureInvariant)]
+    private static partial Regex FieldPattern();
 
     [GeneratedRegex("^[a-zA-Z0-9_-]{1,64}$", RegexOptions.CultureInvariant)]
     private static partial Regex ToolNamePattern();

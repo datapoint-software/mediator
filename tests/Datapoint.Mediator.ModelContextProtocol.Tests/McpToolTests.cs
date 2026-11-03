@@ -26,7 +26,7 @@ public sealed class McpToolTests
         var tools = (await mcp.Client.ListToolsAsync(cancellationToken: Ct)).ToDictionary(t => t.ProtocolTool.Name, t => t.ProtocolTool);
 
         Assert.Equal(
-            ["invoices_archive", "invoices_create", "invoices_get", "invoices_list", "reports_fail"],
+            ["invoices_archive", "invoices_create", "invoices_get", "invoices_list", "reports_fail", "reports_reject"],
             tools.Keys.Order(StringComparer.Ordinal));
 
         var create = tools["invoices_create"];
