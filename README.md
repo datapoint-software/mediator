@@ -57,6 +57,8 @@ var id = await mediator.SendAsync(new CreateUser("Ana"), ct);
 Name a command, query or stream query with `[Action]`, and any host can dispatch it from a name and JSON arguments:
 
 ```csharp
+[Api]
+[ModelContextProtocol]
 [Action("invoice.create", "Creates an invoice for a customer.")]
 public sealed record CreateInvoice(string Customer, decimal Amount) : ICommand<Guid>;
 
@@ -66,8 +68,8 @@ var id = await dispatcher.DispatchAsync("invoice.create", arguments, ct: ct); //
 
 - Every behaviour still runs, so actions dispatched by name are authorized and validated like any other.
 - `IActionCatalog` lists the available actions, with their names, descriptions, kinds and types, for building CLI commands, MCP tools or endpoints.
-- `[Action("invoice.purge", "Deletes cancelled invoices.", Hidden = true)]` keeps an action out of the catalog and of dispatch by name, while it can still be sent through `IMediator`. An unknown and a hidden action fail the same way (`ActionNotFoundException`), so callers can't discover internal actions.
-- Invalid names, duplicate names and named messages fail at startup, in `AddMediator`. Messages can't be actions, because their handlers aren't authorized.
+- `[Api]`, `[CommandLine]` and `[ModelContextProtocol]` say which hosts offer each action. A host offers only the actions marked for it, and one it doesn't offer fails there like an unknown action, so callers can't discover it.
+- Invalid names, duplicate names, missing descriptions, actions no host offers and named messages fail at startup, in `AddMediator`. Messages can't be actions, because their handlers aren't authorized.
 - Invalid JSON throws `InvalidActionArgumentsException`, whose message never repeats the input.
 - **Hosts:** one line offers every action in each kind of host. See each package's README.
 

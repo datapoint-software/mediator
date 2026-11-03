@@ -265,7 +265,7 @@ The behaviour asks `IPrincipalAccessor` who the current user is. Register exactl
 ### Background work in an API
 
 A hosted service or a queue consumer in an ASP.NET Core app has no HTTP request, so `HttpPrincipalAccessor` returns no user, and protected actions fail with `AuthenticationRequiredException`. Options:
-- mark actions that are only ever run by the system with `[AllowAnonymousAccess]`, and don't offer them from hosts (`Hidden = true`, see [Actions](actions.md#hidden-actions));
+- mark commands that are only ever run by the system with `[AllowAnonymousAccess]`, and don't make them actions (no `[Action]`), so no host offers them (see [Actions](actions.md#where-an-action-is-offered));
 - or write your own `IPrincipalAccessor` that returns the request's user during a request, and a service account otherwise.
 
 See [Use cases](use-cases.md#background-jobs).

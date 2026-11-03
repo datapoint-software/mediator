@@ -13,9 +13,9 @@ public sealed class ActionCatalogTests
     }
 
     [Fact]
-    public void Actions_ListsVisibleNamedActionsInNameOrder()
+    public void Actions_ListsNamedActionsInNameOrder()
     {
-        var catalog = new ActionCatalog([typeof(ZetaQuery), typeof(Unnamed), typeof(AlphaCommand), typeof(Hidden), typeof(AlphaCommand)]);
+        var catalog = new ActionCatalog([typeof(ZetaQuery), typeof(Unnamed), typeof(AlphaCommand), typeof(AlphaCommand)]);
 
         Assert.Equal(["alpha.command", "zeta.query"], catalog.Actions.Select(a => a.Name));
     }
@@ -32,13 +32,12 @@ public sealed class ActionCatalogTests
     }
 
     [Fact]
-    public void TryGetAction_HiddenOrUnknown_ReturnsFalse()
+    public void TryGetAction_Unknown_ReturnsFalse()
     {
-        var catalog = new ActionCatalog([typeof(Hidden)]);
+        var catalog = new ActionCatalog([typeof(AlphaCommand), typeof(Unnamed)]);
 
-        Assert.False(catalog.TryGetAction("hidden.command", out var hidden));
-        Assert.Null(hidden);
-        Assert.False(catalog.TryGetAction("unknown", out _));
+        Assert.False(catalog.TryGetAction("unknown", out var unknown));
+        Assert.Null(unknown);
         Assert.Equal("name", Assert.Throws<ArgumentNullException>(() => catalog.TryGetAction(null!, out _)).ParamName);
     }
 
@@ -84,9 +83,42 @@ public sealed class ActionCatalogTests
     }
 
     [Fact]
-    public void DuplicateName_IncludingHiddenAction_Throws()
+    public void ActionsWithoutChannel_ThrowListingEveryOne()
     {
-        Assert.Throws<InvalidOperationException>(() => new ActionCatalog([typeof(Hidden), typeof(HiddenDuplicate)]));
+        var exception = Assert.Throws<InvalidOperationException>(
+            () => new ActionCatalog([typeof(AlphaCommand), typeof(Unoffered), typeof(OtherUnoffered)]));
+
+        Assert.Contains("No host adapter offers", exception.Message);
+        Assert.Contains($"'{typeof(Unoffered)}'", exception.Message);
+        Assert.Contains($"'{typeof(OtherUnoffered)}'", exception.Message);
+        Assert.DoesNotContain(nameof(AlphaCommand), exception.Message);
+    }
+
+    [Fact]
+    public void CustomChannel_IsEnough()
+    {
+        Assert.True(new ActionCatalog([typeof(CustomOnly)]).TryGetAction("custom.only", out _));
+    }
+
+    [Fact]
+    public void IsOfferedBy_MatchesExactlyTheMarkedChannels()
+    {
+        Assert.True(new ActionCatalog([typeof(TwoChannels), typeof(CustomOnly)]).TryGetAction("two.channels", out var action));
+
+        Assert.True(action.IsOfferedBy<ApiAttribute>());
+        Assert.True(action.IsOfferedBy<ModelContextProtocolAttribute>());
+        Assert.False(action.IsOfferedBy<CommandLineAttribute>());
+        Assert.False(action.IsOfferedBy<CustomChannelAttribute>());
+        Assert.False(action.IsOfferedBy<ActionChannelAttribute>());
+    }
+
+    [Fact]
+    public void IsOfferedBy_CustomChannel()
+    {
+        Assert.True(new ActionCatalog([typeof(CustomOnly)]).TryGetAction("custom.only", out var action));
+
+        Assert.True(action.IsOfferedBy<CustomChannelAttribute>());
+        Assert.False(action.IsOfferedBy<ApiAttribute>());
     }
 
     [Fact]
@@ -123,62 +155,91 @@ public sealed class ActionCatalogTests
         Assert.Equal(description, action.Description);
     }
 
+    [Api]
     [Action("alpha.command", "Does alpha.")]
     private sealed record AlphaCommand : ICommand;
 
+    [Api]
     [Action("alpha.command", "A test action.")]
     private sealed record AlphaDuplicate : ICommand;
 
+    [Api]
     [Action("result.command", "A test action.")]
     private sealed record ResultCommand : ICommand<int>;
 
+    [Api]
     [Action("zeta.query", "A test action.")]
     private sealed record ZetaQuery : IQuery<string>;
 
+    [Api]
     [Action("number.stream", "A test action.")]
     private sealed record NumberStream : IStreamQuery<int>;
 
-    [Action("hidden.command", "A test action.", Hidden = true)]
-    private sealed record Hidden : ICommand;
+    [Action("unoffered.command", "A test action.")]
+    private sealed record Unoffered : ICommand;
 
-    [Action("hidden.command", "A test action.")]
-    private sealed record HiddenDuplicate : ICommand;
+    [Action("unoffered.other", "A test action.")]
+    private sealed record OtherUnoffered : ICommand;
+
+    [CustomChannel]
+    [Action("custom.only", "A test action.")]
+    private sealed record CustomOnly : ICommand;
+
+    [Api]
+    [ModelContextProtocol]
+    [Action("two.channels", "A test action.")]
+    private sealed record TwoChannels : ICommand;
+
+    // A channel defined by a custom host adapter.
+    private sealed class CustomChannelAttribute : ActionChannelAttribute;
 
     private sealed record Unnamed : ICommand;
 
+    [Api]
     [Action("named.message", "A test action.")]
     private sealed record NamedMessage : IMessage;
 
+    [Api]
     [Action("ambiguous", "A test action.")]
     private sealed record Ambiguous : ICommand<int>, IQuery<int>;
 
+    [Api]
     [Action("Invoice.Create", "A test action.")]
     private sealed record UppercaseName : ICommand;
 
+    [Api]
     [Action("invoice..create", "A test action.")]
     private sealed record DoubleSeparatorName : ICommand;
 
+    [Api]
     [Action("-invoice", "A test action.")]
     private sealed record LeadingSeparatorName : ICommand;
 
+    [Api]
     [Action("invoice create", "A test action.")]
     private sealed record SpaceName : ICommand;
 
+    [Api]
     [Action("", "A test action.")]
     private sealed record EmptyName : ICommand;
 
+    [Api]
     [Action("invoices_create", "A test action.")]
     private sealed record UnderscoreName : ICommand;
 
+    [Api]
     [Action("invoices.create-draft", "A test action.")]
     private sealed record DotAndHyphenName : ICommand;
 
+    [Api]
     [Action("a123456789a123456789a123456789a123456789a123456789a123456789abcde", "A test action.")]
     private sealed record TooLongName : ICommand;
 
+    [Api]
     [Action("undescribed", "")]
     private sealed record EmptyDescription : ICommand;
 
+    [Api]
     [Action("undescribed", " \t ")]
     private sealed record WhitespaceDescription : ICommand;
 }

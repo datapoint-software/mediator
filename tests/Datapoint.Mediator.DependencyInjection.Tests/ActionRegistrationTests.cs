@@ -10,7 +10,7 @@ namespace Datapoint.Mediator.DependencyInjection.Tests;
 public sealed class ActionRegistrationTests
 {
     [Fact]
-    public void Catalog_ListsVisibleNamedActionsWithHandlers()
+    public void Catalog_ListsNamedActionsWithHandlers()
     {
         using var provider = new ServiceCollection()
             .AddMediator(o => o.AddHandler<GenerateReportHandler>().AddHandler<SecretReportHandler>().AddHandler<PingHandler>())
@@ -53,6 +53,15 @@ public sealed class ActionRegistrationTests
         var services = new ServiceCollection().AddMediator(o => o.AddHandler<GenerateReportHandler>());
 
         Assert.Throws<InvalidOperationException>(() => services.AddMediator(o => o.AddHandler<DuplicateReportHandler>()));
+    }
+
+    [Fact]
+    public void ActionWithoutChannel_ThrowsAtRegistration()
+    {
+        var exception = Assert.Throws<InvalidOperationException>(
+            () => new ServiceCollection().AddMediator(o => o.AddHandler<UnofferedReportHandler>()));
+
+        Assert.Contains(nameof(UnofferedReport), exception.Message);
     }
 
     [Fact]

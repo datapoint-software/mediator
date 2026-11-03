@@ -156,9 +156,11 @@ public sealed class HostProvidedTests
     private static string Text(CallToolResult result) => string.Concat(result.Content.OfType<TextContentBlock>().Select(c => c.Text));
 }
 
+[ModelContextProtocol]
 [Action("reports.totals", "A test action.")]
 public sealed record TenantTotals([HostProvided] Guid TenantId, string Customer) : IQuery<string>;
 
+[ModelContextProtocol]
 [Action("reports.balance", "A test action.")]
 public sealed record TenantBalance(string Customer) : IQuery<string>
 {
@@ -166,6 +168,7 @@ public sealed record TenantBalance(string Customer) : IQuery<string>
     public Guid TenantId { get; init; }
 }
 
+[ModelContextProtocol]
 [Action("reports.audit", "A test action.")]
 public sealed record TenantAudit : ICommand
 {

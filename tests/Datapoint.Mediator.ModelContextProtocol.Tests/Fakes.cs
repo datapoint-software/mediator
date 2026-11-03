@@ -8,23 +8,29 @@ using Datapoint.Mediator.Authorization;
 
 namespace Datapoint.Mediator.ModelContextProtocol.Tests;
 
+[ModelContextProtocol]
 [Action("invoices.create", "Creates an invoice for a customer.")]
 public sealed record CreateInvoice(string Customer, decimal Amount) : ICommand<Guid>;
 
+[ModelContextProtocol]
 [Action("invoices.archive", "A test action.")]
 public sealed record ArchiveInvoice(int Id) : ICommand;
 
+[ModelContextProtocol]
 [Action("invoices.get", "A test action.")]
 public sealed record GetInvoice(int Id) : IQuery<InvoiceView>;
 
 public sealed record InvoiceView(int Id, string Customer);
 
+[ModelContextProtocol]
 [Action("invoices.list", "A test action.")]
 public sealed record ListInvoices(int Count) : IStreamQuery<int>;
 
+[ModelContextProtocol]
 [Action("reports.fail", "A test action.")]
 public sealed record FailingReport : ICommand;
 
+[ModelContextProtocol]
 [Action("reports.reject", "A test action.")]
 public sealed record RejectedReport : ICommand;
 

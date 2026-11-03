@@ -10,7 +10,7 @@ namespace Datapoint.Mediator;
 
 /// <summary>
 /// The actions, among a set of command, query and stream query types, that are marked with
-/// <see cref="ActionAttribute"/> and not hidden.
+/// <see cref="ActionAttribute"/>.
 /// </summary>
 public sealed partial class ActionCatalog : IActionCatalog
 {
@@ -27,15 +27,17 @@ public sealed partial class ActionCatalog : IActionCatalog
     /// </param>
     /// <exception cref="ArgumentNullException"><paramref name="actionTypes"/> is <see langword="null"/>.</exception>
     /// <exception cref="InvalidOperationException">
-    /// An action's name is not valid or is used twice, an action's description is empty, a message is marked as an
-    /// action, or a type implements more than one action interface.
+    /// An action's name is not valid or is used twice, an action's description is empty, an action has no
+    /// <see cref="ActionChannelAttribute"/>, a message is marked as an action, or a type implements more than one
+    /// action interface.
     /// </exception>
     public ActionCatalog(IEnumerable<Type> actionTypes)
     {
         ArgumentNullException.ThrowIfNull(actionTypes);
 
         var named = new Dictionary<string, Type>(StringComparer.Ordinal);
-        var visible = new List<ActionDescriptor>();
+        var actions = new List<ActionDescriptor>();
+        var unoffered = new List<Type>();
 
         foreach (var type in actionTypes.Distinct())
         {
@@ -74,15 +76,25 @@ public sealed partial class ActionCatalog : IActionCatalog
 
             named.Add(attribute.Name, type);
             var (kind, resultType) = GetKind(type);
+            actions.Add(new ActionDescriptor(attribute.Name, attribute.Description, kind, type, resultType));
 
-            if (!attribute.Hidden)
+            if (!type.IsDefined(typeof(ActionChannelAttribute), inherit: false))
             {
-                visible.Add(new ActionDescriptor(attribute.Name, attribute.Description, kind, type, resultType));
+                unoffered.Add(type);
             }
         }
 
-        _actions = visible.ToFrozenDictionary(action => action.Name, StringComparer.Ordinal);
-        Actions = [.. visible.OrderBy(action => action.Name, StringComparer.Ordinal)];
+        // Listed together, so every action can be fixed in one pass.
+        if (unoffered.Count > 0)
+        {
+            throw new InvalidOperationException(
+                $"No host adapter offers {string.Join(", ", unoffered.Select(type => $"'{type}'"))}. Mark each action " +
+                "with the adapters that offer it, such as [Api], [CommandLine] or [ModelContextProtocol]. Code that " +
+                "only your application runs doesn't need [Action]: send it through IMediator.");
+        }
+
+        _actions = actions.ToFrozenDictionary(action => action.Name, StringComparer.Ordinal);
+        Actions = [.. actions.OrderBy(action => action.Name, StringComparer.Ordinal)];
     }
 
     /// <inheritdoc/>

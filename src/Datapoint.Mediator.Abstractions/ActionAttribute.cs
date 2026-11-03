@@ -18,6 +18,11 @@ namespace Datapoint.Mediator;
 /// MCP tool's description.
 /// </para>
 /// <para>
+/// An action also needs at least one <see cref="ActionChannelAttribute"/>, such as <see cref="ApiAttribute"/>, to say
+/// which host adapters offer it. Code that only your application runs isn't an action: leave this attribute out, and
+/// send it through <see cref="IMediator"/>.
+/// </para>
+/// <para>
 /// The attribute is not inherited, so a derived type must be named on its own.
 /// </para>
 /// </remarks>
@@ -46,17 +51,6 @@ public sealed class ActionAttribute : Attribute
     /// Gets the action's name.
     /// </summary>
     public string Name { get; }
-
-    /// <summary>
-    /// Gets a value indicating whether the action is hidden from hosts: not listed by <see cref="IActionCatalog"/>, and
-    /// not dispatchable by name.
-    /// </summary>
-    /// <value>The default is <see langword="false"/>.</value>
-    /// <remarks>
-    /// A hidden action keeps its name, which must still be unique, and can still be sent through
-    /// <see cref="IMediator"/>.
-    /// </remarks>
-    public bool Hidden { get; init; }
 
     /// <summary>
     /// Gets a description of what the action does, shown to users and AI agents, for example as an OpenAPI summary, an

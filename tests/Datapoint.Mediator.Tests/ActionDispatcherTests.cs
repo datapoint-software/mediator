@@ -22,7 +22,7 @@ public sealed class ActionDispatcherTests
             .Add<ICommandHandler<ApproveInvoice, bool>>(new CommandHandler<ApproveInvoice, bool>((c, _) => new(c.Id > 0)))
             .Add<IQueryHandler<GetInvoice, string>>(new QueryHandler<GetInvoice, string>((q, _) => new($"invoice {q.Id}")))
             .Add<IStreamQueryHandler<ListInvoices, int>>(new StreamQueryHandler<ListInvoices, int>((q, ct) => Streams.CountTo(q.Count, ct: ct)));
-        var catalog = new ActionCatalog([typeof(CreateInvoice), typeof(ApproveInvoice), typeof(GetInvoice), typeof(ListInvoices), typeof(PurgeInvoices)]);
+        var catalog = new ActionCatalog([typeof(CreateInvoice), typeof(ApproveInvoice), typeof(GetInvoice), typeof(ListInvoices)]);
         _dispatcher = new ActionDispatcher(new Mediator(provider), catalog);
     }
 
@@ -89,14 +89,12 @@ public sealed class ActionDispatcherTests
     }
 
     [Fact]
-    public async Task UnknownAndHiddenActions_ThrowTheSameException()
+    public async Task UnknownAction_ThrowsWithoutNamingIt()
     {
         var unknown = await Assert.ThrowsAsync<ActionNotFoundException>(async () => await _dispatcher.DispatchAsync("invoice.unknown", default, ct: Ct));
-        var hidden = await Assert.ThrowsAsync<ActionNotFoundException>(async () => await _dispatcher.DispatchAsync("invoice.purge", default, ct: Ct));
 
-        Assert.Equal(unknown.Message, hidden.Message);
         Assert.DoesNotContain("invoice", unknown.Message);
-        Assert.Throws<ActionNotFoundException>(() => _dispatcher.StreamAsync("invoice.purge", default, ct: Ct));
+        Assert.Throws<ActionNotFoundException>(() => _dispatcher.StreamAsync("invoice.unknown", default, ct: Ct));
     }
 
     [Fact]
@@ -166,18 +164,19 @@ public sealed class ActionDispatcherTests
         return default;
     }
 
+    [Api]
     [Action("invoice.create", "A test action.")]
     private sealed record CreateInvoice(string Customer, int Amount) : ICommand;
 
+    [Api]
     [Action("invoice.approve", "A test action.")]
     private sealed record ApproveInvoice(int Id) : ICommand<bool>;
 
+    [Api]
     [Action("invoice.get", "A test action.")]
     private sealed record GetInvoice(int Id) : IQuery<string>;
 
+    [Api]
     [Action("invoice.list", "A test action.")]
     private sealed record ListInvoices(int Count) : IStreamQuery<int>;
-
-    [Action("invoice.purge", "A test action.", Hidden = true)]
-    private sealed record PurgeInvoices : ICommand;
 }

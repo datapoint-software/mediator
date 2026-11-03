@@ -144,9 +144,11 @@ public sealed class HostProvidedTests
     }
 }
 
+[CommandLine]
 [Action("reports.totals", "A test action.")]
 public sealed record TenantTotals([HostProvided] Guid TenantId, string Customer) : IQuery<string>;
 
+[CommandLine]
 [Action("reports.balance", "A test action.")]
 public sealed record TenantBalance(string Customer) : IQuery<string>
 {
@@ -154,6 +156,7 @@ public sealed record TenantBalance(string Customer) : IQuery<string>
     public Guid TenantId { get; init; }
 }
 
+[CommandLine]
 [Action("reports.audit", "A test action.")]
 public sealed record TenantAudit : ICommand
 {

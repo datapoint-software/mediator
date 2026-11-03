@@ -1,6 +1,6 @@
 # 11. Actions are named by `[Action]`, and hidden actions look unknown
 
-- **Status:** Accepted
+- **Status:** Superseded by [0032](0032-actions-declare-the-adapters-that-offer-them.md)
 - **Date:** 2026-10-31
 
 ## Context

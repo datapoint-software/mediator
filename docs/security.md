@@ -20,7 +20,8 @@ Every security consideration in this manual, as one checklist. Each item links t
 - [ ] **`CustomizeProblemDetails` adds no input or exception details,** because it also runs on Mediator's own `400`, `401` and `403` responses. → [ASP.NET Core](hosts/aspnetcore.md#adding-fields-to-mediators-responses)
 - [ ] **ASP.NET Core uses `UseExceptionHandler` in production,** so unhandled exceptions become a `500` without details. → [ASP.NET Core](hosts/aspnetcore.md#errors)
 - [ ] **Behaviours and logs record type names, not requests or results,** which can contain personal data. → [Behaviours](behaviors.md#writing-a-behaviour)
-- [ ] **Action names and descriptions reveal nothing internal.** They're visible to every caller, in OpenAPI, CLI help and MCP tool lists. Use `Hidden = true` for internal actions. → [Actions](actions.md#hidden-actions)
+- [ ] **Each action is offered only by the hosts that need it,** with `[Api]`, `[CommandLine]` and `[ModelContextProtocol]`. Commands only your code runs have no `[Action]`. → [Actions](actions.md#where-an-action-is-offered)
+- [ ] **Action names and descriptions reveal nothing internal.** They're visible to every caller of a host that offers the action, in OpenAPI, CLI help and MCP tool lists. → [Actions](actions.md#descriptions)
 
 ## Hosts
 
@@ -38,7 +39,8 @@ Every security consideration in this manual, as one checklist. Each item links t
 
 These hold whatever your configuration, and are covered by the library's tests:
 - An action with no authorizer is denied.
-- Hidden and unknown actions fail the same way, so they can't be discovered.
+- An action a host doesn't offer fails there like an unknown one, so it can't be discovered.
+- An action that no host offers, or that has no description, fails at startup.
 - The host adapters never echo the caller's input, or the message of an exception they don't recognise.
 - Telemetry never records exception messages, requests or results.
 - Invalid action configurations, such as a message marked as an action, fail at startup.

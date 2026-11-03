@@ -10,35 +10,44 @@ using Datapoint.Mediator.Authorization;
 
 namespace Datapoint.Mediator.CommandLine.Tests;
 
+[CommandLine]
 [Action("invoices.create", "Creates an invoice for a customer.")]
 public sealed record CreateInvoice([property: Description("The customer's name.")] string Customer, decimal Amount, string? Notes = null) : ICommand<Guid>;
 
+[CommandLine]
 [Action("invoices.archive", "A test action.")]
 public sealed record ArchiveInvoice(int Id) : ICommand;
 
+[CommandLine]
 [Action("invoices.get", "A test action.")]
 public sealed record GetInvoice(int Id) : IQuery<InvoiceView>;
 
 public sealed record InvoiceView(int Id, string CustomerName);
 
+[CommandLine]
 [Action("invoices.list", "A test action.")]
 public sealed record ListInvoices(int Count) : IStreamQuery<int>;
 
+[CommandLine]
 [Action("invoices.ship", "A test action.")]
 public sealed record ShipInvoice(int Id, Address Address) : ICommand;
 
 public sealed record Address(string City);
 
+[CommandLine]
 [Action("reports.fail", "A test action.")]
 public sealed record FailingReport : ICommand;
 
+[CommandLine]
 [Action("reports.reject", "A test action.")]
 public sealed record RejectedReport : ICommand;
 
+[CommandLine]
 [Action("ping", "A test action.")]
 public sealed record Ping : ICommand;
 
 // Numbers, dates and times, which System.CommandLine would otherwise parse with the current culture.
+[CommandLine]
 [Action("reports.schedule", "A test action.")]
 public sealed record ScheduleReport(DateOnly Day, double? Threshold = null, DateTimeOffset? NotifyAt = null) : ICommand;
 

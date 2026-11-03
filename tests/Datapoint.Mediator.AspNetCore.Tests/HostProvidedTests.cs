@@ -76,6 +76,7 @@ public sealed class HostProvidedTests
     }
 }
 
+[Api]
 [Action("reports.totals", "A test action.")]
 public sealed record TenantTotals([HostProvided] Guid TenantId, string Customer) : IQuery<string>;
 

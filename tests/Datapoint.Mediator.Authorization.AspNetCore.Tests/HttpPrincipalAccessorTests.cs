@@ -127,6 +127,7 @@ public sealed class HttpPrincipalAccessorTests
     }
 }
 
+[Api]
 [Action("invoices.approve", "A test action.")]
 public sealed record ApproveInvoice : ICommand;
 

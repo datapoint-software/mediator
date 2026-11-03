@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Frozen;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
@@ -11,6 +12,8 @@ namespace Datapoint.Mediator;
 /// </summary>
 public sealed class ActionDescriptor
 {
+    private readonly FrozenSet<Type> _channels;
+
     /// <summary>
     /// Initializes a new instance of the <see cref="ActionDescriptor"/> class.
     /// </summary>
@@ -36,6 +39,9 @@ public sealed class ActionDescriptor
         ActionType = actionType;
         ResultType = resultType;
         HostProvidedProperties = FindHostProvidedProperties(actionType);
+        _channels = actionType.GetCustomAttributes<ActionChannelAttribute>(inherit: false)
+            .Select(channel => channel.GetType())
+            .ToFrozenSet();
     }
 
     /// <summary>
@@ -69,6 +75,22 @@ public sealed class ActionDescriptor
     /// </summary>
     /// <value>The properties, or an empty list when there are none.</value>
     public IReadOnlyList<PropertyInfo> HostProvidedProperties { get; }
+
+    /// <summary>
+    /// Gets a value indicating whether the action is marked with <typeparamref name="TChannel"/>, so the host adapter
+    /// that reads that attribute offers it.
+    /// </summary>
+    /// <typeparam name="TChannel">
+    /// The adapter's attribute, such as <see cref="ApiAttribute"/>. Only that exact type matches.
+    /// </typeparam>
+    /// <returns><see langword="true"/> if the action is marked with <typeparamref name="TChannel"/>.</returns>
+    /// <remarks>
+    /// Adapters call it once per action, when they register their endpoints, tools or commands. An adapter must never
+    /// offer or dispatch an action for which it returns <see langword="false"/>.
+    /// </remarks>
+    public bool IsOfferedBy<TChannel>()
+        where TChannel : ActionChannelAttribute =>
+        _channels.Contains(typeof(TChannel));
 
     // Read-only, because the descriptor is shared by every host. A positional record's parameter shares its property's name. The match ignores case, as hosts do when they read a
     // property's description from its parameter.

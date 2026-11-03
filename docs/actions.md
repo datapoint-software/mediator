@@ -3,6 +3,9 @@
 An action is a command or query with a name. Hosts can list actions and dispatch them by name, with JSON arguments. That's what lets one business layer become HTTP endpoints, CLI commands and MCP tools without writing each one by hand.
 
 ```csharp
+[Api]
+[CommandLine]
+[ModelContextProtocol]
 [Action("invoices.create", "Creates an open invoice for a customer and returns its id.")]
 public sealed record CreateInvoice(string Customer, decimal Amount) : ICommand<Guid>;
 ```
@@ -41,22 +44,50 @@ public sealed record CreateInvoice(
     [property: Description("The amount to invoice, greater than zero.")] decimal Amount) : ICommand<Guid>;
 ```
 
-## Hidden actions
+## Where an action is offered
 
-`Hidden = true` keeps an action out of the catalog and out of dispatch by name, while your own code can still send it through `IMediator`:
+Mark each action with the hosts that offer it. A host offers only the actions marked for it:
+
+| Attribute | Host |
+|---|---|
+| `[Api]` | ASP.NET Core, `MapMediatorActions` |
+| `[CommandLine]` | Command line, `AddMediatorActions` |
+| `[ModelContextProtocol]` | MCP server, `WithMediatorActions` |
 
 ```csharp
-[Action("invoices.purge", "Deletes cancelled invoices.", Hidden = true)]
-public sealed record PurgeCancelledInvoices : ICommand;
+[Api]
+[Action("users.delete", "Deletes a user, given their identifier.")]
+public sealed record DeleteUser(Guid Id) : ICommand;   // an endpoint, but not a CLI command or an MCP tool
 ```
 
-An unknown action and a hidden one fail the same way, with `ActionNotFoundException` and the same message, so callers can't discover internal actions by guessing names.
+- An action a host doesn't offer fails there like an unknown one, so callers can't discover it by guessing names.
+- An action without any of these attributes throws when `AddMediator` runs, with every such action listed. Forgetting a host hides the action from it; forgetting them all is caught at startup.
+- Each host's `Filter` still applies, after the attribute, so it can only narrow what the host offers, for example behind a feature flag.
+- Code that only your application runs, such as a background job's command, isn't an action. Leave out `[Action]`, and send it through `IMediator`.
+- A CLI that sends its actions to your API, instead of running them in-process, needs them marked `[CommandLine]` for itself and `[Api]` for the server.
+
+### Custom hosts
+
+A host you write yourself defines its own attribute, and offers only the actions marked with it:
+
+```csharp
+public sealed class GrpcAttribute : ActionChannelAttribute;
+
+foreach (var action in catalog.Actions.Where(action => action.IsOfferedBy<GrpcAttribute>()))
+{
+    // Offer the action.
+}
+```
+
+`IsOfferedBy` matches that exact attribute. `IActionDispatcher` dispatches any action in the catalog, so a custom host must never dispatch a name it doesn't offer: look the action up in its own list first.
 
 ## Host-provided properties
 
 Some properties are filled in by the host, never by the caller, such as the tenant of the caller's session. Mark them `[HostProvided]`, on the property or on the record parameter:
 
 ```csharp
+[Api]
+[ModelContextProtocol]
 [Action("invoices.list", "Lists the invoices of the signed-in user's tenant.")]
 public sealed record ListInvoices(
     [HostProvided(Reason = "The tenant of the caller's session.")] Guid TenantId,
@@ -193,7 +224,7 @@ They refuse unknown properties, duplicate properties and `null` for non-nullable
 `ActionArguments.Deserialize` reads arguments the way the dispatcher does, so a host that sends them elsewhere, such as a CLI calling a remote server, can refuse them locally with the same `Field`:
 
 ```csharp
-if (!catalog.TryGetAction(name, out var action))
+if (!catalog.TryGetAction(name, out var action) || !action.IsOfferedBy<CommandLineAttribute>())
 {
     throw new ActionNotFoundException();
 }
