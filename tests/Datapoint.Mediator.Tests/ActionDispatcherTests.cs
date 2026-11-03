@@ -140,6 +140,20 @@ public sealed class ActionDispatcherTests
         Assert.Equal("The action's arguments are not valid.", new InvalidActionArgumentsException().Message);
         Assert.Equal("message", new InvalidActionArgumentsException("message").Message);
         Assert.Same(inner, new InvalidActionArgumentsException("message", inner).InnerException);
+        Assert.Null(new InvalidActionArgumentsException("message", inner).Field);
+    }
+
+    [Fact]
+    public void InvalidActionArgumentsException_CarriesActionAndField()
+    {
+        var inner = new InvalidOperationException();
+
+        var exception = new InvalidActionArgumentsException("message", "invoice.get", "id", inner);
+
+        Assert.Equal("message", exception.Message);
+        Assert.Equal("invoice.get", exception.ActionName);
+        Assert.Equal("id", exception.Field);
+        Assert.Same(inner, exception.InnerException);
     }
 
     private static CancellationToken Ct => TestContext.Current.CancellationToken;

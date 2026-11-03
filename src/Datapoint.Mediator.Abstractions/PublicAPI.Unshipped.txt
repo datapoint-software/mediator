@@ -1,1 +1,4 @@
 #nullable enable
+Datapoint.Mediator.InvalidActionArgumentsException.ActionName.get -> string?
+Datapoint.Mediator.InvalidActionArgumentsException.Field.get -> string?
+Datapoint.Mediator.InvalidActionArgumentsException.InvalidActionArgumentsException(string! message, string? actionName, string? field, System.Exception? innerException) -> void
