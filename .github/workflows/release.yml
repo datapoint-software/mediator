@@ -17,6 +17,8 @@ jobs:
     permissions:
       contents: read
       id-token: write # Trusted Publishing: exchanges a GitHub OIDC token for a short-lived nuget.org API key
+    outputs:
+      packages: ${{ steps.packages.outputs.ids }}
     steps:
       - name: Check out
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -40,6 +42,24 @@ jobs:
       - name: Pack
         run: dotnet pack Datapoint.Mediator.slnx --configuration Release --no-build --output artifacts
 
+      # Lists the package ids for the verify job, and fails before pushing if a package has another version than the tag.
+      - name: List packages
+        id: packages
+        env:
+          VERSION: ${{ github.ref_name }}
+        run: |
+          suffix=".$VERSION.nupkg"
+          ids=""
+          for file in artifacts/*.nupkg; do
+            name="$(basename "$file")"
+            if [[ "$name" != *"$suffix" ]]; then
+              echo "::error::$name doesn't have the version $VERSION."
+              exit 1
+            fi
+            ids="$ids ${name%"$suffix"}"
+          done
+          echo "ids=${ids# }" >> "$GITHUB_OUTPUT"
+
       - name: Log in to nuget.org
         id: login
         uses: NuGet/login@8d196754b4036150537f80ac539e15c2f1028841 # v1.2.0
@@ -57,9 +77,74 @@ jobs:
           --source https://api.nuget.org/v3/index.json
           --skip-duplicate
 
-  # Runs only after the packages are published, so a GitHub release never points to a version nuget.org doesn't have.
-  github-release:
+  # nuget.org lists and serves a pushed package only after it's validated and indexed, which can take minutes. A restore
+  # during that window fails with NU1102, and NuGet's HTTP cache keeps the "not found" answer for about 30 minutes, so
+  # this job waits until every package restores from nuget.org before the release is announced.
+  verify:
     needs: publish
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    permissions: {}
+    steps:
+      - name: Set up .NET
+        uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6.0.0
+        with:
+          dotnet-version: 10.0.x
+
+      # The tag and the ids are passed through the environment, and checked, so they can't inject a script or a URL.
+      - name: Wait until nuget.org lists every package
+        env:
+          VERSION: ${{ github.ref_name }}
+          PACKAGES: ${{ needs.publish.outputs.packages }}
+        run: |
+          set -euo pipefail
+          if [[ ! "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.-]+)?$ ]]; then
+            echo "::error::'$VERSION' is not a version."
+            exit 1
+          fi
+          for id in $PACKAGES; do
+            if [[ ! "$id" =~ ^[A-Za-z0-9.]+$ ]]; then
+              echo "::error::'$id' is not a package id."
+              exit 1
+            fi
+            # The flat container index lists lowercase versions, under the lowercase id.
+            until curl --fail --silent "https://api.nuget.org/v3-flatcontainer/${id,,}/index.json" \
+              | jq --exit-status --arg version "${VERSION,,}" '.versions | index($version)' > /dev/null; do
+              echo "Waiting for $id $VERSION to be listed..."
+              sleep 30
+            done
+          done
+
+      - name: Restore every package in a new project
+        working-directory: ${{ runner.temp }}
+        env:
+          VERSION: ${{ github.ref_name }}
+          PACKAGES: ${{ needs.publish.outputs.packages }}
+        run: |
+          set -euo pipefail
+          dotnet new classlib --output restore-check --framework net10.0
+          cd restore-check
+          cat > nuget.config <<'XML'
+          <?xml version="1.0" encoding="utf-8"?>
+          <configuration>
+            <packageSources>
+              <clear />
+              <add key="nuget.org" value="https://api.nuget.org/v3/index.json" />
+            </packageSources>
+          </configuration>
+          XML
+          for id in $PACKAGES; do
+            dotnet add package "$id" --version "$VERSION" --no-restore
+          done
+          until dotnet restore --no-http-cache --force; do
+            echo "Retrying the restore..."
+            sleep 30
+          done
+
+  # Runs only after every package restores from nuget.org, so a GitHub release never points to a version consumers
+  # can't install yet.
+  github-release:
+    needs: verify
     runs-on: ubuntu-latest
     permissions:
       contents: write # creates the release

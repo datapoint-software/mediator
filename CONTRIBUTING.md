@@ -101,7 +101,7 @@ Compare the `Allocated` column before and after your change.
    git push origin <version>
    ```
 
-5. The `Release` workflow builds, tests and packs, then waits for approval in the `nuget` environment. After approval, it publishes to nuget.org with Trusted Publishing, then creates the GitHub release with the same notes.
+5. The `Release` workflow builds, tests and packs, then waits for approval in the `nuget` environment. After approval, it publishes to nuget.org with Trusted Publishing, then waits, for up to an hour, until nuget.org lists every package and a new project referencing all of them restores. Only then does it create the GitHub release with the same notes, so announce the version only once the release exists: before that, consumers' restores can fail with NU1102, and NuGet's HTTP cache keeps that answer for about 30 minutes.
 
 A published version is permanent: it can be unlisted, but never replaced.
 
