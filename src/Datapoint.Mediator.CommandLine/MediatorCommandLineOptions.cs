@@ -9,8 +9,13 @@ namespace Datapoint.Mediator.CommandLine;
 public sealed class MediatorCommandLineOptions
 {
     /// <summary>
-    /// Gets or sets which actions to add, or <see langword="null"/> to add every action in the catalog.
+    /// Gets or sets which actions to add, or <see langword="null"/> to add every action marked with
+    /// <see cref="CommandLineAttribute"/>.
     /// </summary>
+    /// <remarks>
+    /// The filter only sees actions marked with <see cref="CommandLineAttribute"/>, so it can narrow them but never add
+    /// others.
+    /// </remarks>
     public Func<ActionDescriptor, bool>? Filter { get; set; }
 
     /// <summary>

@@ -51,6 +51,12 @@ public sealed record Ping : ICommand;
 [Action("reports.schedule", "A test action.")]
 public sealed record ScheduleReport(DateOnly Day, double? Threshold = null, DateTimeOffset? NotifyAt = null) : ICommand;
 
+// Offered by the other hosts, never as a command.
+[Api]
+[ModelContextProtocol]
+[Action("invoices.export", "A test action.")]
+public sealed record ExportInvoices : ICommand;
+
 public sealed class Recorder
 {
     public List<string> Log { get; } = [];
@@ -96,6 +102,15 @@ public sealed class ListInvoicesHandler : IStreamQueryHandler<ListInvoices, int>
             await Task.Yield();
             yield return i;
         }
+    }
+}
+
+public sealed class ExportInvoicesHandler(Recorder recorder) : ICommandHandler<ExportInvoices>
+{
+    public ValueTask HandleAsync(ExportInvoices command, CancellationToken ct = default)
+    {
+        recorder.Log.Add("export");
+        return default;
     }
 }
 

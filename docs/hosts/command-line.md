@@ -1,6 +1,6 @@
 # Command line
 
-`Datapoint.Mediator.CommandLine` adds every [action](../actions.md) as a [System.CommandLine](https://learn.microsoft.com/dotnet/standard/commandline/) command, so a CLI offers the same operations as your API.
+`Datapoint.Mediator.CommandLine` adds every [action](../actions.md) marked `[CommandLine]` as a [System.CommandLine](https://learn.microsoft.com/dotnet/standard/commandline/) command, so a CLI offers the same operations as your API.
 
 ```bash
 dotnet add package Datapoint.Mediator.CommandLine --prerelease
@@ -19,6 +19,8 @@ return await root.Parse(args).InvokeAsync();
 The full app is in [`samples/Invoicing/Invoicing.Cli`](../../samples/Invoicing/Invoicing.Cli/Program.cs).
 
 ## Commands
+
+An action without `[CommandLine]` isn't added, and running it fails like running an unknown command. A CLI that sends its actions to your API, instead of running them in-process, needs them marked `[Api]` too, for the server. See [Where an action is offered](../actions.md#where-an-action-is-offered).
 
 Each dot in an action's name starts a subcommand, and actions share their groups:
 
@@ -114,7 +116,7 @@ Unhandled exceptions are never printed, because their messages can contain conne
 ```csharp
 root.AddMediatorActions(services, o =>
 {
-    o.Filter = a => !a.Name.StartsWith("admin.");   // add only some actions
+    o.Filter = a => !a.Name.StartsWith("admin.");   // add only some of the [CommandLine] actions
     o.SerializerOptions = mySerializerOptions;       // default: web defaults (camelCase)
     o.ErrorMessage = ...;                            // see Errors
 });

@@ -55,7 +55,7 @@ public static class MediatorCommandExtensions
 
         foreach (var action in services.GetRequiredService<IActionCatalog>().Actions)
         {
-            if (!(options.Filter?.Invoke(action) ?? true))
+            if (!action.IsOfferedBy<CommandLineAttribute>() || !(options.Filter?.Invoke(action) ?? true))
             {
                 continue;
             }

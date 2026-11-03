@@ -22,6 +22,30 @@ public sealed class CommandTests
     }
 
     [Fact]
+    public async Task ActionNotMarkedForCommandLine_IsNotAddedAndFailsLikeAnUnknownCommand()
+    {
+        await using var cli = new Cli();
+
+        var notOffered = await cli.RunAsync("invoices", "export");
+        var unknown = await cli.RunAsync("invoices", "unknown");
+
+        Assert.DoesNotContain("export", cli.Root.Subcommands.Single(c => c.Name == "invoices").Subcommands.Select(c => c.Name));
+        Assert.NotEqual(0, notOffered.ExitCode);
+        Assert.Equal(unknown.ExitCode, notOffered.ExitCode);
+        Assert.Equal(unknown.Output.Replace("unknown", "export"), notOffered.Output);
+        Assert.Equal(unknown.Error.Replace("unknown", "export"), notOffered.Error);
+        Assert.DoesNotContain("export", cli.Recorder.Log);
+    }
+
+    [Fact]
+    public async Task Filter_CannotAddAnActionNotMarkedForCommandLine()
+    {
+        await using var cli = new Cli(o => o.Filter = _ => true);
+
+        Assert.DoesNotContain("export", cli.Root.Subcommands.Single(c => c.Name == "invoices").Subcommands.Select(c => c.Name));
+    }
+
+    [Fact]
     public async Task Filter_LimitsTheCommands()
     {
         await using var cli = new Cli(o => o.Filter = a => a.Name == "ping");
