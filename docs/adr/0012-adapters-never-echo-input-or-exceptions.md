@@ -1,6 +1,6 @@
 # 12. Adapters never echo input or exception details
 
-- **Status:** Accepted
+- **Status:** Superseded by [0029](0029-argument-errors-name-the-field.md)
 - **Date:** 2026-10-31
 
 ## Context

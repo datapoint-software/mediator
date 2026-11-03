@@ -16,7 +16,7 @@ var root = new RootCommand("Invoicing sample: the same actions as the API and th
     .AddActions(services, o => o.ErrorMessage = e => e switch
     {
         ValidationException v => InvoicingServiceCollectionExtensions.Describe(v),
-        InvoiceNotFoundException => e.Message,
+        InvoiceNotFoundException => "The invoice doesn't exist.",
         _ => null,   // anything else: "An unexpected error occurred." and exit code 70
     });
 

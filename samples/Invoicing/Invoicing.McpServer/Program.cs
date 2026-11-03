@@ -21,7 +21,7 @@ builder.Services.AddMcpServer()
     .WithMediatorActions(o => o.ErrorMessage = e => e switch
     {
         ValidationException v => InvoicingServiceCollectionExtensions.Describe(v),
-        InvoiceNotFoundException => e.Message,
+        InvoiceNotFoundException => "The invoice doesn't exist.",
         _ => null,   // anything else: a generic error that reveals nothing
     });
 

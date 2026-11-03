@@ -75,7 +75,7 @@ These must hold after every change. Each has tests, and a record explaining why:
 - Authorization fails closed: an action without an authorizer is denied ([ADR 0025](docs/adr/0025-decisions-bound-to-their-request.md)).
 - Messages aren't authorized and can never be actions, so they must never be built from user input ([ADR 0008](docs/adr/0008-messages-are-not-authorized.md)).
 - Hidden and unknown actions fail the same way ([ADR 0011](docs/adr/0011-named-actions.md)).
-- Host adapters never echo the caller's input or the message of an exception they don't recognise, and telemetry never records exception messages ([ADR 0012](docs/adr/0012-adapters-never-echo-input-or-exceptions.md)).
+- Host adapters never echo the caller's input or the message of an exception they don't recognise, and telemetry never records exception messages ([ADR 0029](docs/adr/0029-argument-errors-name-the-field.md)).
 - Every host adapter maps `AuthenticationRequiredException` and `AccessDeniedException` by their full type names ([ADR 0013](docs/adr/0013-adapters-match-authorization-exceptions-by-name.md)).
 - Only one `IPrincipalAccessor` can be registered ([ADR 0014](docs/adr/0014-one-principal-accessor.md)).
 
