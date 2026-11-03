@@ -215,6 +215,29 @@ public sealed class EndpointTests
     }
 
     [Fact]
+    public async Task ActionNotMarkedForApi_IsNotMappedAndFailsLikeAnUnknownAction()
+    {
+        await using var app = await TestApp.StartAsync();
+
+        var notOffered = await app.Client.PostAsync("/api/invoices/export", null, Ct);
+        var unknown = await app.Client.PostAsync("/api/invoices/unknown", null, Ct);
+
+        Assert.DoesNotContain("/api/invoices/export", RouteEndpoints(app).Select(e => e.RoutePattern.RawText));
+        Assert.Equal(HttpStatusCode.NotFound, notOffered.StatusCode);
+        Assert.Equal(unknown.StatusCode, notOffered.StatusCode);
+        Assert.Equal(await unknown.Content.ReadAsStringAsync(Ct), await notOffered.Content.ReadAsStringAsync(Ct));
+        Assert.DoesNotContain("export", app.App.Services.GetRequiredService<Recorder>().Log);
+    }
+
+    [Fact]
+    public async Task Filter_CannotMapAnActionNotMarkedForApi()
+    {
+        await using var app = await TestApp.StartAsync(o => o.Filter = _ => true);
+
+        Assert.DoesNotContain("/api/invoices/export", RouteEndpoints(app).Select(e => e.RoutePattern.RawText));
+    }
+
+    [Fact]
     public async Task Filter_LimitsMappedActions()
     {
         await using var app = await TestApp.StartAsync(o => o.Filter = a => a.Kind == ActionKind.Query);

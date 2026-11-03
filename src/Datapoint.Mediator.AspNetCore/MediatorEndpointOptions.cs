@@ -10,8 +10,12 @@ namespace Datapoint.Mediator.AspNetCore;
 public sealed class MediatorEndpointOptions
 {
     /// <summary>
-    /// Gets or sets which actions to map, or <see langword="null"/> to map every action in the catalog.
+    /// Gets or sets which actions to map, or <see langword="null"/> to map every action marked with
+    /// <see cref="ApiAttribute"/>.
     /// </summary>
+    /// <remarks>
+    /// The filter only sees actions marked with <see cref="ApiAttribute"/>, so it can narrow them but never add others.
+    /// </remarks>
     public Func<ActionDescriptor, bool>? Filter { get; set; }
 
     /// <summary>

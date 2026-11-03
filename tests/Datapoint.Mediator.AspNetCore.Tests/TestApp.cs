@@ -42,7 +42,8 @@ public sealed class TestApp : IAsyncDisposable
                 .AddHandler<GetInvoiceHandler>()
                 .AddHandler<ListInvoicesHandler>()
                 .AddHandler<FailingReportHandler>()
-                .AddHandler<RejectedReportHandler>();
+                .AddHandler<RejectedReportHandler>()
+                .AddHandler<ExportInvoicesHandler>();
             configureMediator?.Invoke(o);
         });
 

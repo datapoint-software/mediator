@@ -34,6 +34,12 @@ public sealed record FailingReport : ICommand;
 [Action("reports.reject", "A test action.")]
 public sealed record RejectedReport : ICommand;
 
+// Offered by the other hosts, never by the API.
+[CommandLine]
+[ModelContextProtocol]
+[Action("invoices.export", "A test action.")]
+public sealed record ExportInvoices : ICommand;
+
 public sealed class Recorder
 {
     public List<string> Log { get; } = [];
@@ -44,6 +50,15 @@ public sealed class CreateInvoiceHandler : ICommandHandler<CreateInvoice, Guid>
     public static readonly Guid Id = Guid.Parse("8f14e45f-ceea-467e-a2a4-3f0c3e1d2b10");
 
     public ValueTask<Guid> HandleAsync(CreateInvoice command, CancellationToken ct = default) => new(Id);
+}
+
+public sealed class ExportInvoicesHandler(Recorder recorder) : ICommandHandler<ExportInvoices>
+{
+    public ValueTask HandleAsync(ExportInvoices command, CancellationToken ct = default)
+    {
+        recorder.Log.Add("export");
+        return default;
+    }
 }
 
 public sealed class ArchiveInvoiceHandler(Recorder recorder) : ICommandHandler<ArchiveInvoice>

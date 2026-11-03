@@ -25,7 +25,7 @@ The full app is in [`samples/Invoicing/Invoicing.Api`](../../samples/Invoicing/I
 
 ## Endpoints
 
-Each action becomes a `POST` endpoint at its name, with dots turned into slashes: `invoices.create` is served at `POST /api/invoices/create`.
+Each action marked `[Api]` becomes a `POST` endpoint at its name, with dots turned into slashes: `invoices.create` is served at `POST /api/invoices/create`. An action without `[Api]` isn't mapped, so a request for it gets the same `404` as one for an unknown action. See [Where an action is offered](../actions.md#where-an-action-is-offered).
 
 | Request | |
 |---|---|
@@ -92,7 +92,7 @@ The property stays in the schema, so the document still describes the type exact
 ```csharp
 app.MapMediatorActions("/api", o =>
 {
-    o.Filter = a => a.Name.StartsWith("invoices.");   // map only some actions
+    o.Filter = a => a.Name.StartsWith("invoices.");   // map only some of the [Api] actions
     o.SerializerOptions = mySerializerOptions;          // default: the app's JsonOptions
     o.MapException = ...;                               // see Errors
 });

@@ -15,7 +15,8 @@ namespace Microsoft.AspNetCore.Builder;
 public static class MediatorEndpointRouteBuilderExtensions
 {
     /// <summary>
-    /// Maps every action in <see cref="IActionCatalog"/> as a <c>POST</c> endpoint under <paramref name="prefix"/>.
+    /// Maps every action in <see cref="IActionCatalog"/> marked with <see cref="ApiAttribute"/> as a <c>POST</c>
+    /// endpoint under <paramref name="prefix"/>.
     /// </summary>
     /// <param name="endpoints">The endpoint route builder.</param>
     /// <param name="prefix">The route prefix, such as <c>/api</c>.</param>
@@ -27,6 +28,11 @@ public static class MediatorEndpointRouteBuilderExtensions
     /// <c>POST {prefix}/invoices/create</c>. The request body is the action's JSON, and an empty body is treated as an
     /// empty object. A command without a result returns <c>204 No Content</c>; other actions return <c>200 OK</c> with
     /// their result as JSON, and stream queries stream a JSON array.
+    /// </para>
+    /// <para>
+    /// An action without <see cref="ApiAttribute"/> isn't mapped, so a request for it gets the same <c>404</c> as a
+    /// request for an unknown action. <see cref="MediatorEndpointOptions.Filter"/> applies after the attribute, so it
+    /// can only narrow the mapped actions.
     /// </para>
     /// <para>
     /// Requests are dispatched through <see cref="IActionDispatcher"/>, so every behaviour runs, including authorization.
@@ -64,7 +70,7 @@ public static class MediatorEndpointRouteBuilderExtensions
 
         foreach (var action in endpoints.ServiceProvider.GetRequiredService<IActionCatalog>().Actions)
         {
-            if (options.Filter?.Invoke(action) ?? true)
+            if (action.IsOfferedBy<ApiAttribute>() && (options.Filter?.Invoke(action) ?? true))
             {
                 Map(group, action, options);
             }
