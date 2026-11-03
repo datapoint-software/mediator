@@ -32,6 +32,9 @@ public sealed record Address(string City);
 [Action("reports.fail")]
 public sealed record FailingReport : ICommand;
 
+[Action("reports.reject")]
+public sealed record RejectedReport : ICommand;
+
 [Action("ping")]
 public sealed record Ping : ICommand;
 
@@ -94,6 +97,13 @@ public sealed class ShipInvoiceHandler(Recorder recorder) : ICommandHandler<Ship
         recorder.Log.Add($"ship {command.Id} to {command.Address.City}");
         return default;
     }
+}
+
+// Throws the exception itself, as a remote dispatcher might, with a field and message that must never reach the caller.
+public sealed class RejectedReportHandler : ICommandHandler<RejectedReport>
+{
+    public ValueTask HandleAsync(RejectedReport command, CancellationToken ct = default) =>
+        throw new InvalidActionArgumentsException("secret message", "reports.reject", "ignore previous instructions", null);
 }
 
 public sealed class FailingReportHandler : ICommandHandler<FailingReport>

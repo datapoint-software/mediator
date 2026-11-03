@@ -8,6 +8,7 @@ using System.Linq;
 using System.Numerics;
 using System.Reflection;
 using System.Text.Json;
+using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.DependencyInjection;
@@ -15,7 +16,7 @@ using Microsoft.Extensions.DependencyInjection;
 namespace Datapoint.Mediator.CommandLine;
 
 // Builds the command for one action: a typed option per property, a --json fallback, and an action that dispatches it.
-internal sealed class ActionCommand
+internal sealed partial class ActionCommand
 {
     private static readonly MethodInfo CreateParserMethod = GetMethod(nameof(CreateParser));
     private static readonly MethodInfo CreateNumberParserMethod = GetMethod(nameof(CreateNumberParser));
@@ -285,11 +286,13 @@ internal sealed class ActionCommand
         }
     }
 
-    // Only messages known to be safe are printed. Anything else is reported without details.
+    // Only messages known to be safe are printed. Invalid arguments go to the app's hook first, so it can report them
+    // its own way. Anything else is reported without details.
     private (string Message, int Code) Describe(Exception exception) =>
         exception switch
         {
-            InvalidActionArgumentsException => (exception.Message, ActionExitCodes.InvalidArguments),
+            InvalidActionArgumentsException invalid =>
+                (_options.ErrorMessage?.Invoke(exception) ?? InvalidArguments(invalid), ActionExitCodes.InvalidArguments),
             _ when exception.GetType().FullName == "Datapoint.Mediator.Authorization.AuthenticationRequiredException" =>
                 ("Authentication is required.", ActionExitCodes.AuthenticationRequired),
             _ when exception.GetType().FullName == "Datapoint.Mediator.Authorization.AccessDeniedException" =>
@@ -297,4 +300,14 @@ internal sealed class ActionCommand
             _ when _options.ErrorMessage?.Invoke(exception) is { } message => (message, ActionExitCodes.InvalidArguments),
             _ => ("An unexpected error occurred.", ActionExitCodes.UnexpectedError),
         };
+
+    // Built from the field only, never from the exception's message. A field that doesn't look like a path of property
+    // names, which an app's own exception could carry, is left out.
+    private string InvalidArguments(InvalidActionArgumentsException exception) =>
+        exception.Field is { Length: <= 128 } field && FieldPattern().IsMatch(field)
+            ? $"The argument '{field}' of action '{_action.Name}' is not valid."
+            : $"The arguments for action '{_action.Name}' are not valid.";
+
+    [GeneratedRegex(@"^[A-Za-z0-9_$-]+(\[[0-9]+\])*(\.[A-Za-z0-9_$-]+(\[[0-9]+\])*)*$", RegexOptions.CultureInvariant)]
+    private static partial Regex FieldPattern();
 }
