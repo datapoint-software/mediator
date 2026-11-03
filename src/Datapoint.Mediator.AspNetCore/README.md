@@ -3,7 +3,7 @@
 Maps [Datapoint.Mediator](https://www.nuget.org/packages/Datapoint.Mediator) actions as ASP.NET Core endpoints, with OpenAPI metadata and safe `ProblemDetails` errors, so an API offers the same commands and queries as a CLI or an MCP server.
 
 ```csharp
-[Action("invoices.create", Description = "Creates an invoice for a customer.")]
+[Action("invoices.create", "Creates an invoice for a customer.")]
 public sealed record CreateInvoice(string Customer, decimal Amount) : ICommand<Guid>;
 
 app.MapMediatorActions("/api").RequireAuthorization();   // POST /api/invoices/create

@@ -14,6 +14,10 @@ namespace Datapoint.Mediator;
 /// Messages cannot be actions, because their handlers are not authorized.
 /// </para>
 /// <para>
+/// The description is required, because hosts show it to their callers: as the OpenAPI summary, in CLI help and as the
+/// MCP tool's description.
+/// </para>
+/// <para>
 /// The attribute is not inherited, so a derived type must be named on its own.
 /// </para>
 /// </remarks>
@@ -24,11 +28,18 @@ public sealed class ActionAttribute : Attribute
     /// Initializes a new instance of the <see cref="ActionAttribute"/> class.
     /// </summary>
     /// <param name="name">The action's name, such as <c>invoice.create</c>.</param>
-    /// <exception cref="ArgumentNullException"><paramref name="name"/> is <see langword="null"/>.</exception>
-    public ActionAttribute(string name)
+    /// <param name="description">
+    /// What the action does, such as <c>Creates an invoice for a customer.</c>, shown to users and AI agents.
+    /// </param>
+    /// <exception cref="ArgumentNullException">
+    /// <paramref name="name"/> or <paramref name="description"/> is <see langword="null"/>.
+    /// </exception>
+    public ActionAttribute(string name, string description)
     {
         ArgumentNullException.ThrowIfNull(name);
+        ArgumentNullException.ThrowIfNull(description);
         Name = name;
+        Description = description;
     }
 
     /// <summary>
@@ -48,8 +59,11 @@ public sealed class ActionAttribute : Attribute
     public bool Hidden { get; init; }
 
     /// <summary>
-    /// Gets a description of what the action does, shown to users and AI agents, for example as an MCP tool's
-    /// description or in CLI help.
+    /// Gets a description of what the action does, shown to users and AI agents, for example as an OpenAPI summary, an
+    /// MCP tool's description or in CLI help.
     /// </summary>
-    public string? Description { get; init; }
+    /// <remarks>
+    /// Every action needs one: <see cref="IActionCatalog"/> refuses an empty or whitespace description at startup.
+    /// </remarks>
+    public string Description { get; }
 }

@@ -6,20 +6,20 @@ namespace Invoicing.Domain;
 // Each action is offered by every host: POST /api/invoices/create, `invoicing invoices create`, and the MCP tool
 // invoices_create. Descriptions become OpenAPI summaries, CLI help and the text an AI agent reads to choose a tool.
 
-[Action("invoices.create", Description = "Creates an open invoice for a customer and returns its id.")]
+[Action("invoices.create", "Creates an open invoice for a customer and returns its id.")]
 public sealed record CreateInvoice(
     [property: Description("The customer's name.")] string Customer,
     [property: Description("The amount to invoice, greater than zero.")] decimal Amount) : ICommand<Guid>;
 
-[Action("invoices.get", Description = "Gets an invoice by id, or null when it doesn't exist.")]
+[Action("invoices.get", "Gets an invoice by id, or null when it doesn't exist.")]
 public sealed record GetInvoice(
     [property: Description("The invoice's id.")] Guid Id) : IQuery<InvoiceView?>;
 
-[Action("invoices.list", Description = "Lists invoices, newest first.")]
+[Action("invoices.list", "Lists invoices, newest first.")]
 public sealed record ListInvoices(
     [property: Description("The maximum number of invoices to return.")] int Max = 50) : IStreamQuery<InvoiceView>;
 
-[Action("invoices.cancel", Description = "Cancels an open invoice.")]
+[Action("invoices.cancel", "Cancels an open invoice.")]
 public sealed record CancelInvoice(
     [property: Description("The invoice's id.")] Guid Id,
     [property: Description("Why the invoice is cancelled.")] string Reason) : ICommand;

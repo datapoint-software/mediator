@@ -156,17 +156,17 @@ public sealed class HostProvidedTests
     private static string Text(CallToolResult result) => string.Concat(result.Content.OfType<TextContentBlock>().Select(c => c.Text));
 }
 
-[Action("reports.totals")]
+[Action("reports.totals", "A test action.")]
 public sealed record TenantTotals([HostProvided] Guid TenantId, string Customer) : IQuery<string>;
 
-[Action("reports.balance")]
+[Action("reports.balance", "A test action.")]
 public sealed record TenantBalance(string Customer) : IQuery<string>
 {
     [HostProvided(Reason = "The tenant of the caller's session.")]
     public Guid TenantId { get; init; }
 }
 
-[Action("reports.audit")]
+[Action("reports.audit", "A test action.")]
 public sealed record TenantAudit : ICommand
 {
     [HostProvided]

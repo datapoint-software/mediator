@@ -27,8 +27,8 @@ public sealed partial class ActionCatalog : IActionCatalog
     /// </param>
     /// <exception cref="ArgumentNullException"><paramref name="actionTypes"/> is <see langword="null"/>.</exception>
     /// <exception cref="InvalidOperationException">
-    /// An action's name is not valid or is used twice, a message is marked as an action, or a type implements more than
-    /// one action interface.
+    /// An action's name is not valid or is used twice, an action's description is empty, a message is marked as an
+    /// action, or a type implements more than one action interface.
     /// </exception>
     public ActionCatalog(IEnumerable<Type> actionTypes)
     {
@@ -57,6 +57,13 @@ public sealed partial class ActionCatalog : IActionCatalog
                 throw new InvalidOperationException(
                     $"'{attribute.Name}' on '{type}' is not a valid action name. Use up to {MaxNameLength} lowercase " +
                     "letters and digits, separated by single dots or hyphens, such as 'invoices.create'.");
+            }
+
+            if (string.IsNullOrWhiteSpace(attribute.Description))
+            {
+                throw new InvalidOperationException(
+                    $"'{attribute.Name}' on '{type}' has no description. Describe what the action does, because hosts " +
+                    "show it to callers as the OpenAPI summary, in CLI help and as the MCP tool's description.");
             }
 
             if (named.TryGetValue(attribute.Name, out var other))

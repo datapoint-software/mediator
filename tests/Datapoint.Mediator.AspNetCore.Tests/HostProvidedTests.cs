@@ -76,7 +76,7 @@ public sealed class HostProvidedTests
     }
 }
 
-[Action("reports.totals")]
+[Action("reports.totals", "A test action.")]
 public sealed record TenantTotals([HostProvided] Guid TenantId, string Customer) : IQuery<string>;
 
 public sealed class TenantTotalsHandler : IQueryHandler<TenantTotals, string>

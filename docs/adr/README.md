@@ -36,5 +36,6 @@ Each record follows [Michael Nygard's format](https://cognitect.com/blog/2011/11
 | [0028](0028-host-provided-properties.md) | Host-provided properties are hidden and refused by the CLI and MCP adapters | Accepted |
 | [0029](0029-argument-errors-name-the-field.md) | Argument errors name the field, and hooks see them first | Accepted |
 | [0030](0030-registration-methods-carry-the-mediator-prefix.md) | Host registration methods carry the Mediator prefix | Accepted |
+| [0031](0031-every-action-has-a-description.md) | Every action has a description | Accepted |
 
 To add a record, copy the structure of an existing one, use the next number, and add it to this table.

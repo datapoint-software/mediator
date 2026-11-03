@@ -8,24 +8,24 @@ using Datapoint.Mediator.Authorization;
 
 namespace Datapoint.Mediator.AspNetCore.Tests;
 
-[Action("invoices.create", Description = "Creates an invoice for a customer.")]
+[Action("invoices.create", "Creates an invoice for a customer.")]
 public sealed record CreateInvoice(string Customer, decimal Amount) : ICommand<Guid>;
 
-[Action("invoices.archive")]
+[Action("invoices.archive", "A test action.")]
 public sealed record ArchiveInvoice(int Id) : ICommand;
 
-[Action("invoices.get")]
+[Action("invoices.get", "A test action.")]
 public sealed record GetInvoice(int Id) : IQuery<InvoiceView>;
 
 public sealed record InvoiceView(int Id, string CustomerName);
 
-[Action("invoices.list")]
+[Action("invoices.list", "A test action.")]
 public sealed record ListInvoices(int Count) : IStreamQuery<int>;
 
-[Action("reports.fail")]
+[Action("reports.fail", "A test action.")]
 public sealed record FailingReport : ICommand;
 
-[Action("reports.reject")]
+[Action("reports.reject", "A test action.")]
 public sealed record RejectedReport : ICommand;
 
 public sealed class Recorder

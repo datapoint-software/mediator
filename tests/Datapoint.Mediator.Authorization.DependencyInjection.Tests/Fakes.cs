@@ -6,11 +6,11 @@ using Datapoint.Mediator.Authorization;
 
 namespace Datapoint.Mediator.Authorization.DependencyInjection.Tests;
 
-[Action("invoice.approve")]
+[Action("invoice.approve", "A test action.")]
 public sealed record ApproveInvoice(decimal Amount) : ICommand;
 
 // Named, so it can be dispatched by name, but deliberately without an authorizer.
-[Action("invoice.void")]
+[Action("invoice.void", "A test action.")]
 public sealed record VoidInvoice : ICommand;
 
 public sealed record ArchiveInvoice : ICommand;

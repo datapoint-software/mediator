@@ -90,7 +90,7 @@ Each behaviour can run code before and after the rest of the pipeline, or stop i
 
 ## Actions
 
-Commands and queries marked with `[Action("invoices.create")]` can also be dispatched **by name**, with JSON arguments. That's what lets one business layer be offered as HTTP endpoints, CLI commands and MCP tools. See [Actions](actions.md).
+Commands and queries marked with `[Action("invoices.create", "Creates an invoice.")]` can also be dispatched **by name**, with JSON arguments. That's what lets one business layer be offered as HTTP endpoints, CLI commands and MCP tools. See [Actions](actions.md).
 
 ## Where things live
 

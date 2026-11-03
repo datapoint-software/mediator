@@ -3,22 +3,22 @@ using System.Threading.Tasks;
 
 namespace Datapoint.Mediator.DependencyInjection.Tests;
 
-[Action("report.generate", Description = "Generates a report.")]
+[Action("report.generate", "Generates a report.")]
 public sealed record GenerateReport(string Title) : ICommand<string>;
 
-[Action("report.archive")]
+[Action("report.archive", "A test action.")]
 public sealed record ArchiveReport : ICommand;
 
-[Action("report.secret", Hidden = true)]
+[Action("report.secret", "A test action.", Hidden = true)]
 public sealed record SecretReport : ICommand;
 
-[Action("report.generate")]
+[Action("report.generate", "A test action.")]
 public sealed record DuplicateReport : ICommand;
 
-[Action("Report Bad")]
+[Action("Report Bad", "A test action.")]
 public sealed record BadlyNamedReport : ICommand;
 
-[Action("report.created")]
+[Action("report.created", "A test action.")]
 public sealed record ReportCreated : IMessage;
 
 public sealed class GenerateReportHandler : ICommandHandler<GenerateReport, string>

@@ -10,36 +10,36 @@ using Datapoint.Mediator.Authorization;
 
 namespace Datapoint.Mediator.CommandLine.Tests;
 
-[Action("invoices.create", Description = "Creates an invoice for a customer.")]
+[Action("invoices.create", "Creates an invoice for a customer.")]
 public sealed record CreateInvoice([property: Description("The customer's name.")] string Customer, decimal Amount, string? Notes = null) : ICommand<Guid>;
 
-[Action("invoices.archive")]
+[Action("invoices.archive", "A test action.")]
 public sealed record ArchiveInvoice(int Id) : ICommand;
 
-[Action("invoices.get")]
+[Action("invoices.get", "A test action.")]
 public sealed record GetInvoice(int Id) : IQuery<InvoiceView>;
 
 public sealed record InvoiceView(int Id, string CustomerName);
 
-[Action("invoices.list")]
+[Action("invoices.list", "A test action.")]
 public sealed record ListInvoices(int Count) : IStreamQuery<int>;
 
-[Action("invoices.ship")]
+[Action("invoices.ship", "A test action.")]
 public sealed record ShipInvoice(int Id, Address Address) : ICommand;
 
 public sealed record Address(string City);
 
-[Action("reports.fail")]
+[Action("reports.fail", "A test action.")]
 public sealed record FailingReport : ICommand;
 
-[Action("reports.reject")]
+[Action("reports.reject", "A test action.")]
 public sealed record RejectedReport : ICommand;
 
-[Action("ping")]
+[Action("ping", "A test action.")]
 public sealed record Ping : ICommand;
 
 // Numbers, dates and times, which System.CommandLine would otherwise parse with the current culture.
-[Action("reports.schedule")]
+[Action("reports.schedule", "A test action.")]
 public sealed record ScheduleReport(DateOnly Day, double? Threshold = null, DateTimeOffset? NotifyAt = null) : ICommand;
 
 public sealed class Recorder

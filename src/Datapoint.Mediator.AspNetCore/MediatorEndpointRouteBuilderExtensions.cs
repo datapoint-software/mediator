@@ -84,12 +84,8 @@ public static class MediatorEndpointRouteBuilderExtensions
             .Accepts(action.ActionType, "application/json")
             .ProducesProblem(StatusCodes.Status400BadRequest)
             .ProducesProblem(StatusCodes.Status401Unauthorized)
-            .ProducesProblem(StatusCodes.Status403Forbidden);
-
-        if (action.Description is { } description)
-        {
-            endpoint.WithSummary(description);
-        }
+            .ProducesProblem(StatusCodes.Status403Forbidden)
+            .WithSummary(action.Description);
 
         _ = action.Kind switch
         {

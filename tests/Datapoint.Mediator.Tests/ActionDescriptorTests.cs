@@ -53,7 +53,7 @@ public sealed class ActionDescriptorTests
     }
 
     private static ActionDescriptor Describe(Type actionType) =>
-        new("test.action", null, ActionKind.Command, actionType, null);
+        new("test.action", "A test action.", ActionKind.Command, actionType, null);
 
     private static IEnumerable<string> Names(Type actionType) =>
         Describe(actionType).HostProvidedProperties.Select(property => property.Name);

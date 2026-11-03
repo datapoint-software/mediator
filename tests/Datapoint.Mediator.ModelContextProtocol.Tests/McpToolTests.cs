@@ -262,7 +262,7 @@ public sealed class McpToolTests
     public void ActionWithInvalidToolName_FailsWhenTheServerIsConfigured()
     {
         var services = new ServiceCollection()
-            .AddSingleton<IActionCatalog>(new SingleActionCatalog(new ActionDescriptor("Not Valid", null, ActionKind.Query, typeof(GetInvoice), typeof(InvoiceView))));
+            .AddSingleton<IActionCatalog>(new SingleActionCatalog(new ActionDescriptor("Not Valid", "A test action.", ActionKind.Query, typeof(GetInvoice), typeof(InvoiceView))));
         services.AddMcpServer().WithMediatorActions();
         using var provider = services.BuildServiceProvider();
 

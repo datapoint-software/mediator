@@ -41,7 +41,7 @@ A nightly job that cancels invoices unpaid for a year has no user. Two options:
 **System-only actions.** Mark the action as anonymous, and hidden from hosts, so only your code can send it:
 
 ```csharp
-[Action("invoices.cancel-expired", Hidden = true)]
+[Action("invoices.cancel-expired", "Cancels the open invoices whose due date has passed.", Hidden = true)]
 [AllowAnonymousAccess]
 public sealed record CancelExpiredInvoices : ICommand;
 ```
@@ -85,7 +85,7 @@ Charging a card, sending an email or posting to another system can't be rolled b
 
 ```csharp
 [NonTransactional]
-[Action("invoices.charge")]
+[Action("invoices.charge", "Charges an invoice to the customer's card.")]
 public sealed record ChargeInvoice(Guid Id) : ICommand;
 
 public sealed class ChargeInvoiceHandler(InvoicingDbContext db, IPayments payments) : ICommandHandler<ChargeInvoice>

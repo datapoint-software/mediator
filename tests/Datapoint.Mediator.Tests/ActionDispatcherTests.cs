@@ -166,18 +166,18 @@ public sealed class ActionDispatcherTests
         return default;
     }
 
-    [Action("invoice.create")]
+    [Action("invoice.create", "A test action.")]
     private sealed record CreateInvoice(string Customer, int Amount) : ICommand;
 
-    [Action("invoice.approve")]
+    [Action("invoice.approve", "A test action.")]
     private sealed record ApproveInvoice(int Id) : ICommand<bool>;
 
-    [Action("invoice.get")]
+    [Action("invoice.get", "A test action.")]
     private sealed record GetInvoice(int Id) : IQuery<string>;
 
-    [Action("invoice.list")]
+    [Action("invoice.list", "A test action.")]
     private sealed record ListInvoices(int Count) : IStreamQuery<int>;
 
-    [Action("invoice.purge", Hidden = true)]
+    [Action("invoice.purge", "A test action.", Hidden = true)]
     private sealed record PurgeInvoices : ICommand;
 }

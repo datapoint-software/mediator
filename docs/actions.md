@@ -3,7 +3,7 @@
 An action is a command or query with a name. Hosts can list actions and dispatch them by name, with JSON arguments. That's what lets one business layer become HTTP endpoints, CLI commands and MCP tools without writing each one by hand.
 
 ```csharp
-[Action("invoices.create", Description = "Creates an open invoice for a customer and returns its id.")]
+[Action("invoices.create", "Creates an open invoice for a customer and returns its id.")]
 public sealed record CreateInvoice(string Customer, decimal Amount) : ICommand<Guid>;
 ```
 
@@ -31,7 +31,7 @@ Use dots to group actions, such as `invoices.create` and `invoices.lines.add`: h
 
 ## Descriptions
 
-`Description` becomes the OpenAPI summary, the CLI command's help, and the text an AI agent reads to choose a tool. Write it for someone who has never seen your code: what the action does, and what it returns.
+Every action needs a description, the second argument of `[Action]`. It becomes the OpenAPI summary, the CLI command's help, and the text an AI agent reads to choose a tool. Write it for someone who has never seen your code: what the action does, and what it returns. An empty or whitespace description throws when `AddMediator` runs.
 
 For CLI help and MCP schemas, describe each argument with `[Description]` from `System.ComponentModel`:
 
@@ -46,7 +46,7 @@ public sealed record CreateInvoice(
 `Hidden = true` keeps an action out of the catalog and out of dispatch by name, while your own code can still send it through `IMediator`:
 
 ```csharp
-[Action("invoices.purge", Hidden = true)]
+[Action("invoices.purge", "Deletes cancelled invoices.", Hidden = true)]
 public sealed record PurgeCancelledInvoices : ICommand;
 ```
 
@@ -57,7 +57,7 @@ An unknown action and a hidden one fail the same way, with `ActionNotFoundExcept
 Some properties are filled in by the host, never by the caller, such as the tenant of the caller's session. Mark them `[HostProvided]`, on the property or on the record parameter:
 
 ```csharp
-[Action("invoices.list", Description = "Lists the invoices of the signed-in user's tenant.")]
+[Action("invoices.list", "Lists the invoices of the signed-in user's tenant.")]
 public sealed record ListInvoices(
     [HostProvided(Reason = "The tenant of the caller's session.")] Guid TenantId,
     string? Customer) : IQuery<IReadOnlyList<InvoiceSummary>>;

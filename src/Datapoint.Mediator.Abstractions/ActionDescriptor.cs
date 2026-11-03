@@ -15,18 +15,20 @@ public sealed class ActionDescriptor
     /// Initializes a new instance of the <see cref="ActionDescriptor"/> class.
     /// </summary>
     /// <param name="name">The action's name.</param>
-    /// <param name="description">A description of what the action does, or <see langword="null"/>.</param>
+    /// <param name="description">A description of what the action does.</param>
     /// <param name="kind">The kind of the action.</param>
     /// <param name="actionType">The type of the command, query or stream query.</param>
     /// <param name="resultType">
     /// The type of the result, or of each streamed result; <see langword="null"/> for a command without a result.
     /// </param>
     /// <exception cref="ArgumentNullException">
-    /// <paramref name="name"/> or <paramref name="actionType"/> is <see langword="null"/>.
+    /// <paramref name="name"/>, <paramref name="description"/> or <paramref name="actionType"/> is
+    /// <see langword="null"/>.
     /// </exception>
-    public ActionDescriptor(string name, string? description, ActionKind kind, Type actionType, Type? resultType)
+    public ActionDescriptor(string name, string description, ActionKind kind, Type actionType, Type? resultType)
     {
         ArgumentNullException.ThrowIfNull(name);
+        ArgumentNullException.ThrowIfNull(description);
         ArgumentNullException.ThrowIfNull(actionType);
         Name = name;
         Description = description;
@@ -42,9 +44,9 @@ public sealed class ActionDescriptor
     public string Name { get; }
 
     /// <summary>
-    /// Gets a description of what the action does, or <see langword="null"/>.
+    /// Gets a description of what the action does.
     /// </summary>
-    public string? Description { get; }
+    public string Description { get; }
 
     /// <summary>
     /// Gets the kind of the action.

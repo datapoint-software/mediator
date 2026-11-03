@@ -10,7 +10,7 @@ public sealed class ActionArgumentsTests
 {
     private const string Id = "\"id\": \"3f2c0d4e-0000-0000-0000-000000000000\"";
 
-    private static readonly ActionDescriptor Action = new("orders.create", null, ActionKind.Command, typeof(CreateOrder), null);
+    private static readonly ActionDescriptor Action = new("orders.create", "Creates an order.", ActionKind.Command, typeof(CreateOrder), null);
 
     private static readonly JsonSerializerOptions Strict = new(JsonSerializerOptions.Strict)
     {

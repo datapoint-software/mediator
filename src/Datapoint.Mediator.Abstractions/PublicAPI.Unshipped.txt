@@ -1,1 +1,10 @@
 #nullable enable
+*REMOVED*Datapoint.Mediator.ActionAttribute.ActionAttribute(string! name) -> void
+*REMOVED*Datapoint.Mediator.ActionAttribute.Description.get -> string?
+*REMOVED*Datapoint.Mediator.ActionAttribute.Description.init -> void
+*REMOVED*Datapoint.Mediator.ActionDescriptor.ActionDescriptor(string! name, string? description, Datapoint.Mediator.ActionKind kind, System.Type! actionType, System.Type? resultType) -> void
+*REMOVED*Datapoint.Mediator.ActionDescriptor.Description.get -> string?
+Datapoint.Mediator.ActionAttribute.ActionAttribute(string! name, string! description) -> void
+Datapoint.Mediator.ActionAttribute.Description.get -> string!
+Datapoint.Mediator.ActionDescriptor.ActionDescriptor(string! name, string! description, Datapoint.Mediator.ActionKind kind, System.Type! actionType, System.Type? resultType) -> void
+Datapoint.Mediator.ActionDescriptor.Description.get -> string!
