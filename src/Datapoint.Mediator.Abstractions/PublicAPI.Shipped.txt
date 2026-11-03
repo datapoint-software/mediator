@@ -1,16 +1,16 @@
 #nullable enable
 Datapoint.Mediator.ActionAttribute
-Datapoint.Mediator.ActionAttribute.ActionAttribute(string! name) -> void
-Datapoint.Mediator.ActionAttribute.Description.get -> string?
-Datapoint.Mediator.ActionAttribute.Description.init -> void
-Datapoint.Mediator.ActionAttribute.Hidden.get -> bool
-Datapoint.Mediator.ActionAttribute.Hidden.init -> void
+Datapoint.Mediator.ActionAttribute.ActionAttribute(string! name, string! description) -> void
+Datapoint.Mediator.ActionAttribute.Description.get -> string!
 Datapoint.Mediator.ActionAttribute.Name.get -> string!
+Datapoint.Mediator.ActionChannelAttribute
+Datapoint.Mediator.ActionChannelAttribute.ActionChannelAttribute() -> void
 Datapoint.Mediator.ActionDescriptor
-Datapoint.Mediator.ActionDescriptor.ActionDescriptor(string! name, string? description, Datapoint.Mediator.ActionKind kind, System.Type! actionType, System.Type? resultType) -> void
+Datapoint.Mediator.ActionDescriptor.ActionDescriptor(string! name, string! description, Datapoint.Mediator.ActionKind kind, System.Type! actionType, System.Type? resultType) -> void
 Datapoint.Mediator.ActionDescriptor.ActionType.get -> System.Type!
-Datapoint.Mediator.ActionDescriptor.Description.get -> string?
+Datapoint.Mediator.ActionDescriptor.Description.get -> string!
 Datapoint.Mediator.ActionDescriptor.HostProvidedProperties.get -> System.Collections.Generic.IReadOnlyList<System.Reflection.PropertyInfo!>!
+Datapoint.Mediator.ActionDescriptor.IsOfferedBy<TChannel>() -> bool
 Datapoint.Mediator.ActionDescriptor.Kind.get -> Datapoint.Mediator.ActionKind
 Datapoint.Mediator.ActionDescriptor.Name.get -> string!
 Datapoint.Mediator.ActionDescriptor.ResultType.get -> System.Type?
@@ -23,6 +23,10 @@ Datapoint.Mediator.ActionNotFoundException
 Datapoint.Mediator.ActionNotFoundException.ActionNotFoundException() -> void
 Datapoint.Mediator.ActionNotFoundException.ActionNotFoundException(string! message) -> void
 Datapoint.Mediator.ActionNotFoundException.ActionNotFoundException(string! message, System.Exception! innerException) -> void
+Datapoint.Mediator.ApiAttribute
+Datapoint.Mediator.ApiAttribute.ApiAttribute() -> void
+Datapoint.Mediator.CommandLineAttribute
+Datapoint.Mediator.CommandLineAttribute.CommandLineAttribute() -> void
 Datapoint.Mediator.HostProvidedAttribute
 Datapoint.Mediator.HostProvidedAttribute.HostProvidedAttribute() -> void
 Datapoint.Mediator.HostProvidedAttribute.Reason.get -> string?
@@ -73,3 +77,5 @@ Datapoint.Mediator.InvalidActionArgumentsException.InvalidActionArgumentsExcepti
 Datapoint.Mediator.InvalidActionArgumentsException.InvalidActionArgumentsException(string! message) -> void
 Datapoint.Mediator.InvalidActionArgumentsException.InvalidActionArgumentsException(string! message, System.Exception! innerException) -> void
 Datapoint.Mediator.InvalidActionArgumentsException.InvalidActionArgumentsException(string! message, string? actionName, string? field, System.Exception? innerException) -> void
+Datapoint.Mediator.ModelContextProtocolAttribute
+Datapoint.Mediator.ModelContextProtocolAttribute.ModelContextProtocolAttribute() -> void

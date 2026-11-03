@@ -4,6 +4,49 @@ All notable changes to the Datapoint.Mediator packages are documented in this fi
 
 The format is based on [Keep a Changelog 1.1.0](https://keepachangelog.com/en/1.1.0/), and the packages follow [Semantic Versioning 2.0.0](https://semver.org/spec/v2.0.0.html).
 
+## [4.0.0-beta.5](https://github.com/datapoint-software/mediator/releases/tag/4.0.0-beta.5) - 2026-11-03
+
+### Added
+
+- **Breaking:** **abstractions:** Require a description for every action ([4468664](https://github.com/datapoint-software/mediator/commit/446866452d3719350e7f37944d0a3d2e4edf937e))
+- **Breaking:** **abstractions:** Declare the adapters that offer an action ([f6bc4a5](https://github.com/datapoint-software/mediator/commit/f6bc4a536997ef789dff2284ff90dbef0efdad69))
+- **Breaking:** **aspnetcore:** Offer only actions marked [Api] ([b026b68](https://github.com/datapoint-software/mediator/commit/b026b6895a4696f121a80e0c06bd0a056f1ed335))
+- **Breaking:** **model-context-protocol:** Offer only actions marked [ModelContextProtocol] ([5c3ac54](https://github.com/datapoint-software/mediator/commit/5c3ac546e539f789c7be990794a6d9d21b0f8d4d))
+- **Breaking:** **command-line:** Offer only actions marked [CommandLine] ([26cc402](https://github.com/datapoint-software/mediator/commit/26cc402fbfa6c22185b99862d7e9d82c49e91f07))
+
+### Documentation
+
+- **command-line:** Remove an outdated copy of the guide's sections ([bcf180d](https://github.com/datapoint-software/mediator/commit/bcf180ded3b2c4e35e61e9635d7a2ac0bb5b5c6a))
+
+### Migrating from 4.0.0-beta.4
+
+These changes are breaking: review each one before adopting `4.0.0-beta.5`. An application that hasn't migrated fails at startup, in `AddMediator`, so nothing is exposed by mistake.
+
+- **Every action needs a description,** as the second argument of `[Action]`. Startup refuses an empty or whitespace one.
+
+  | Before | After |
+  |---|---|
+  | `[Action("invoices.create", Description = "Creates an invoice.")]` | `[Action("invoices.create", "Creates an invoice.")]` |
+  | `[Action("invoices.create")]` | `[Action("invoices.create", "Creates an invoice.")]` |
+
+  `ActionDescriptor.Description` is no longer nullable, and its constructor requires a description.
+- **Mark each action with the hosts that offer it:** `[Api]`, `[CommandLine]` or `[ModelContextProtocol]`. A host now offers only the actions marked for it, and an action without any of them fails at startup, with every such action listed. To keep offering an action everywhere, as before, mark it with all three:
+
+  ```csharp
+  [Api]
+  [CommandLine]
+  [ModelContextProtocol]
+  [Action("invoices.create", "Creates an invoice.")]
+  public sealed record CreateInvoice(string Customer, decimal Amount) : ICommand<Guid>;
+  ```
+
+- **`Hidden` is removed.** Remove `[Action]` from actions that had `Hidden = true`, and keep sending them through `IMediator`.
+- **`Filter` only narrows.** It now sees only the actions marked for its host. A filter that removed actions from one host can become a missing attribute instead.
+- **A CLI that dispatches to your API** needs its actions marked `[CommandLine]` and `[Api]`.
+- **Custom hosts** check their own attribute, derived from `ActionChannelAttribute`, with `action.IsOfferedBy<TChannel>()` before offering or dispatching an action. `IActionDispatcher` doesn't check channels.
+
+See [ADR 0031](https://github.com/datapoint-software/mediator/blob/main/docs/adr/0031-every-action-has-a-description.md) and [ADR 0032](https://github.com/datapoint-software/mediator/blob/main/docs/adr/0032-actions-declare-the-adapters-that-offer-them.md) for the decisions, and [Where an action is offered](https://github.com/datapoint-software/mediator/blob/main/docs/actions.md#where-an-action-is-offered) for the guide.
+
 ## [4.0.0-beta.4](https://github.com/datapoint-software/mediator/releases/tag/4.0.0-beta.4) - 2026-11-03
 
 ### Added
