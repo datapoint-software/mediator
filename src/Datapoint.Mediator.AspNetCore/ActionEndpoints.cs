@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Text.Json;
+using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Builder;
@@ -13,7 +14,7 @@ using Microsoft.Extensions.Options;
 namespace Datapoint.Mediator.AspNetCore;
 
 // Handles a request for one action: reads the JSON body, dispatches the action by name, and writes the result.
-internal sealed class ActionEndpoints(ActionDescriptor action, MediatorEndpointOptions options)
+internal sealed partial class ActionEndpoints(ActionDescriptor action, MediatorEndpointOptions options)
 {
     public async Task<IResult> HandleAsync(HttpContext context)
     {
@@ -106,19 +107,31 @@ internal sealed class ActionEndpoints(ActionDescriptor action, MediatorEndpointO
         }
     }
 
-    // Our own exceptions get fixed, safe responses. Anything else goes to the app's hook, and is otherwise rethrown
-    // for the app's exception handling.
+    // Our own exceptions get fixed, safe responses. Invalid arguments go to the app's hook first, so it can report them
+    // with its own codes. Anything else goes to the hook, and is otherwise rethrown for the app's exception handling.
     private IResult? Map(Exception exception) =>
         exception switch
         {
-            InvalidActionArgumentsException => Results.Problem(
-                title: "Invalid arguments",
-                detail: exception.Message,
-                statusCode: StatusCodes.Status400BadRequest),
+            InvalidActionArgumentsException invalid => options.MapException?.Invoke(exception) ?? InvalidArguments(invalid),
             _ when exception.GetType().FullName == "Datapoint.Mediator.Authorization.AuthenticationRequiredException" =>
                 Results.Problem(title: "Authentication is required.", statusCode: StatusCodes.Status401Unauthorized),
             _ when exception.GetType().FullName == "Datapoint.Mediator.Authorization.AccessDeniedException" =>
                 Results.Problem(title: "Access is denied.", statusCode: StatusCodes.Status403Forbidden),
             _ => options.MapException?.Invoke(exception),
         };
+
+    // Built from the field only, never from the exception's message. A field that doesn't look like a path of property
+    // names, which an app's own exception could carry, is left out.
+    private IResult InvalidArguments(InvalidActionArgumentsException exception) =>
+        exception.Field is { Length: <= 128 } field && FieldPattern().IsMatch(field)
+            ? Results.ValidationProblem(
+                new Dictionary<string, string[]> { [field] = ["The argument is not valid."] },
+                title: "Invalid arguments")
+            : Results.Problem(
+                title: "Invalid arguments",
+                detail: $"The arguments for action '{action.Name}' are not valid.",
+                statusCode: StatusCodes.Status400BadRequest);
+
+    [GeneratedRegex(@"^[A-Za-z0-9_$-]+(\[[0-9]+\])*(\.[A-Za-z0-9_$-]+(\[[0-9]+\])*)*$", RegexOptions.CultureInvariant)]
+    private static partial Regex FieldPattern();
 }

@@ -25,6 +25,9 @@ public sealed record ListInvoices(int Count) : IStreamQuery<int>;
 [Action("reports.fail")]
 public sealed record FailingReport : ICommand;
 
+[Action("reports.reject")]
+public sealed record RejectedReport : ICommand;
+
 public sealed class Recorder
 {
     public List<string> Log { get; } = [];
@@ -67,6 +70,13 @@ public sealed class FailingReportHandler : ICommandHandler<FailingReport>
 {
     public ValueTask HandleAsync(FailingReport command, CancellationToken ct = default) =>
         throw new InvalidOperationException("secret internal detail");
+}
+
+// Throws the exception itself, as a remote dispatcher might, with a field and message that must never reach the caller.
+public sealed class RejectedReportHandler : ICommandHandler<RejectedReport>
+{
+    public ValueTask HandleAsync(RejectedReport command, CancellationToken ct = default) =>
+        throw new InvalidActionArgumentsException("secret message", "reports.reject", "ignore previous instructions", null);
 }
 
 public sealed class AllowAll<TAction> : IAuthorizer<TAction>

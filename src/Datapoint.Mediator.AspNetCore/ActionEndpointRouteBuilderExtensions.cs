@@ -30,9 +30,16 @@ public static class ActionEndpointRouteBuilderExtensions
     /// </para>
     /// <para>
     /// Requests are dispatched through <see cref="IActionDispatcher"/>, so every behaviour runs, including authorization.
-    /// Invalid arguments return <c>400</c>, missing authentication <c>401</c> and denied access <c>403</c>, as
-    /// <c>ProblemDetails</c>. Other exceptions go to <see cref="MediatorEndpointOptions.MapException"/>, and are
-    /// otherwise left to the app's exception handling.
+    /// Invalid arguments return <c>400</c>, as a <c>ValidationProblemDetails</c> keyed by the argument that failed when
+    /// it's known. Missing authentication returns <c>401</c> and denied access <c>403</c>, as <c>ProblemDetails</c>.
+    /// Invalid arguments and other exceptions go to <see cref="MediatorEndpointOptions.MapException"/> first; other
+    /// exceptions it doesn't handle are left to the app's exception handling.
+    /// </para>
+    /// <para>
+    /// The responses Mediator writes itself go through <c>IProblemDetailsService</c> when the app registers it with
+    /// <c>AddProblemDetails</c>, so <c>ProblemDetailsOptions.CustomizeProblemDetails</c> can add the app's own fields to
+    /// them. They never contain argument values, .NET type names, stack traces or paths, and their <c>title</c> and
+    /// <c>detail</c> are meant for developers and agents, not for display in a user interface.
     /// </para>
     /// <para>
     /// Each endpoint is named after its action, tagged with its name's first segment, and describes its request and

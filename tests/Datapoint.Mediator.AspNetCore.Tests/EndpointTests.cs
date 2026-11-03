@@ -121,8 +121,9 @@ public sealed class EndpointTests
 
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
         var body = await response.Content.ReadAsStringAsync(Ct);
-        Assert.Contains("The argument 'amount' of action 'invoices.create' is not valid.", body);
+        Assert.Contains("\"amount\"", body);
         Assert.DoesNotContain("secret-input", body);
+        Assert.DoesNotContain("System.", body);
     }
 
     [Fact]
@@ -230,7 +231,7 @@ public sealed class EndpointTests
 
         var endpoints = RouteEndpoints(app).ToDictionary(e => e.Metadata.GetMetadata<IEndpointNameMetadata>()!.EndpointName);
 
-        Assert.Equal(["invoices.archive", "invoices.create", "invoices.get", "invoices.list", "reports.fail"], endpoints.Keys.Order(StringComparer.Ordinal));
+        Assert.Equal(["invoices.archive", "invoices.create", "invoices.get", "invoices.list", "reports.fail", "reports.reject"], endpoints.Keys.Order(StringComparer.Ordinal));
         var create = endpoints["invoices.create"];
         Assert.Equal("/api/invoices/create", create.RoutePattern.RawText);
         Assert.Equal(typeof(CreateInvoice), create.Metadata.GetMetadata<IAcceptsMetadata>()!.RequestType);

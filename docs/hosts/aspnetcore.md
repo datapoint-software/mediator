@@ -104,16 +104,38 @@ You can call `MapActions` several times with different prefixes and filters, for
 
 | Failure | Response |
 |---|---|
-| The body isn't valid JSON, or doesn't fit the action's type | `400`, with a fixed message |
+| The body isn't valid JSON | `400`, "Invalid request body" |
+| The arguments don't fit the action's type | `MapException`, if it handles it; otherwise `400`, naming the argument that failed |
 | No authenticated user | `401` |
 | The user may not run the action | `403` |
 | Anything else | `MapException`, if it handles it; otherwise rethrown to the app's exception handling |
 
-Responses are `ProblemDetails`, and never repeat the request's input. Map your own exceptions with `MapException`. Return `null` for exceptions it doesn't handle:
+When the argument that failed is known, the `400` is a `ValidationProblemDetails`, the shape ASP.NET Core uses for its own validation errors:
+
+```json
+{
+  "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1",
+  "title": "Invalid arguments",
+  "status": 400,
+  "errors": { "lines[1].quantity": ["The argument is not valid."] }
+}
+```
+
+Otherwise, such as for an unknown property, it's a `ProblemDetails` with the detail "The arguments for action 'invoices.create' are not valid." See [Invalid arguments](../actions.md#invalid-arguments) for how the field is spelled.
+
+The responses Mediator writes never contain argument values, .NET type names, stack traces or paths. Their `title` and `detail` are meant for developers and agents, not for display in a user interface.
+
+### Mapping your own errors
+
+Map your own exceptions with `MapException`, and return `null` for exceptions it doesn't handle. It also receives `InvalidActionArgumentsException` first, so you can report it with your own codes:
 
 ```csharp
 app.MapActions("/api", o => o.MapException = e => e switch
 {
+    // An argument Mediator couldn't read: Field comes from the action's contract, so it's safe to return.
+    InvalidActionArgumentsException { Field: { } field } =>
+        Results.ValidationProblem(new Dictionary<string, string[]> { [field] = ["invalid"] }, title: "Invalid arguments"),
+
     ValidationException v => Results.ValidationProblem(v.Errors
         .GroupBy(f => f.PropertyName)
         .ToDictionary(g => g.Key, g => g.Select(f => f.ErrorMessage).ToArray())),   // never AttemptedValue
@@ -121,6 +143,24 @@ app.MapActions("/api", o => o.MapException = e => e switch
     _ => null,
 });
 ```
+
+> **Security:** return only text you wrote. Never return an exception's `Message`, or `InnerException.Message` for invalid arguments: they're for logs, and can contain .NET type names, values or property names the caller chose.
+
+### Adding fields to Mediator's responses
+
+The `400`, `401` and `403` responses Mediator writes go through ASP.NET Core's `IProblemDetailsService` when you register it, so `CustomizeProblemDetails` can add your own fields, such as an error code, to them too. Authentication and access-denied responses can't be replaced with `MapException`, but they can be extended this way:
+
+```csharp
+builder.Services.AddProblemDetails(o => o.CustomizeProblemDetails = c =>
+    c.ProblemDetails.Extensions["code"] = c.ProblemDetails.Status switch
+    {
+        401 => "authentication_required",
+        403 => "access_denied",
+        _ => "error",
+    });
+```
+
+`CustomizeProblemDetails` runs on every problem response, so it must not add input or exception details either.
 
 Unhandled exceptions reach ASP.NET Core's exception handling. In production, use `app.UseExceptionHandler()` with `builder.Services.AddProblemDetails()`, so they become a `500` without details.
 
