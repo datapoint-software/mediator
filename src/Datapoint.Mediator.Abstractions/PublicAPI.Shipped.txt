@@ -67,6 +67,9 @@ Datapoint.Mediator.ITransactionContext.IsActive.get -> bool
 Datapoint.Mediator.ITransactionContext.IsJoined.get -> bool
 Datapoint.Mediator.ITransactionContext.IsReadOnly.get -> bool
 Datapoint.Mediator.InvalidActionArgumentsException
+Datapoint.Mediator.InvalidActionArgumentsException.ActionName.get -> string?
+Datapoint.Mediator.InvalidActionArgumentsException.Field.get -> string?
 Datapoint.Mediator.InvalidActionArgumentsException.InvalidActionArgumentsException() -> void
 Datapoint.Mediator.InvalidActionArgumentsException.InvalidActionArgumentsException(string! message) -> void
 Datapoint.Mediator.InvalidActionArgumentsException.InvalidActionArgumentsException(string! message, System.Exception! innerException) -> void
+Datapoint.Mediator.InvalidActionArgumentsException.InvalidActionArgumentsException(string! message, string? actionName, string? field, System.Exception? innerException) -> void

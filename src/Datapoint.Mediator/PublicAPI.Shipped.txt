@@ -1,4 +1,5 @@
 #nullable enable
+Datapoint.Mediator.ActionArguments
 Datapoint.Mediator.ActionCatalog
 Datapoint.Mediator.ActionCatalog.ActionCatalog(System.Collections.Generic.IEnumerable<System.Type!>! actionTypes) -> void
 Datapoint.Mediator.ActionCatalog.Actions.get -> System.Collections.Generic.IReadOnlyList<Datapoint.Mediator.ActionDescriptor!>!
@@ -17,3 +18,4 @@ Datapoint.Mediator.Mediator.StreamAsync<TResult>(Datapoint.Mediator.IStreamQuery
 Datapoint.Mediator.MediatorTelemetry
 const Datapoint.Mediator.MediatorTelemetry.MeterName = "Datapoint.Mediator" -> string!
 const Datapoint.Mediator.MediatorTelemetry.SourceName = "Datapoint.Mediator" -> string!
+static Datapoint.Mediator.ActionArguments.Deserialize(Datapoint.Mediator.ActionDescriptor! action, System.Text.Json.JsonElement arguments, System.Text.Json.JsonSerializerOptions? options = null) -> object!

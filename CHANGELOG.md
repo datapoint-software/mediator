@@ -4,6 +4,41 @@ All notable changes to the Datapoint.Mediator packages are documented in this fi
 
 The format is based on [Keep a Changelog 1.1.0](https://keepachangelog.com/en/1.1.0/), and the packages follow [Semantic Versioning 2.0.0](https://semver.org/spec/v2.0.0.html).
 
+## [4.0.0-beta.4](https://github.com/datapoint-software/mediator/releases/tag/4.0.0-beta.4) - 2026-11-03
+
+### Added
+
+- **abstractions:** Add ActionName and Field to InvalidActionArgumentsException ([c76684c](https://github.com/datapoint-software/mediator/commit/c76684c7f9fd9fd4f72387f153259eedbaf7e6c7))
+- **mediator:** Name the failing argument and add ActionArguments ([8fc008c](https://github.com/datapoint-software/mediator/commit/8fc008c5fd3d1a91197f2997dc370f6f517adc26))
+- **Breaking:** **aspnetcore:** Report argument errors as validation problems and pass them to MapException ([a9b7fbb](https://github.com/datapoint-software/mediator/commit/a9b7fbbf90ea5836dabb29ec1f0b8e5bf9c69670))
+- **Breaking:** **model-context-protocol:** Name the failing argument and pass argument errors to ErrorMessage ([8e1deea](https://github.com/datapoint-software/mediator/commit/8e1deea278a88eabce9c9e98a2fc7b9fe15c15f5))
+- **Breaking:** **command-line:** Name the failing argument and pass argument errors to ErrorMessage ([2a61d5e](https://github.com/datapoint-software/mediator/commit/2a61d5e87a0b5dca1da3fedfd8f2efc43c6ee489))
+
+### Documentation
+
+- Record that argument errors name the field, and that hooks write their own text ([a7b1d29](https://github.com/datapoint-software/mediator/commit/a7b1d2980cb585f531801944e2989eb1584279e1))
+
+### Refactor
+
+- **Breaking:** Prefix host registration methods with Mediator ([cb865ff](https://github.com/datapoint-software/mediator/commit/cb865ffa1a0caec25ed71bd8e5ce062a5c8e56c0))
+
+### Migrating from 4.0.0-beta.3
+
+These changes are breaking: review each one before adopting `4.0.0-beta.4`.
+
+- **Renamed registration methods:** `app.MapActions(...)` is now `app.MapMediatorActions(...)`, and `root.AddActions(...)` is now `root.AddMediatorActions(...)`. Their extension classes are now `MediatorEndpointRouteBuilderExtensions` and `MediatorCommandExtensions`, in the same namespaces. `WithMediatorActions` is unchanged. See [ADR 0030](https://github.com/datapoint-software/mediator/blob/main/docs/adr/0030-registration-methods-carry-the-mediator-prefix.md).
+- **Invalid arguments name the field.** `InvalidActionArgumentsException` has `ActionName` and `Field`, such as `count` or `lines[1].quantity`, built only from the action's contract. The default texts change:
+  - HTTP: a `400` `ValidationProblemDetails` with `"errors": { "count": ["The argument is not valid."] }` when the field is known; otherwise the `ProblemDetails` "The arguments for action '<name>' are not valid.".
+  - MCP and CLI: "The argument 'count' of action '<name>' is not valid.", or the generic text.
+  - Update tests or clients that match the old texts.
+- **Hooks see invalid arguments first.** `MapException` and `ErrorMessage` now receive `InvalidActionArgumentsException` before Mediator writes its own response; returning `null` keeps it. A hook that returns a value for every exception now also replaces that response: make it return `null` for exceptions it doesn't recognise.
+- **Hosts no longer print the exception's message.** If your code throws `InvalidActionArgumentsException` itself and wants its own text shown, return that text from `ErrorMessage` or `MapException`. Use the new constructor to pass the field.
+- **Hooks should write their own text.** An exception's `Message` is for logs, including your own exceptions'. Never return `InnerException.Message` for invalid arguments.
+- **Optional:** use options based on `JsonSerializerOptions.Strict`, with camelCase names, so missing, `null` and unknown arguments are refused, and check arguments locally with `ActionArguments.Deserialize`. See [Invalid arguments](https://github.com/datapoint-software/mediator/blob/main/docs/actions.md#invalid-arguments).
+- `CustomizeProblemDetails` keeps running on Mediator's own `400`, `401` and `403` responses, and is now covered by tests.
+
+See [ADR 0029](https://github.com/datapoint-software/mediator/blob/main/docs/adr/0029-argument-errors-name-the-field.md) for the decision.
+
 ## [4.0.0-beta.3](https://github.com/datapoint-software/mediator/releases/tag/4.0.0-beta.3) - 2026-11-02
 
 ### Added

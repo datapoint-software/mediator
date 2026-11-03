@@ -1,5 +1,1 @@
 #nullable enable
-*REMOVED*Microsoft.AspNetCore.Builder.ActionEndpointRouteBuilderExtensions
-*REMOVED*static Microsoft.AspNetCore.Builder.ActionEndpointRouteBuilderExtensions.MapActions(this Microsoft.AspNetCore.Routing.IEndpointRouteBuilder! endpoints, string! prefix = "", System.Action<Datapoint.Mediator.AspNetCore.MediatorEndpointOptions!>? configure = null) -> Microsoft.AspNetCore.Routing.RouteGroupBuilder!
-Microsoft.AspNetCore.Builder.MediatorEndpointRouteBuilderExtensions
-static Microsoft.AspNetCore.Builder.MediatorEndpointRouteBuilderExtensions.MapMediatorActions(this Microsoft.AspNetCore.Routing.IEndpointRouteBuilder! endpoints, string! prefix = "", System.Action<Datapoint.Mediator.AspNetCore.MediatorEndpointOptions!>? configure = null) -> Microsoft.AspNetCore.Routing.RouteGroupBuilder!

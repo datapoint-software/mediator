@@ -7,5 +7,5 @@ Datapoint.Mediator.AspNetCore.MediatorEndpointOptions.MapException.set -> void
 Datapoint.Mediator.AspNetCore.MediatorEndpointOptions.MediatorEndpointOptions() -> void
 Datapoint.Mediator.AspNetCore.MediatorEndpointOptions.SerializerOptions.get -> System.Text.Json.JsonSerializerOptions?
 Datapoint.Mediator.AspNetCore.MediatorEndpointOptions.SerializerOptions.set -> void
-Microsoft.AspNetCore.Builder.ActionEndpointRouteBuilderExtensions
-static Microsoft.AspNetCore.Builder.ActionEndpointRouteBuilderExtensions.MapActions(this Microsoft.AspNetCore.Routing.IEndpointRouteBuilder! endpoints, string! prefix = "", System.Action<Datapoint.Mediator.AspNetCore.MediatorEndpointOptions!>? configure = null) -> Microsoft.AspNetCore.Routing.RouteGroupBuilder!
+Microsoft.AspNetCore.Builder.MediatorEndpointRouteBuilderExtensions
+static Microsoft.AspNetCore.Builder.MediatorEndpointRouteBuilderExtensions.MapMediatorActions(this Microsoft.AspNetCore.Routing.IEndpointRouteBuilder! endpoints, string! prefix = "", System.Action<Datapoint.Mediator.AspNetCore.MediatorEndpointOptions!>? configure = null) -> Microsoft.AspNetCore.Routing.RouteGroupBuilder!
