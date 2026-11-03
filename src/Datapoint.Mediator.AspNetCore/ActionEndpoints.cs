@@ -120,17 +120,21 @@ internal sealed partial class ActionEndpoints(ActionDescriptor action, MediatorE
             _ => options.MapException?.Invoke(exception),
         };
 
-    // Built from the field only, never from the exception's message. A field that doesn't look like a path of property
+    // Built from the field and the reason only, never from the exception's message. A field that doesn't look like a path of property
     // names, which an app's own exception could carry, is left out.
     private IResult InvalidArguments(InvalidActionArgumentsException exception) =>
         exception.Field is { Length: <= 128 } field && FieldPattern().IsMatch(field)
             ? Results.ValidationProblem(
-                new Dictionary<string, string[]> { [field] = ["The argument is not valid."] },
+                new Dictionary<string, string[]> { [field] = [IsRequired(exception) ? "The argument is required." : "The argument is not valid."] },
                 title: "Invalid arguments")
             : Results.Problem(
                 title: "Invalid arguments",
                 detail: $"The arguments for action '{action.Name}' are not valid.",
                 statusCode: StatusCodes.Status400BadRequest);
+
+    // A missing or null argument is reported as required.
+    private static bool IsRequired(InvalidActionArgumentsException exception) =>
+        exception.Reason is InvalidActionArgumentReason.Missing or InvalidActionArgumentReason.Null;
 
     [GeneratedRegex(@"^[A-Za-z0-9_$-]+(\[[0-9]+\])*(\.[A-Za-z0-9_$-]+(\[[0-9]+\])*)*$", RegexOptions.CultureInvariant)]
     private static partial Regex FieldPattern();

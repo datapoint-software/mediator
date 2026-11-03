@@ -10,11 +10,14 @@ namespace Datapoint.Mediator;
 
 // Finds the argument a JsonException is about, from its Path and the action's contract. The path holds the caller's
 // spelling and dictionary keys, so only names found in the contract are written, in the contract's spelling, and the
-// walk stops before anything the contract doesn't describe. It runs only when deserialization has already failed.
+// walk stops before anything the contract doesn't describe. The reason comes from the contract and the kind of JSON
+// value only. It runs only when deserialization has already failed.
 internal static class ArgumentField
 {
-    public static string? Find(JsonException exception, JsonElement arguments, JsonTypeInfo typeInfo)
+    public static string? Find(JsonException exception, JsonElement arguments, JsonTypeInfo typeInfo, out InvalidActionArgumentReason? reason)
     {
+        reason = null;
+
         // System.Text.Json sets the path on every exception it throws while deserializing, starting with "$".
         var segments = Parse(exception.Path ?? "$", out var complete);
         var field = new StringBuilder();
@@ -58,9 +61,23 @@ internal static class ArgumentField
             && FindMissingRequired(typeInfo, target) is { } missing)
         {
             Append(field, missing.Name);
+            reason = InvalidActionArgumentReason.Missing;
+        }
+        else
+        {
+            // Only a complete walk reaches the value that failed. Otherwise, the element is the value's container.
+            reason = complete && element is { ValueKind: JsonValueKind.Null }
+                ? InvalidActionArgumentReason.Null
+                : InvalidActionArgumentReason.Invalid;
         }
 
-        return field.Length > 0 ? field.ToString() : null;
+        if (field.Length == 0)
+        {
+            reason = null;
+            return null;
+        }
+
+        return field.ToString();
     }
 
     private static void Append(StringBuilder field, string name)

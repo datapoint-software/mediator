@@ -151,7 +151,17 @@ public sealed class ActionDispatcherTests
         Assert.Equal("message", exception.Message);
         Assert.Equal("invoice.get", exception.ActionName);
         Assert.Equal("id", exception.Field);
+        Assert.Null(exception.Reason);
         Assert.Same(inner, exception.InnerException);
+    }
+
+    [Fact]
+    public void InvalidActionArgumentsException_CarriesReasonOnlyWithAField()
+    {
+        Assert.Equal(
+            InvalidActionArgumentReason.Missing,
+            new InvalidActionArgumentsException("message", "invoice.get", "id", InvalidActionArgumentReason.Missing, null).Reason);
+        Assert.Null(new InvalidActionArgumentsException("message", "invoice.get", null, InvalidActionArgumentReason.Missing, null).Reason);
     }
 
     private static CancellationToken Ct => TestContext.Current.CancellationToken;

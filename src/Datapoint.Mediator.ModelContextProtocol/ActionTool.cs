@@ -202,12 +202,16 @@ internal sealed partial class ActionTool : McpServerTool
             _ => _options.ErrorMessage?.Invoke(exception),
         };
 
-    // Built from the field only, never from the exception's message. A field that doesn't look like a path of property
+    // Built from the field and the reason only, never from the exception's message. A field that doesn't look like a path of property
     // names, which an app's own exception could carry, is left out.
     private string InvalidArguments(InvalidActionArgumentsException exception) =>
         exception.Field is { Length: <= 128 } field && FieldPattern().IsMatch(field)
-            ? $"The argument '{field}' of action '{_action.Name}' is not valid."
+            ? $"The argument '{field}' of action '{_action.Name}' is {(IsRequired(exception) ? "required" : "not valid")}."
             : $"The arguments for action '{_action.Name}' are not valid.";
+
+    // A missing or null argument is reported as required.
+    private static bool IsRequired(InvalidActionArgumentsException exception) =>
+        exception.Reason is InvalidActionArgumentReason.Missing or InvalidActionArgumentReason.Null;
 
     [GeneratedRegex(@"^[A-Za-z0-9_$-]+(\[[0-9]+\])*(\.[A-Za-z0-9_$-]+(\[[0-9]+\])*)*$", RegexOptions.CultureInvariant)]
     private static partial Regex FieldPattern();

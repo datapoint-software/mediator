@@ -93,6 +93,8 @@ Invalid `--json` arguments exit with code 2, naming the argument that failed whe
 The argument 'amount' of action 'invoices.create' is not valid.
 ```
 
+A missing argument, or `null` where it isn't accepted, reads "... is required." instead.
+
 See [Invalid arguments](../actions.md#invalid-arguments) for how the argument is spelled. The messages Mediator writes never contain argument values, .NET type names, stack traces or paths.
 
 Map your own exceptions to a message with `ErrorMessage`. Return `null` for exceptions it doesn't handle. A mapped exception exits with code 2. `ErrorMessage` also receives `InvalidActionArgumentsException` first, so you can report it your own way:

@@ -42,6 +42,7 @@ public sealed class ActionArgumentsTests
         Assert.Equal("The arguments for action 'orders.create' are missing.", exception.Message);
         Assert.Equal("orders.create", exception.ActionName);
         Assert.Null(exception.Field);
+        Assert.Null(exception.Reason);
         Assert.Null(exception.InnerException);
     }
 
@@ -52,35 +53,37 @@ public sealed class ActionArgumentsTests
     }
 
     [Theory]
-    [InlineData("wrong type", """{ "count": "secret-value", "name": "Ana" }""", "count")]
-    [InlineData("invalid GUID", """{ "id": "secret-value", "name": "Ana" }""", "id")]
-    [InlineData("caller's spelling", """{ "COUNT": "secret-value" }""", "count")]
-    [InlineData("nested property", """{ "address": { "city": { "postcode": "secret-value" } } }""", "address.city.postcode")]
-    [InlineData("array item", """{ "lines": [ { "quantity": 1 }, { "quantity": "secret-value" } ] }""", "lines[1].quantity")]
-    [InlineData("whole array", """{ "lines": "secret-value" }""", "lines")]
-    [InlineData("dictionary key", """{ "tags": { "secret-value": "x" } }""", "tags")]
-    [InlineData("dictionary key with \"']\"", """{ "tags": { "secret']value": "x" } }""", "tags")]
-    [InlineData("item of a dictionary", """{ "groups": { "secret-value": [ "x" ] } }""", "groups")]
-    [InlineData("polymorphic value", """{ "payment": { "$type": "card", "number": "secret-value" } }""", "payment")]
-    [InlineData("custom converter", """{ "code": 123 }""", "code")]
-    public void Deserialize_InvalidArgument_NamesTheFieldWithWebOptions(string situation, string json, string field)
+    [InlineData("wrong type", """{ "count": "secret-value", "name": "Ana" }""", "count", InvalidActionArgumentReason.Invalid)]
+    [InlineData("null for a value type", """{ "count": null }""", "count", InvalidActionArgumentReason.Null)]
+    [InlineData("invalid GUID", """{ "id": "secret-value", "name": "Ana" }""", "id", InvalidActionArgumentReason.Invalid)]
+    [InlineData("caller's spelling", """{ "COUNT": "secret-value" }""", "count", InvalidActionArgumentReason.Invalid)]
+    [InlineData("nested property", """{ "address": { "city": { "postcode": "secret-value" } } }""", "address.city.postcode", InvalidActionArgumentReason.Invalid)]
+    [InlineData("array item", """{ "lines": [ { "quantity": 1 }, { "quantity": "secret-value" } ] }""", "lines[1].quantity", InvalidActionArgumentReason.Invalid)]
+    [InlineData("whole array", """{ "lines": "secret-value" }""", "lines", InvalidActionArgumentReason.Invalid)]
+    [InlineData("dictionary key", """{ "tags": { "secret-value": "x" } }""", "tags", InvalidActionArgumentReason.Invalid)]
+    [InlineData("dictionary key with \"']\"", """{ "tags": { "secret']value": "x" } }""", "tags", InvalidActionArgumentReason.Invalid)]
+    [InlineData("item of a dictionary", """{ "groups": { "secret-value": [ "x" ] } }""", "groups", InvalidActionArgumentReason.Invalid)]
+    [InlineData("polymorphic value", """{ "payment": { "$type": "card", "number": "secret-value" } }""", "payment", InvalidActionArgumentReason.Invalid)]
+    [InlineData("custom converter", """{ "code": 123 }""", "code", InvalidActionArgumentReason.Invalid)]
+    [InlineData("null item of a dictionary", """{ "tags": { "secret-value": null } }""", "tags", InvalidActionArgumentReason.Invalid)]
+    public void Deserialize_InvalidArgument_NamesTheFieldWithWebOptions(string situation, string json, string field, InvalidActionArgumentReason reason)
     {
         var exception = Assert.Throws<InvalidActionArgumentsException>(() => ActionArguments.Deserialize(Action, Json(json)));
 
-        AssertField(exception, field, situation);
+        AssertField(exception, field, reason, situation);
     }
 
     [Theory]
-    [InlineData("missing required property", $$"""{ "count": 1 }""", "id")]
-    [InlineData("null for a non-nullable property", $$"""{ "count": 1, {{Id}}, "name": null }""", "name")]
-    [InlineData("missing nested required property", $$"""{ "count": 1, {{Id}}, "name": "Ana", "lines": [ {} ] }""", "lines[0].quantity")]
-    [InlineData("missing required member", $$"""{ "count": 1, {{Id}}, "name": "Ana", "customer": {} }""", "customer.email")]
-    [InlineData("duplicate property", $$"""{ "count": 1, "count": 2, {{Id}}, "name": "Ana" }""", "count")]
-    public void Deserialize_InvalidArgument_NamesTheFieldWithStrictOptions(string situation, string json, string field)
+    [InlineData("missing required property", $$"""{ "count": 1 }""", "id", InvalidActionArgumentReason.Missing)]
+    [InlineData("null for a non-nullable property", $$"""{ "count": 1, {{Id}}, "name": null }""", "name", InvalidActionArgumentReason.Null)]
+    [InlineData("missing nested required property", $$"""{ "count": 1, {{Id}}, "name": "Ana", "lines": [ {} ] }""", "lines[0].quantity", InvalidActionArgumentReason.Missing)]
+    [InlineData("missing required member", $$"""{ "count": 1, {{Id}}, "name": "Ana", "customer": {} }""", "customer.email", InvalidActionArgumentReason.Missing)]
+    [InlineData("duplicate property", $$"""{ "count": 1, "count": 2, {{Id}}, "name": "Ana" }""", "count", InvalidActionArgumentReason.Invalid)]
+    public void Deserialize_InvalidArgument_NamesTheFieldWithStrictOptions(string situation, string json, string field, InvalidActionArgumentReason reason)
     {
         var exception = Assert.Throws<InvalidActionArgumentsException>(() => ActionArguments.Deserialize(Action, Json(json), Strict));
 
-        AssertField(exception, field, situation);
+        AssertField(exception, field, reason, situation);
     }
 
     [Theory]
@@ -92,6 +95,7 @@ public sealed class ActionArgumentsTests
         var exception = Assert.Throws<InvalidActionArgumentsException>(() => ActionArguments.Deserialize(Action, Json(json), Strict));
 
         Assert.Null(exception.Field);
+        Assert.Null(exception.Reason);
         Assert.Equal("The arguments for action 'orders.create' are not valid.", exception.Message);
     }
 
@@ -103,14 +107,17 @@ public sealed class ActionArgumentsTests
         var exception = Assert.Throws<InvalidActionArgumentsException>(() => ActionArguments.Deserialize(Action, Json(json)));
 
         Assert.Null(exception.Field);
+        Assert.Null(exception.Reason);
         Assert.DoesNotContain("secret-value", exception.Message);
     }
 
-    private static void AssertField(InvalidActionArgumentsException exception, string field, string situation)
+    private static void AssertField(InvalidActionArgumentsException exception, string field, InvalidActionArgumentReason reason, string situation)
     {
         Assert.True(field == exception.Field, $"{situation}: expected '{field}', got '{exception.Field}'.");
+        Assert.True(reason == exception.Reason, $"{situation}: expected {reason}, got {exception.Reason}.");
         Assert.Equal("orders.create", exception.ActionName);
-        Assert.Equal($"The argument '{field}' of action 'orders.create' is not valid.", exception.Message);
+        var problem = reason == InvalidActionArgumentReason.Invalid ? "not valid" : "required";
+        Assert.Equal($"The argument '{field}' of action 'orders.create' is {problem}.", exception.Message);
         Assert.DoesNotContain("secret", exception.Message);
         Assert.DoesNotContain("System.", exception.Message);
         Assert.IsType<JsonException>(exception.InnerException);

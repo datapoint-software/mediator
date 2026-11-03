@@ -1,1 +1,7 @@
 #nullable enable
+Datapoint.Mediator.InvalidActionArgumentReason
+Datapoint.Mediator.InvalidActionArgumentReason.Invalid = 0 -> Datapoint.Mediator.InvalidActionArgumentReason
+Datapoint.Mediator.InvalidActionArgumentReason.Missing = 1 -> Datapoint.Mediator.InvalidActionArgumentReason
+Datapoint.Mediator.InvalidActionArgumentReason.Null = 2 -> Datapoint.Mediator.InvalidActionArgumentReason
+Datapoint.Mediator.InvalidActionArgumentsException.InvalidActionArgumentsException(string! message, string? actionName, string? field, Datapoint.Mediator.InvalidActionArgumentReason? reason, System.Exception? innerException) -> void
+Datapoint.Mediator.InvalidActionArgumentsException.Reason.get -> Datapoint.Mediator.InvalidActionArgumentReason?

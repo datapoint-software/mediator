@@ -16,7 +16,7 @@ Every security consideration in this manual, as one checklist. Each item links t
 
 - [ ] **Validation errors are reported without `AttemptedValue`,** only the property name and message. → [Validation](validation.md#reporting-errors-safely)
 - [ ] **Error hooks (`MapException`, `ErrorMessage`) return only text you wrote,** never an exception's `Message`, even for your own exceptions: it's for logs, and a message that later gains an id or a value would reach callers without anyone changing the hook.
-- [ ] **Hooks report invalid arguments from `Field`,** never from `InvalidActionArgumentsException`'s message or `InnerException.Message`, which can contain .NET type names and property names the caller chose. → [Actions](actions.md#invalid-arguments)
+- [ ] **Hooks report invalid arguments from `Field` and `Reason`,** never from `InvalidActionArgumentsException`'s message or `InnerException.Message`, which can contain .NET type names and property names the caller chose. → [Actions](actions.md#invalid-arguments)
 - [ ] **`CustomizeProblemDetails` adds no input or exception details,** because it also runs on Mediator's own `400`, `401` and `403` responses. → [ASP.NET Core](hosts/aspnetcore.md#adding-fields-to-mediators-responses)
 - [ ] **ASP.NET Core uses `UseExceptionHandler` in production,** so unhandled exceptions become a `500` without details. → [ASP.NET Core](hosts/aspnetcore.md#errors)
 - [ ] **Behaviours and logs record type names, not requests or results,** which can contain personal data. → [Behaviours](behaviors.md#writing-a-behaviour)

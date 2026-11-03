@@ -49,7 +49,8 @@ public sealed class ArgumentErrorTests
         var (status, body) = await PostAsync(app, "/api/invoices/create", json);
 
         Assert.Equal(HttpStatusCode.BadRequest, status);
-        Assert.True(body.GetProperty("errors").TryGetProperty(field, out _), situation);
+        Assert.True(body.GetProperty("errors").TryGetProperty(field, out var messages), situation);
+        Assert.Equal("The argument is required.", messages[0].GetString());
         AssertNoLeak(body);
     }
 

@@ -121,6 +121,8 @@ When the argument that failed is known, the `400` is a `ValidationProblemDetails
 }
 ```
 
+A missing argument, or `null` where it isn't accepted, reads "The argument is required." instead.
+
 Otherwise, such as for an unknown property, it's a `ProblemDetails` with the detail "The arguments for action 'invoices.create' are not valid." See [Invalid arguments](../actions.md#invalid-arguments) for how the field is spelled.
 
 The responses Mediator writes never contain argument values, .NET type names, stack traces or paths. Their `title` and `detail` are meant for developers and agents, not for display in a user interface.
@@ -133,8 +135,11 @@ Map your own exceptions with `MapException`, and return `null` for exceptions it
 app.MapMediatorActions("/api", o => o.MapException = e => e switch
 {
     // An argument Mediator couldn't read: Field comes from the action's contract, so it's safe to return.
-    InvalidActionArgumentsException { Field: { } field } =>
-        Results.ValidationProblem(new Dictionary<string, string[]> { [field] = ["invalid"] }, title: "Invalid arguments"),
+    InvalidActionArgumentsException { Field: { } field } invalid =>
+        Results.ValidationProblem(new Dictionary<string, string[]>
+        {
+            [field] = [invalid.Reason is InvalidActionArgumentReason.Invalid ? "invalid" : "required"],
+        }, title: "Invalid arguments"),
 
     ValidationException v => Results.ValidationProblem(v.Errors
         .GroupBy(f => f.PropertyName)

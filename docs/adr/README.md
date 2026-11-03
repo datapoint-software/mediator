@@ -38,5 +38,6 @@ Each record follows [Michael Nygard's format](https://cognitect.com/blog/2011/11
 | [0030](0030-registration-methods-carry-the-mediator-prefix.md) | Host registration methods carry the Mediator prefix | Accepted |
 | [0031](0031-every-action-has-a-description.md) | Every action has a description | Accepted |
 | [0032](0032-actions-declare-the-adapters-that-offer-them.md) | Actions declare the adapters that offer them | Accepted |
+| [0033](0033-argument-errors-give-a-reason.md) | Argument errors give a reason | Accepted |
 
 To add a record, copy the structure of an existing one, use the next number, and add it to this table.

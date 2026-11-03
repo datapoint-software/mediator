@@ -14,7 +14,8 @@ namespace Datapoint.Mediator;
 /// </para>
 /// <para>
 /// Host adapters pass this exception to the application's error hook before writing their own response, so the
-/// application can report it with its own error codes, from <see cref="ActionName"/> and <see cref="Field"/>.
+/// application can report it with its own error codes, from <see cref="ActionName"/>, <see cref="Field"/> and
+/// <see cref="Reason"/>.
 /// </para>
 /// </remarks>
 public sealed class InvalidActionArgumentsException : Exception
@@ -59,10 +60,36 @@ public sealed class InvalidActionArgumentsException : Exception
     /// </param>
     /// <param name="innerException">The exception that caused this exception, or <see langword="null"/>.</param>
     public InvalidActionArgumentsException(string message, string? actionName, string? field, Exception? innerException)
+        : this(message, actionName, field, null, innerException)
+    {
+    }
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="InvalidActionArgumentsException"/> class with a message, the
+    /// action and the argument that failed, why it failed, and the exception that caused it.
+    /// </summary>
+    /// <param name="message">The message that describes the error, for logs.</param>
+    /// <param name="actionName">The name of the action whose arguments failed, or <see langword="null"/>.</param>
+    /// <param name="field">
+    /// The argument that failed, as it's spelled on the wire, such as <c>count</c> or <c>targets[0].port</c>, or
+    /// <see langword="null"/> when it isn't known. It must never be text the caller chose.
+    /// </param>
+    /// <param name="reason">
+    /// Why the argument failed, or <see langword="null"/> when it isn't known. It's ignored when
+    /// <paramref name="field"/> is <see langword="null"/>.
+    /// </param>
+    /// <param name="innerException">The exception that caused this exception, or <see langword="null"/>.</param>
+    public InvalidActionArgumentsException(
+        string message,
+        string? actionName,
+        string? field,
+        InvalidActionArgumentReason? reason,
+        Exception? innerException)
         : base(message, innerException)
     {
         ActionName = actionName;
         Field = field;
+        Reason = field is null ? null : reason;
     }
 
     /// <summary>
@@ -81,4 +108,15 @@ public sealed class InvalidActionArgumentsException : Exception
     /// name the caller chose.
     /// </remarks>
     public string? Field { get; }
+
+    /// <summary>
+    /// Gets why the argument named by <see cref="Field"/> failed, or <see langword="null"/> when it isn't known.
+    /// </summary>
+    /// <remarks>
+    /// It's always <see langword="null"/> when <see cref="Field"/> is. When Mediator throws this exception, the reason
+    /// comes from the action's contract and the kind of JSON value, never from the caller's text, so an application can
+    /// report <see cref="InvalidActionArgumentReason.Missing"/> and <see cref="InvalidActionArgumentReason.Null"/> as
+    /// a required value.
+    /// </remarks>
+    public InvalidActionArgumentReason? Reason { get; }
 }

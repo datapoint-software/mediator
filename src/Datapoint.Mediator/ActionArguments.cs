@@ -29,7 +29,8 @@ public static class ActionArguments
     /// <exception cref="ArgumentNullException"><paramref name="action"/> is <see langword="null"/>.</exception>
     /// <exception cref="InvalidActionArgumentsException">
     /// The arguments don't match the action's type, or are JSON <c>null</c>. The exception's
-    /// <see cref="InvalidActionArgumentsException.Field"/> names the argument that failed, when it can be determined.
+    /// <see cref="InvalidActionArgumentsException.Field"/> names the argument that failed, when it can be determined,
+    /// and its <see cref="InvalidActionArgumentsException.Reason"/> says why.
     /// </exception>
     public static object Deserialize(ActionDescriptor action, JsonElement arguments, JsonSerializerOptions? options = null)
     {
@@ -49,12 +50,14 @@ public static class ActionArguments
         }
         catch (JsonException exception)
         {
-            var field = ArgumentField.Find(exception, arguments, options.GetTypeInfo(action.ActionType));
+            var field = ArgumentField.Find(exception, arguments, options.GetTypeInfo(action.ActionType), out var reason);
             var message = field is null
                 ? $"The arguments for action '{action.Name}' are not valid."
-                : $"The argument '{field}' of action '{action.Name}' is not valid.";
+                : reason is InvalidActionArgumentReason.Missing or InvalidActionArgumentReason.Null
+                    ? $"The argument '{field}' of action '{action.Name}' is required."
+                    : $"The argument '{field}' of action '{action.Name}' is not valid.";
 
-            throw new InvalidActionArgumentsException(message, action.Name, field, exception);
+            throw new InvalidActionArgumentsException(message, action.Name, field, reason, exception);
         }
 
         return result

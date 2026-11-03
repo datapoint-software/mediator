@@ -187,24 +187,28 @@ await foreach (var item in dispatcher.StreamAsync("invoices.list", default, ct: 
 - `IActionCatalog` is a singleton, and `IActionDispatcher` is scoped.
 - `DispatchAsync` returns the result as `object?`, or `null` for a command without a result.
 - An undefined `JsonElement` (`default`) means no arguments.
-- Arguments that aren't valid JSON for the action's type throw `InvalidActionArgumentsException`. Its `Field` names the argument that failed, as it's spelled on the wire, such as `count` or `lines[1].quantity`, and its message never repeats the input. See [Invalid arguments](#invalid-arguments).
+- Arguments that aren't valid JSON for the action's type throw `InvalidActionArgumentsException`. Its `Field` names the argument that failed, as it's spelled on the wire, such as `count` or `lines[1].quantity`, its `Reason` says why, and its message never repeats the input. See [Invalid arguments](#invalid-arguments).
 - Pass `JsonSerializerOptions` to control naming and converters. Hosts use their own: see each host's guide.
 
 ## Invalid arguments
 
-`InvalidActionArgumentsException` says which argument failed, never its value:
+`InvalidActionArgumentsException` says which argument failed and why, never its value:
 
-| Arguments | `Field` |
-|---|---|
-| `{ "count": "abc" }` for an `int` | `count` |
-| `{ "lines": [ {}, { "quantity": "abc" } ] }` | `lines[1].quantity` |
-| `{ "COUNT": "abc" }`, bound ignoring case | `count`, the contract's spelling, not the caller's |
-| `{ "tags": { "any key": "abc" } }` for a dictionary | `tags`: it stops before the key, which the caller chose |
-| a missing required property, with strict options | the missing property, such as `id` |
-| an unknown property, with strict options | `null`: the caller chose its name |
-| malformed JSON, or JSON `null` | `null` |
+| Arguments | `Field` | `Reason` |
+|---|---|---|
+| `{ "count": "abc" }` for an `int` | `count` | `Invalid` |
+| `{ "count": null }` for an `int` | `count` | `Null` |
+| `{ "lines": [ {}, { "quantity": "abc" } ] }` | `lines[1].quantity` | `Invalid` |
+| `{ "COUNT": "abc" }`, bound ignoring case | `count`, the contract's spelling, not the caller's | `Invalid` |
+| `{ "tags": { "any key": "abc" } }` for a dictionary | `tags`: it stops before the key, which the caller chose | `Invalid` |
+| a missing required property, with strict options | the missing property, such as `id` | `Missing` |
+| `null` for a non-nullable property, with strict options | the property, such as `name` | `Null` |
+| an unknown property, with strict options | `null`: the caller chose its name | `null` |
+| malformed JSON, or JSON `null` | `null` | `null` |
 
-`ActionName` is the action's name. The message, for logs, says the same: `The argument 'count' of action 'orders.create' is not valid.`
+`Reason` is `null` whenever `Field` is. Report `Missing` and `Null` as a required value, such as "Enter a hostname", and `Invalid` as a value of the wrong type or format.
+
+`ActionName` is the action's name. The message, for logs, says the same: `The argument 'count' of action 'orders.create' is not valid.`, or `... is required.` for `Missing` and `Null`.
 
 ### Strict arguments
 
@@ -238,7 +242,7 @@ An undefined `JsonElement` means no arguments (`{}`), and JSON `null` throws. It
 ## Writing your own host
 
 When building a host on `IActionDispatcher`, follow the same rules as the built-in ones:
-- Map `InvalidActionArgumentsException`, `ActionNotFoundException`, `AuthenticationRequiredException` and `AccessDeniedException` to fixed, safe responses. Describe invalid arguments from `Field`, never from the exception's message.
+- Map `InvalidActionArgumentsException`, `ActionNotFoundException`, `AuthenticationRequiredException` and `AccessDeniedException` to fixed, safe responses. Describe invalid arguments from `Field` and `Reason`, never from the exception's message.
 - Never return or print any other exception's message, or the caller's input.
 - Don't offer the properties in `ActionDescriptor.HostProvidedProperties` to callers, and refuse a caller's value for one, matching its JSON name with `StringComparer.OrdinalIgnoreCase`.
 - Create a DI scope per call, and pass the caller's cancellation token.

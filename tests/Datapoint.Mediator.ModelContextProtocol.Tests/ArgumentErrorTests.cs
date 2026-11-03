@@ -37,7 +37,7 @@ public sealed class ArgumentErrorTests
 
         var text = await CallAsync(mcp, "invoices_create", new() { ["customer"] = "Ana" });
 
-        Assert.EndsWith("The argument 'amount' of action 'invoices.create' is not valid.", text);
+        Assert.EndsWith("The argument 'amount' of action 'invoices.create' is required.", text);
     }
 
     [Fact]
@@ -65,6 +65,7 @@ public sealed class ArgumentErrorTests
 
         Assert.EndsWith("invalid: amount", text);
         Assert.Equal("invoices.create", received!.ActionName);
+        Assert.Equal(InvalidActionArgumentReason.Invalid, received.Reason);
     }
 
     [Fact]

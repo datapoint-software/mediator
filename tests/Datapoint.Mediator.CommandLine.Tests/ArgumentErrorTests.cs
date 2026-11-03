@@ -32,7 +32,7 @@ public sealed class ArgumentErrorTests
 
         var (_, _, error) = await cli.RunAsync("invoices", "create", "--json", """{ "customer": "Ana" }""");
 
-        Assert.Equal("The argument 'amount' of action 'invoices.create' is not valid.", error.Trim());
+        Assert.Equal("The argument 'amount' of action 'invoices.create' is required.", error.Trim());
     }
 
     [Fact]
@@ -62,6 +62,7 @@ public sealed class ArgumentErrorTests
         Assert.Equal(ActionExitCodes.InvalidArguments, exitCode);
         Assert.Equal("invalid: amount", error.Trim());
         Assert.Equal("invoices.create", received!.ActionName);
+        Assert.Equal(InvalidActionArgumentReason.Invalid, received.Reason);
     }
 
     [Fact]

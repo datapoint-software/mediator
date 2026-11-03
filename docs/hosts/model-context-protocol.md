@@ -78,6 +78,8 @@ Invalid arguments, missing authentication and denied access are reported to the 
 The argument 'amount' of action 'invoices.create' is not valid.
 ```
 
+A missing argument, or `null` where it isn't accepted, reads "... is required." instead.
+
 See [Invalid arguments](../actions.md#invalid-arguments) for how the argument is spelled. Any other exception is reported as a generic error that reveals nothing, unless `ErrorMessage` returns a safe message for it. `ErrorMessage` also receives `InvalidActionArgumentsException` first, so you can report it your own way:
 
 ```csharp
