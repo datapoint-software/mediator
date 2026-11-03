@@ -70,12 +70,18 @@ Datapoint.Mediator.ITransactionContext.AttemptId.get -> System.Guid
 Datapoint.Mediator.ITransactionContext.IsActive.get -> bool
 Datapoint.Mediator.ITransactionContext.IsJoined.get -> bool
 Datapoint.Mediator.ITransactionContext.IsReadOnly.get -> bool
+Datapoint.Mediator.InvalidActionArgumentReason
+Datapoint.Mediator.InvalidActionArgumentReason.Invalid = 0 -> Datapoint.Mediator.InvalidActionArgumentReason
+Datapoint.Mediator.InvalidActionArgumentReason.Missing = 1 -> Datapoint.Mediator.InvalidActionArgumentReason
+Datapoint.Mediator.InvalidActionArgumentReason.Null = 2 -> Datapoint.Mediator.InvalidActionArgumentReason
 Datapoint.Mediator.InvalidActionArgumentsException
 Datapoint.Mediator.InvalidActionArgumentsException.ActionName.get -> string?
 Datapoint.Mediator.InvalidActionArgumentsException.Field.get -> string?
 Datapoint.Mediator.InvalidActionArgumentsException.InvalidActionArgumentsException() -> void
 Datapoint.Mediator.InvalidActionArgumentsException.InvalidActionArgumentsException(string! message) -> void
 Datapoint.Mediator.InvalidActionArgumentsException.InvalidActionArgumentsException(string! message, System.Exception! innerException) -> void
+Datapoint.Mediator.InvalidActionArgumentsException.InvalidActionArgumentsException(string! message, string? actionName, string? field, Datapoint.Mediator.InvalidActionArgumentReason? reason, System.Exception? innerException) -> void
 Datapoint.Mediator.InvalidActionArgumentsException.InvalidActionArgumentsException(string! message, string? actionName, string? field, System.Exception? innerException) -> void
+Datapoint.Mediator.InvalidActionArgumentsException.Reason.get -> Datapoint.Mediator.InvalidActionArgumentReason?
 Datapoint.Mediator.ModelContextProtocolAttribute
 Datapoint.Mediator.ModelContextProtocolAttribute.ModelContextProtocolAttribute() -> void

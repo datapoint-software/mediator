@@ -1,3 +1,1 @@
 #nullable enable
-Datapoint.Mediator.ModelContextProtocol.MediatorMcpOptions.ErrorContent.get -> System.Func<System.Exception!, object?>?
-Datapoint.Mediator.ModelContextProtocol.MediatorMcpOptions.ErrorContent.set -> void

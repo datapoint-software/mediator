@@ -4,6 +4,14 @@ All notable changes to the Datapoint.Mediator packages are documented in this fi
 
 The format is based on [Keep a Changelog 1.1.0](https://keepachangelog.com/en/1.1.0/), and the packages follow [Semantic Versioning 2.0.0](https://semver.org/spec/v2.0.0.html).
 
+## [4.0.0-beta.6](https://github.com/datapoint-software/mediator/releases/tag/4.0.0-beta.6) - 2026-11-03
+
+### Added
+
+- **Breaking:** Say why an argument couldn't be read ([f79ddb5](https://github.com/datapoint-software/mediator/commit/f79ddb53bf3cde4ef5822b6e0d617f794d221d43))
+- **Breaking:** Let error hooks word authentication and access-denied failures ([599db88](https://github.com/datapoint-software/mediator/commit/599db8849cae0406f8958a7a6917165ad5234123))
+- **Breaking:** **model-context-protocol:** Return errors as tool results ([75b8075](https://github.com/datapoint-software/mediator/commit/75b80756a1771df1cf5bec00f09db9f320b5dcaf))
+
 ## [4.0.0-beta.5](https://github.com/datapoint-software/mediator/releases/tag/4.0.0-beta.5) - 2026-11-03
 
 ### Added

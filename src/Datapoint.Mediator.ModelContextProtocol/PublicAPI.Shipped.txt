@@ -1,5 +1,7 @@
 #nullable enable
 Datapoint.Mediator.ModelContextProtocol.MediatorMcpOptions
+Datapoint.Mediator.ModelContextProtocol.MediatorMcpOptions.ErrorContent.get -> System.Func<System.Exception!, object?>?
+Datapoint.Mediator.ModelContextProtocol.MediatorMcpOptions.ErrorContent.set -> void
 Datapoint.Mediator.ModelContextProtocol.MediatorMcpOptions.ErrorMessage.get -> System.Func<System.Exception!, string?>?
 Datapoint.Mediator.ModelContextProtocol.MediatorMcpOptions.ErrorMessage.set -> void
 Datapoint.Mediator.ModelContextProtocol.MediatorMcpOptions.Filter.get -> System.Func<Datapoint.Mediator.ActionDescriptor!, bool>?
