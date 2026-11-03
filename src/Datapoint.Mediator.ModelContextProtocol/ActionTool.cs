@@ -188,17 +188,17 @@ internal sealed partial class ActionTool : McpServerTool
         return null;
     }
 
-    // Only messages known to be safe reach the agent. Invalid arguments go to the app's hook first, so it can report
-    // them with its own codes. Anything else is rethrown, and the MCP SDK reports a generic error without the
-    // exception's message.
+    // Only messages known to be safe reach the agent. Invalid arguments and authorization failures go to the app's hook
+    // first, so it can report them with its own codes. Anything else is rethrown, and the MCP SDK reports a generic
+    // error without the exception's message.
     private string? SafeMessage(Exception exception) =>
         exception switch
         {
             InvalidActionArgumentsException invalid => _options.ErrorMessage?.Invoke(exception) ?? InvalidArguments(invalid),
             _ when exception.GetType().FullName == "Datapoint.Mediator.Authorization.AuthenticationRequiredException" =>
-                "Authentication is required.",
+                _options.ErrorMessage?.Invoke(exception) ?? "Authentication is required.",
             _ when exception.GetType().FullName == "Datapoint.Mediator.Authorization.AccessDeniedException" =>
-                "Access is denied.",
+                _options.ErrorMessage?.Invoke(exception) ?? "Access is denied.",
             _ => _options.ErrorMessage?.Invoke(exception),
         };
 

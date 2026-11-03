@@ -118,7 +118,7 @@ Actions let hosts dispatch commands and queries by name, with JSON arguments ([A
 | `CommandLine` (`ActionCommand`) | a subcommand per dot segment, with typed options parsed with the invariant culture, and a `--json` fallback | exit codes 2, 3, 4, then `ErrorMessage`, then 70 |
 | `ModelContextProtocol` (`ActionTool`, `ActionToolsSetup`) | a tool per action, named with dots as underscores, with a JSON schema | safe messages, then `ErrorMessage`, then a generic SDK error |
 
-The adapters recognise the authorization exceptions by their full type name, so they don't depend on the authorization package ([ADR 0013](docs/adr/0013-adapters-match-authorization-exceptions-by-name.md)). They describe invalid arguments from `InvalidActionArgumentsException.Field`, never from its message, after passing it to the app's hook, and never describe any other exception ([ADR 0029](docs/adr/0029-argument-errors-name-the-field.md)).
+The adapters recognise the authorization exceptions by their full type name, so they don't depend on the authorization package ([ADR 0013](docs/adr/0013-adapters-match-authorization-exceptions-by-name.md)). They describe invalid arguments from `InvalidActionArgumentsException.Field`, never from its message, after passing it to the app's hook, and never describe any other exception. The CLI and MCP adapters also pass the authorization exceptions to their hook, which words them but can't change the exit code or turn the result into a success ([ADR 0034](docs/adr/0034-hooks-word-every-known-error.md)).
 
 The CLI and MCP adapters hide host-provided properties, and refuse a caller's value for one, matching JSON names with `StringComparer.OrdinalIgnoreCase`. They check the caller's arguments before resolving `IActionDispatcher`, so an app's decorator of the dispatcher can set the value afterwards. ASP.NET Core and the dispatcher don't treat them differently.
 
@@ -140,7 +140,7 @@ Any change must keep these true. Tests cover each one, and the linked records ex
 - **Messages are not authorized,** and can never be actions ([0008](docs/adr/0008-messages-are-not-authorized.md)).
 - **An adapter offers only the actions marked for it, and one it doesn't offer is indistinguishable from an unknown one** ([0032](docs/adr/0032-actions-declare-the-adapters-that-offer-them.md)).
 - **The CLI and MCP adapters never take a host-provided value from the caller:** they hide the property and refuse a value for it, in any letter case ([0028](docs/adr/0028-host-provided-properties.md)).
-- **No adapter echoes input or exception details:** invalid arguments are described only by a `Field` built from the action's contract, and telemetry never records exception messages ([0029](docs/adr/0029-argument-errors-name-the-field.md)).
+- **No adapter echoes input or exception details:** invalid arguments are described only by a `Field` built from the action's contract, and telemetry never records exception messages ([0034](docs/adr/0034-hooks-word-every-known-error.md)).
 - **Every adapter maps both authorization exceptions** by their full type names ([0013](docs/adr/0013-adapters-match-authorization-exceptions-by-name.md)).
 - **One `IPrincipalAccessor` per app:** the registration methods refuse a second one ([0014](docs/adr/0014-one-principal-accessor.md)).
 - **Dispatch without behaviours allocates nothing:** check with the benchmarks ([0006](docs/adr/0006-cached-generic-dispatchers.md)).

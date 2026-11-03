@@ -153,7 +153,7 @@ app.MapMediatorActions("/api", o => o.MapException = e => e switch
 
 ### Adding fields to Mediator's responses
 
-The `400`, `401` and `403` responses Mediator writes go through ASP.NET Core's `IProblemDetailsService` when you register it, so `CustomizeProblemDetails` can add your own fields, such as an error code, to them too. Authentication and access-denied responses can't be replaced with `MapException`, but they can be extended this way:
+The `400`, `401` and `403` responses Mediator writes go through ASP.NET Core's `IProblemDetailsService` when you register it, so `CustomizeProblemDetails` can add your own fields, such as an error code, to them too. Authentication and access-denied responses don't go through `MapException`, so their status can't change, but they can be extended this way:
 
 ```csharp
 builder.Services.AddProblemDetails(o => o.CustomizeProblemDetails = c =>

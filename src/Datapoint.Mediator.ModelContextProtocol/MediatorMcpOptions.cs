@@ -32,8 +32,8 @@ public sealed class MediatorMcpOptions
 
     /// <summary>
     /// Gets or sets a function that turns an exception thrown by an action into a message for the AI agent, or returns
-    /// <see langword="null"/> to keep Mediator's message for invalid arguments, or to report a generic error that reveals
-    /// nothing about any other exception.
+    /// <see langword="null"/> to keep Mediator's message for invalid arguments and authorization failures, or to report a
+    /// generic error that reveals nothing about any other exception.
     /// </summary>
     /// <remarks>
     /// <para>
@@ -44,8 +44,13 @@ public sealed class MediatorMcpOptions
     /// </para>
     /// <para>
     /// It also receives <see cref="InvalidActionArgumentsException"/>, before Mediator writes its own message, so you can
-    /// report it your own way, from its <c>ActionName</c> and <c>Field</c>. Never return its message or its inner
+    /// report it your own way, from its <c>ActionName</c>, <c>Field</c> and <c>Reason</c>. Never return its message or its inner
     /// exception's message, which can contain .NET type names and property names the caller chose.
+    /// </para>
+    /// <para>
+    /// It also receives <c>AuthenticationRequiredException</c> and <c>AccessDeniedException</c>, so you can word them
+    /// your own way. The result is still an error, whatever the function returns. Don't reveal why access was denied,
+    /// such as a role or who owns a resource.
     /// </para>
     /// <para>
     /// The messages Mediator writes itself never contain argument values, .NET type names, stack traces or paths. They

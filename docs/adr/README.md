@@ -34,10 +34,11 @@ Each record follows [Michael Nygard's format](https://cognitect.com/blog/2011/11
 | [0026](0026-transaction-context-in-abstractions.md) | The transaction state is a contract in Abstractions | Accepted |
 | [0027](0027-startup-checks.md) | Startup checks, and behaviours with settings are registered once | Accepted |
 | [0028](0028-host-provided-properties.md) | Host-provided properties are hidden and refused by the CLI and MCP adapters | Accepted |
-| [0029](0029-argument-errors-name-the-field.md) | Argument errors name the field, and hooks see them first | Accepted |
+| [0029](0029-argument-errors-name-the-field.md) | Argument errors name the field, and hooks see them first | Superseded by [0034](0034-hooks-word-every-known-error.md) |
 | [0030](0030-registration-methods-carry-the-mediator-prefix.md) | Host registration methods carry the Mediator prefix | Accepted |
 | [0031](0031-every-action-has-a-description.md) | Every action has a description | Accepted |
 | [0032](0032-actions-declare-the-adapters-that-offer-them.md) | Actions declare the adapters that offer them | Accepted |
 | [0033](0033-argument-errors-give-a-reason.md) | Argument errors give a reason | Accepted |
+| [0034](0034-hooks-word-every-known-error.md) | Error hooks word every known error | Accepted |
 
 To add a record, copy the structure of an existing one, use the next number, and add it to this table.

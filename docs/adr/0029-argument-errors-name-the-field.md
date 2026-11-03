@@ -1,6 +1,6 @@
 # 29. Argument errors name the field, and hooks see them first
 
-- **Status:** Accepted
+- **Status:** Superseded by [0034](0034-hooks-word-every-known-error.md)
 - **Date:** 2026-11-03
 - **Supersedes:** [0012](0012-adapters-never-echo-input-or-exceptions.md)
 

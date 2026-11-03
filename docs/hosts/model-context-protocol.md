@@ -80,17 +80,21 @@ The argument 'amount' of action 'invoices.create' is not valid.
 
 A missing argument, or `null` where it isn't accepted, reads "... is required." instead.
 
-See [Invalid arguments](../actions.md#invalid-arguments) for how the argument is spelled. Any other exception is reported as a generic error that reveals nothing, unless `ErrorMessage` returns a safe message for it. `ErrorMessage` also receives `InvalidActionArgumentsException` first, so you can report it your own way:
+See [Invalid arguments](../actions.md#invalid-arguments) for how the argument is spelled. Any other exception is reported as a generic error that reveals nothing, unless `ErrorMessage` returns a safe message for it. `ErrorMessage` also receives `InvalidActionArgumentsException`, `AuthenticationRequiredException` and `AccessDeniedException` first, so you can report them with your own codes, and `null` keeps Mediator's text. The result is an error whatever it returns:
 
 ```csharp
 .WithMediatorActions(o => o.ErrorMessage = e => e switch
 {
     InvalidActionArgumentsException { Field: { } field } => $"invalid: {field}",
+    AuthenticationRequiredException => "authentication_required",
+    AccessDeniedException => "access_denied",
     ValidationException v => string.Join("; ", v.Errors.Select(f => $"{f.PropertyName}: {f.ErrorMessage}")),   // never AttemptedValue
     InvoiceNotFoundException => "The invoice doesn't exist.",
     _ => null,
 })
 ```
+
+Don't say why access was denied, such as a missing role or who owns a resource: that tells an agent how to get in.
 
 Good error messages help agents correct themselves: "Amount: must be greater than 0" lets the agent retry with a valid amount.
 

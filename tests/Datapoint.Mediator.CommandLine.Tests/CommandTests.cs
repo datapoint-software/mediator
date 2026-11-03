@@ -290,8 +290,42 @@ public sealed class CommandTests
         Assert.Equal("services", Assert.Throws<ArgumentNullException>(() => new RootCommand().AddMediatorActions(null!)).ParamName);
     }
 
-    private static Cli WithAuthorization(ClaimsPrincipal? principal) =>
+    [Fact]
+    public async Task ErrorMessage_WordsAuthorizationFailures_KeepingTheirExitCodes()
+    {
+        await using var cli = WithAuthorization(principal: null, e => e switch
+        {
+            AuthenticationRequiredException => "unauthenticated: sign in first",
+            AccessDeniedException => "forbidden",
+            _ => null,
+        });
+        await using var signedIn = WithAuthorization(
+            new ClaimsPrincipal(new ClaimsIdentity([new Claim(ClaimTypes.Name, "ana")], "test")),
+            e => e is AccessDeniedException ? "forbidden" : null);
+
+        var unauthenticated = await cli.RunAsync("invoices", "get", "--id", "1");
+        var denied = await signedIn.RunAsync("invoices", "archive", "--id", "1");
+
+        Assert.Equal(ActionExitCodes.AuthenticationRequired, unauthenticated.ExitCode);
+        Assert.Equal("unauthenticated: sign in first", unauthenticated.Error.Trim());
+        Assert.Equal(ActionExitCodes.AccessDenied, denied.ExitCode);
+        Assert.Equal("forbidden", denied.Error.Trim());
+    }
+
+    [Fact]
+    public async Task ErrorMessage_ReturningNull_KeepsTheAuthorizationTexts()
+    {
+        await using var cli = WithAuthorization(principal: null, _ => null);
+
+        var (exitCode, _, error) = await cli.RunAsync("invoices", "get", "--id", "1");
+
+        Assert.Equal(ActionExitCodes.AuthenticationRequired, exitCode);
+        Assert.Equal("Authentication is required.", error.Trim());
+    }
+
+    private static Cli WithAuthorization(ClaimsPrincipal? principal, Func<Exception, string?>? errorMessage = null) =>
         new(
+            configureCommands: o => o.ErrorMessage = errorMessage,
             configureMediator: o => o.AddAuthorizationBehavior(),
             configureServices: s => s
                 .AddSingleton<IPrincipalAccessor>(new FixedPrincipalAccessor(principal))

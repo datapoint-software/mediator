@@ -218,6 +218,42 @@ public sealed class McpToolTests
     }
 
     [Fact]
+    public async Task CallTool_ErrorMessage_WordsAuthorizationFailures_KeepingThemErrors()
+    {
+        await using var unauthenticated = await McpHarness.StartAsync(
+            o => o.ErrorMessage = e => e is AuthenticationRequiredException ? "unauthenticated: sign in first" : null,
+            configureMediator: o => o.AddAuthorizationBehavior(),
+            configureServices: s => s.AddSingleton<IPrincipalAccessor>(new FixedPrincipalAccessor(null)));
+        await using var signedIn = await McpHarness.StartAsync(
+            o => o.ErrorMessage = e => e is AccessDeniedException ? "forbidden" : null,
+            configureMediator: o => o.AddAuthorizationBehavior(),
+            configureServices: s => s.AddSingleton<IPrincipalAccessor>(new FixedPrincipalAccessor(SignedIn())));
+
+        var missing = await unauthenticated.Client.CallToolAsync("invoices_get", cancellationToken: Ct);
+        var denied = await signedIn.Client.CallToolAsync("invoices_archive", new Dictionary<string, object?> { ["id"] = 1 }, cancellationToken: Ct);
+
+        Assert.True(missing.IsError);
+        Assert.EndsWith("unauthenticated: sign in first", Text(missing));
+        Assert.True(denied.IsError);
+        Assert.EndsWith("forbidden", Text(denied));
+        Assert.Empty(signedIn.Recorder.Log);
+    }
+
+    [Fact]
+    public async Task CallTool_ErrorMessage_ReturningNull_KeepsTheAuthorizationTexts()
+    {
+        await using var mcp = await McpHarness.StartAsync(
+            o => o.ErrorMessage = _ => null,
+            configureMediator: o => o.AddAuthorizationBehavior(),
+            configureServices: s => s.AddSingleton<IPrincipalAccessor>(new FixedPrincipalAccessor(null)));
+
+        var result = await mcp.Client.CallToolAsync("invoices_get", cancellationToken: Ct);
+
+        Assert.True(result.IsError);
+        Assert.EndsWith("Authentication is required.", Text(result));
+    }
+
+    [Fact]
     public async Task CallTool_ActionWithoutAuthorizer_ReportsAccessDenied()
     {
         await using var mcp = await McpHarness.StartAsync(

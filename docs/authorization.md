@@ -51,7 +51,7 @@ public sealed class DownloadItemAuthorizer(AppDbContext db) : IAuthorizer<Downlo
 | `AuthorizationDecision.Deny(details)` | denied; `details` is optional |
 | `AuthorizationDecision.AllowIf(condition)` | allowed when `condition` is `true`, without details |
 
-> **Security:** details are for your application and its audit log. They **never** reach the caller: the exception's message doesn't include them, and the API, CLI and MCP adapters only say 401 or 403. Don't copy them into your own error responses either. They can be sensitive, such as a classification label, so protect them wherever you store them.
+> **Security:** details are for your application and its audit log. They **never** reach the caller: the exceptions don't carry them, and the API, CLI and MCP adapters only say 401 or 403, in Mediator's words or your hook's. Don't copy them into your own error responses either. They can be sensitive, such as a classification label, so protect them wherever you store them.
 
 Register the authorizers, the current user and the behaviour:
 

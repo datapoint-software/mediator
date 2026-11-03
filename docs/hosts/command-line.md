@@ -80,7 +80,7 @@ invoicing invoices list | jq -r '.customer'
 |---|---|---|
 | 0 | `Success` | The action succeeded. |
 | 1 | `InvalidCommandLine` | Invalid command line, such as a missing or mistyped option. The action didn't run. |
-| 2 | `InvalidArguments` | Invalid arguments, or an error with a message from `ErrorMessage`, such as validation errors. |
+| 2 | `InvalidArguments` | Invalid arguments, or another exception with a message from `ErrorMessage`, such as validation errors. |
 | 3 | `AuthenticationRequired` | No signed-in user. |
 | 4 | `AccessDenied` | The user may not run the action. |
 | 70 | `UnexpectedError` | Any other failure. "An unexpected error occurred." is printed, with no details. |
@@ -97,17 +97,21 @@ A missing argument, or `null` where it isn't accepted, reads "... is required." 
 
 See [Invalid arguments](../actions.md#invalid-arguments) for how the argument is spelled. The messages Mediator writes never contain argument values, .NET type names, stack traces or paths.
 
-Map your own exceptions to a message with `ErrorMessage`. Return `null` for exceptions it doesn't handle. A mapped exception exits with code 2. `ErrorMessage` also receives `InvalidActionArgumentsException` first, so you can report it your own way:
+Map your own exceptions to a message with `ErrorMessage`. Return `null` for exceptions it doesn't handle. A mapped exception exits with code 2. `ErrorMessage` also receives `InvalidActionArgumentsException`, `AuthenticationRequiredException` and `AccessDeniedException` first, so you can word them your own way, and `null` keeps Mediator's text. Their exit codes stay 2, 3 and 4 whatever it returns:
 
 ```csharp
 root.AddMediatorActions(services, o => o.ErrorMessage = e => e switch
 {
     InvalidActionArgumentsException { Field: { } field } => $"invalid: {field}",
+    AuthenticationRequiredException => "authentication_required: sign in with 'invoices login'.",
+    AccessDeniedException => "access_denied",
     ValidationException v => string.Join("; ", v.Errors.Select(f => $"{f.PropertyName}: {f.ErrorMessage}")),   // never AttemptedValue
     InvoiceNotFoundException => "The invoice doesn't exist.",
     _ => null,
 });
 ```
+
+Don't say why access was denied, such as a missing role or who owns a resource: that tells a caller how to get in.
 
 Unhandled exceptions are never printed, because their messages can contain connection strings or personal data. Log them yourself, for example in a behaviour, if you need the details.
 

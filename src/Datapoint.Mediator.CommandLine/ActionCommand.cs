@@ -286,17 +286,18 @@ internal sealed partial class ActionCommand
         }
     }
 
-    // Only messages known to be safe are printed. Invalid arguments go to the app's hook first, so it can report them
-    // its own way. Anything else is reported without details.
+    // Only messages known to be safe are printed. Invalid arguments and authorization failures go to the app's hook
+    // first, so it can word them its own way, but the exit code stays Mediator's. Anything else is reported without
+    // details.
     private (string Message, int Code) Describe(Exception exception) =>
         exception switch
         {
             InvalidActionArgumentsException invalid =>
                 (_options.ErrorMessage?.Invoke(exception) ?? InvalidArguments(invalid), ActionExitCodes.InvalidArguments),
             _ when exception.GetType().FullName == "Datapoint.Mediator.Authorization.AuthenticationRequiredException" =>
-                ("Authentication is required.", ActionExitCodes.AuthenticationRequired),
+                (_options.ErrorMessage?.Invoke(exception) ?? "Authentication is required.", ActionExitCodes.AuthenticationRequired),
             _ when exception.GetType().FullName == "Datapoint.Mediator.Authorization.AccessDeniedException" =>
-                ("Access is denied.", ActionExitCodes.AccessDenied),
+                (_options.ErrorMessage?.Invoke(exception) ?? "Access is denied.", ActionExitCodes.AccessDenied),
             _ when _options.ErrorMessage?.Invoke(exception) is { } message => (message, ActionExitCodes.InvalidArguments),
             _ => ("An unexpected error occurred.", ActionExitCodes.UnexpectedError),
         };
