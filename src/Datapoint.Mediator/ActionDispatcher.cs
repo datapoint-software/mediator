@@ -16,8 +16,6 @@ namespace Datapoint.Mediator;
 /// </remarks>
 public sealed class ActionDispatcher : IActionDispatcher
 {
-    private static readonly JsonElement EmptyObject = JsonDocument.Parse("{}").RootElement.Clone();
-
     private readonly IMediator _mediator;
     private readonly IActionCatalog _catalog;
 
@@ -68,24 +66,6 @@ public sealed class ActionDispatcher : IActionDispatcher
             throw new ActionNotFoundException();
         }
 
-        if (arguments.ValueKind == JsonValueKind.Undefined)
-        {
-            arguments = EmptyObject;
-        }
-
-        object? action;
-
-        try
-        {
-            action = arguments.Deserialize(descriptor.ActionType, options ?? JsonSerializerOptions.Web);
-        }
-        catch (JsonException exception)
-        {
-            throw new InvalidActionArgumentsException($"The arguments for action '{descriptor.Name}' are not valid.", exception);
-        }
-
-        return action is null
-            ? throw new InvalidActionArgumentsException($"The arguments for action '{descriptor.Name}' are missing.")
-            : (descriptor, action);
+        return (descriptor, ActionArguments.Deserialize(descriptor, arguments, options));
     }
 }

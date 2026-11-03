@@ -156,13 +156,58 @@ await foreach (var item in dispatcher.StreamAsync("invoices.list", default, ct: 
 - `IActionCatalog` is a singleton, and `IActionDispatcher` is scoped.
 - `DispatchAsync` returns the result as `object?`, or `null` for a command without a result.
 - An undefined `JsonElement` (`default`) means no arguments.
-- Arguments that aren't valid JSON for the action's type throw `InvalidActionArgumentsException`, whose message never repeats the input.
+- Arguments that aren't valid JSON for the action's type throw `InvalidActionArgumentsException`. Its `Field` names the argument that failed, as it's spelled on the wire, such as `count` or `lines[1].quantity`, and its message never repeats the input. See [Invalid arguments](#invalid-arguments).
 - Pass `JsonSerializerOptions` to control naming and converters. Hosts use their own: see each host's guide.
+
+## Invalid arguments
+
+`InvalidActionArgumentsException` says which argument failed, never its value:
+
+| Arguments | `Field` |
+|---|---|
+| `{ "count": "abc" }` for an `int` | `count` |
+| `{ "lines": [ {}, { "quantity": "abc" } ] }` | `lines[1].quantity` |
+| `{ "COUNT": "abc" }`, bound ignoring case | `count`, the contract's spelling, not the caller's |
+| `{ "tags": { "any key": "abc" } }` for a dictionary | `tags`: it stops before the key, which the caller chose |
+| a missing required property, with strict options | the missing property, such as `id` |
+| an unknown property, with strict options | `null`: the caller chose its name |
+| malformed JSON, or JSON `null` | `null` |
+
+`ActionName` is the action's name. The message, for logs, says the same: `The argument 'count' of action 'orders.create' is not valid.`
+
+### Strict arguments
+
+With the default options, a missing `int` becomes `0`, and `null` reaches a non-nullable `string`. To refuse them, use options based on `JsonSerializerOptions.Strict`, with camelCase names, in every host:
+
+```csharp
+var arguments = new JsonSerializerOptions(JsonSerializerOptions.Strict)
+{
+    PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+};
+```
+
+They refuse unknown properties, duplicate properties and `null` for non-nullable properties, and they require constructor parameters without a default value. Use positional records, or mark properties `required`, so a missing argument is refused too. Strict options match names case-sensitively, so callers must send `count`, not `Count`.
+
+### Checking arguments before sending them
+
+`ActionArguments.Deserialize` reads arguments the way the dispatcher does, so a host that sends them elsewhere, such as a CLI calling a remote server, can refuse them locally with the same `Field`:
+
+```csharp
+if (!catalog.TryGetAction(name, out var action))
+{
+    throw new ActionNotFoundException();
+}
+
+// Throws InvalidActionArgumentsException, like the dispatcher.
+var instance = ActionArguments.Deserialize(action, arguments, options);
+```
+
+An undefined `JsonElement` means no arguments (`{}`), and JSON `null` throws. It never returns `null`.
 
 ## Writing your own host
 
 When building a host on `IActionDispatcher`, follow the same rules as the built-in ones:
-- Map `InvalidActionArgumentsException`, `ActionNotFoundException`, `AuthenticationRequiredException` and `AccessDeniedException` to fixed, safe responses.
+- Map `InvalidActionArgumentsException`, `ActionNotFoundException`, `AuthenticationRequiredException` and `AccessDeniedException` to fixed, safe responses. Describe invalid arguments from `Field`, never from the exception's message.
 - Never return or print any other exception's message, or the caller's input.
 - Don't offer the properties in `ActionDescriptor.HostProvidedProperties` to callers, and refuse a caller's value for one, matching its JSON name with `StringComparer.OrdinalIgnoreCase`.
 - Create a DI scope per call, and pass the caller's cancellation token.

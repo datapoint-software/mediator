@@ -1,1 +1,3 @@
 #nullable enable
+Datapoint.Mediator.ActionArguments
+static Datapoint.Mediator.ActionArguments.Deserialize(Datapoint.Mediator.ActionDescriptor! action, System.Text.Json.JsonElement arguments, System.Text.Json.JsonSerializerOptions? options = null) -> object!

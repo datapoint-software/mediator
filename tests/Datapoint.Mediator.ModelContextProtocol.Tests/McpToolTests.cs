@@ -152,7 +152,7 @@ public sealed class McpToolTests
 
         Assert.True(result.IsError);
         var text = Text(result);
-        Assert.Contains("are not valid", text);
+        Assert.Contains("The argument 'amount' of action 'invoices.create' is not valid.", text);
         Assert.DoesNotContain("secret-input", text);
     }
 

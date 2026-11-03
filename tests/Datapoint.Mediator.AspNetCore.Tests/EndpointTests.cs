@@ -121,7 +121,7 @@ public sealed class EndpointTests
 
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
         var body = await response.Content.ReadAsStringAsync(Ct);
-        Assert.Contains("are not valid", body);
+        Assert.Contains("The argument 'amount' of action 'invoices.create' is not valid.", body);
         Assert.DoesNotContain("secret-input", body);
     }
 
