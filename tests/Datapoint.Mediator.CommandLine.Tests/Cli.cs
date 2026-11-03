@@ -25,7 +25,7 @@ public sealed class Cli : IAsyncDisposable
             configureMediator?.Invoke(o);
         });
         _provider = services.BuildServiceProvider(new ServiceProviderOptions { ValidateScopes = true });
-        Root = new RootCommand("Invoices").AddActions(_provider, configureCommands);
+        Root = new RootCommand("Invoices").AddMediatorActions(_provider, configureCommands);
     }
 
     public RootCommand Root { get; }

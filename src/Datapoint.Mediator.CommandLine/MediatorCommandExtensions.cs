@@ -9,7 +9,7 @@ namespace System.CommandLine;
 /// <summary>
 /// Extension methods for adding mediator actions as CLI commands.
 /// </summary>
-public static class ActionCommandExtensions
+public static class MediatorCommandExtensions
 {
     /// <summary>
     /// Adds every action in <see cref="IActionCatalog"/> as a subcommand of <paramref name="command"/>.
@@ -41,7 +41,7 @@ public static class ActionCommandExtensions
     /// <exception cref="ArgumentNullException">
     /// <paramref name="command"/> or <paramref name="services"/> is <see langword="null"/>.
     /// </exception>
-    public static TCommand AddActions<TCommand>(
+    public static TCommand AddMediatorActions<TCommand>(
         this TCommand command,
         IServiceProvider services,
         Action<MediatorCommandLineOptions>? configure = null)

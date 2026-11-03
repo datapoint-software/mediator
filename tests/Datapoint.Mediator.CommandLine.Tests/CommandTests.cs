@@ -257,13 +257,13 @@ public sealed class CommandTests
     }
 
     [Fact]
-    public async Task AddActions_NullArguments_Throw()
+    public async Task AddMediatorActions_NullArguments_Throw()
     {
         await using var cli = new Cli();
         var provider = new ServiceCollection().BuildServiceProvider();
 
-        Assert.Equal("command", Assert.Throws<ArgumentNullException>(() => ((RootCommand)null!).AddActions(provider)).ParamName);
-        Assert.Equal("services", Assert.Throws<ArgumentNullException>(() => new RootCommand().AddActions(null!)).ParamName);
+        Assert.Equal("command", Assert.Throws<ArgumentNullException>(() => ((RootCommand)null!).AddMediatorActions(provider)).ParamName);
+        Assert.Equal("services", Assert.Throws<ArgumentNullException>(() => new RootCommand().AddMediatorActions(null!)).ParamName);
     }
 
     private static Cli WithAuthorization(ClaimsPrincipal? principal) =>

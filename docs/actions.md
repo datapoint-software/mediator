@@ -9,8 +9,8 @@ public sealed record CreateInvoice(string Customer, decimal Amount) : ICommand<G
 
 | Host | Registration | `invoices.create` becomes |
 |---|---|---|
-| ASP.NET Core | `app.MapActions("/api")` | `POST /api/invoices/create` |
-| Command line | `root.AddActions(services)` | `mytool invoices create --customer Ana --amount 100` |
+| ASP.NET Core | `app.MapMediatorActions("/api")` | `POST /api/invoices/create` |
+| Command line | `root.AddMediatorActions(services)` | `mytool invoices create --customer Ana --amount 100` |
 | MCP server | `.WithMediatorActions()` | the tool `invoices_create` |
 
 Every behaviour still runs, so an action dispatched by name is authorized, validated and wrapped in a transaction like any other.
@@ -76,7 +76,7 @@ The refusal reads `'tenantId' is set by the server and cannot be given.` It matc
 
 ### Filling the value
 
-An API can overwrite the property in middleware, before `MapActions` reads the body. Hosts that dispatch in-process, such as an MCP server or a CLI that runs the actions itself, set it in a decorator of `IActionDispatcher`. The adapters refuse the caller's value **before** they call the dispatcher, so the decorator's value never trips the refusal:
+An API can overwrite the property in middleware, before `MapMediatorActions` reads the body. Hosts that dispatch in-process, such as an MCP server or a CLI that runs the actions itself, set it in a decorator of `IActionDispatcher`. The adapters refuse the caller's value **before** they call the dispatcher, so the decorator's value never trips the refusal:
 
 1. The adapter refuses arguments that contain a host-provided property.
 2. It calls `IActionDispatcher`, which is your decorator.

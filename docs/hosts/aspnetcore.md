@@ -17,7 +17,7 @@ var app = builder.Build();
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapOpenApi();
-app.MapActions("/api").RequireAuthorization();
+app.MapMediatorActions("/api").RequireAuthorization();
 app.Run();
 ```
 
@@ -45,10 +45,10 @@ Every action uses `POST`, including queries, because their arguments are a JSON 
 
 ## Conventions and OpenAPI
 
-`MapActions` returns a `RouteGroupBuilder`, so ASP.NET Core conventions apply to every action endpoint:
+`MapMediatorActions` returns a `RouteGroupBuilder`, so ASP.NET Core conventions apply to every action endpoint:
 
 ```csharp
-app.MapActions("/api")
+app.MapMediatorActions("/api")
     .RequireAuthorization()
     .RequireRateLimiting("api")
     .RequireCors("frontend");
@@ -58,7 +58,7 @@ Each endpoint carries its name (the action's name), its summary (the action's de
 
 ## Host-provided properties
 
-A property marked [`[HostProvided]`](../actions.md#host-provided-properties), such as the tenant of the user's session, is bound from the body like any other: this adapter doesn't hide or refuse it. **The app must overwrite it** before `MapActions` reads the body, for example in middleware that replaces the body's `tenantId` with the tenant of the verified session, and must never trust the value the caller sent.
+A property marked [`[HostProvided]`](../actions.md#host-provided-properties), such as the tenant of the user's session, is bound from the body like any other: this adapter doesn't hide or refuse it. **The app must overwrite it** before `MapMediatorActions` reads the body, for example in middleware that replaces the body's `tenantId` with the tenant of the verified session, and must never trust the value the caller sent.
 
 In OpenAPI, mark it `readOnly`, which means "not sent in requests", and take it out of `required`. This package doesn't depend on `Microsoft.AspNetCore.OpenApi`, so add this schema transformer to your app:
 
@@ -90,7 +90,7 @@ The property stays in the schema, so the document still describes the type exact
 ## Options
 
 ```csharp
-app.MapActions("/api", o =>
+app.MapMediatorActions("/api", o =>
 {
     o.Filter = a => a.Name.StartsWith("invoices.");   // map only some actions
     o.SerializerOptions = mySerializerOptions;          // default: the app's JsonOptions
@@ -98,7 +98,7 @@ app.MapActions("/api", o =>
 });
 ```
 
-You can call `MapActions` several times with different prefixes and filters, for example to require different policies for different groups.
+You can call `MapMediatorActions` several times with different prefixes and filters, for example to require different policies for different groups.
 
 ## Errors
 
@@ -130,7 +130,7 @@ The responses Mediator writes never contain argument values, .NET type names, st
 Map your own exceptions with `MapException`, and return `null` for exceptions it doesn't handle. It also receives `InvalidActionArgumentsException` first, so you can report it with your own codes:
 
 ```csharp
-app.MapActions("/api", o => o.MapException = e => e switch
+app.MapMediatorActions("/api", o => o.MapException = e => e switch
 {
     // An argument Mediator couldn't read: Field comes from the action's contract, so it's safe to return.
     InvalidActionArgumentsException { Field: { } field } =>

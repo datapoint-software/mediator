@@ -24,8 +24,8 @@ A NuGet package that implements the Mediator pattern for .NET. It lets component
 | `Datapoint.Mediator.EntityFrameworkCore` | A behaviour that runs each command in an EF Core transaction and saves once, at the end. |
 | `Datapoint.Mediator.EntityFrameworkCore.DependencyInjection` | `options.AddTransactionBehavior<TDbContext>()`. |
 | `Datapoint.Mediator.ModelContextProtocol` | Offers actions as MCP tools for AI agents: `services.AddMcpServer().WithMediatorActions()`. |
-| `Datapoint.Mediator.AspNetCore` | Maps actions as HTTP endpoints with OpenAPI metadata: `app.MapActions("/api")`. |
-| `Datapoint.Mediator.CommandLine` | Adds actions as System.CommandLine commands: `new RootCommand().AddActions(services)`. |
+| `Datapoint.Mediator.AspNetCore` | Maps actions as HTTP endpoints with OpenAPI metadata: `app.MapMediatorActions("/api")`. |
+| `Datapoint.Mediator.CommandLine` | Adds actions as System.CommandLine commands: `new RootCommand().AddMediatorActions(services)`. |
 
 ## Quick start
 
@@ -73,8 +73,8 @@ var id = await dispatcher.DispatchAsync("invoice.create", arguments, ct: ct); //
 
   | Host | Package | Registration | `invoices.create` becomes |
   |---|---|---|---|
-  | API | `Datapoint.Mediator.AspNetCore` | `app.MapActions("/api")` | `POST /api/invoices/create` |
-  | CLI | `Datapoint.Mediator.CommandLine` | `root.AddActions(services)` | `mytool invoices create --customer Ana --amount 100` |
+  | API | `Datapoint.Mediator.AspNetCore` | `app.MapMediatorActions("/api")` | `POST /api/invoices/create` |
+  | CLI | `Datapoint.Mediator.CommandLine` | `root.AddMediatorActions(services)` | `mytool invoices create --customer Ana --amount 100` |
   | MCP server | `Datapoint.Mediator.ModelContextProtocol` | `.WithMediatorActions()` | the tool `invoices_create` |
 
 ## Behaviour order

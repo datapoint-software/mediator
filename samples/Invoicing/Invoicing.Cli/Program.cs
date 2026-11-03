@@ -13,7 +13,7 @@ await services.EnsureInvoicingDatabaseAsync();
 
 // One command per action: `invoicing invoices create --customer Ana --amount 100`. Results are printed as JSON.
 var root = new RootCommand("Invoicing sample: the same actions as the API and the MCP server.")
-    .AddActions(services, o => o.ErrorMessage = e => e switch
+    .AddMediatorActions(services, o => o.ErrorMessage = e => e switch
     {
         ValidationException v => InvoicingServiceCollectionExtensions.Describe(v),
         InvoiceNotFoundException => "The invoice doesn't exist.",

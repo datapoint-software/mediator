@@ -3,7 +3,7 @@
 Adds [Datapoint.Mediator](https://www.nuget.org/packages/Datapoint.Mediator) actions as [System.CommandLine](https://learn.microsoft.com/dotnet/standard/commandline/) commands, with typed options and JSON output, so a CLI offers the same commands and queries as an API or an MCP server.
 
 ```csharp
-return await new RootCommand("Invoicing").AddActions(services).Parse(args).InvokeAsync();
+return await new RootCommand("Invoicing").AddMediatorActions(services).Parse(args).InvokeAsync();
 ```
 
 ```bash

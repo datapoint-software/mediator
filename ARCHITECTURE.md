@@ -49,8 +49,8 @@ All package names start with `Datapoint.Mediator.`, except the implementation, w
 | `Authorization.AspNetCore` | `HttpPrincipalAccessor` and `AddHttpPrincipalAccessor`. | ASP.NET Core (framework reference) |
 | `EntityFrameworkCore` | `TransactionBehavior<TDbContext>`, its options, `ITransactionInitializer<TDbContext>`, `TransactionContext` and `[NonTransactional]`. | EF Core (relational) |
 | `*.DependencyInjection` | The `Add…Behavior()` and `Add…Accessor()` registration methods for each feature. | — |
-| `AspNetCore` | `MapActions`: one `POST` endpoint per action. | ASP.NET Core (framework reference) |
-| `CommandLine` | `AddActions`: one command per action. | System.CommandLine |
+| `AspNetCore` | `MapMediatorActions`: one `POST` endpoint per action. | ASP.NET Core (framework reference) |
+| `CommandLine` | `AddMediatorActions`: one command per action. | System.CommandLine |
 | `ModelContextProtocol` | `WithMediatorActions`: one MCP tool per action. | ModelContextProtocol SDK |
 
 Outside `src/`:

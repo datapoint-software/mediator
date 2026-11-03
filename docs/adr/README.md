@@ -35,5 +35,6 @@ Each record follows [Michael Nygard's format](https://cognitect.com/blog/2011/11
 | [0027](0027-startup-checks.md) | Startup checks, and behaviours with settings are registered once | Accepted |
 | [0028](0028-host-provided-properties.md) | Host-provided properties are hidden and refused by the CLI and MCP adapters | Accepted |
 | [0029](0029-argument-errors-name-the-field.md) | Argument errors name the field, and hooks see them first | Accepted |
+| [0030](0030-registration-methods-carry-the-mediator-prefix.md) | Host registration methods carry the Mediator prefix | Accepted |
 
 To add a record, copy the structure of an existing one, use the next number, and add it to this table.

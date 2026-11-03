@@ -8,7 +8,7 @@ builder.Services.AddHttpPrincipalAccessor();
 
 var app = builder.Build();
 app.UseAuthentication();   // sets the request's user, before any endpoint runs
-app.MapActions("/api");    // from Datapoint.Mediator.AspNetCore
+app.MapMediatorActions("/api");    // from Datapoint.Mediator.AspNetCore
 ```
 
 An anonymous request has no authenticated user, so protected actions fail with `AuthenticationRequiredException` (HTTP 401). Outside a request, such as in a background service, there is no user.

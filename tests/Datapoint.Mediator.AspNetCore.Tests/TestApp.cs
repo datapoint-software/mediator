@@ -48,7 +48,7 @@ public sealed class TestApp : IAsyncDisposable
 
         var app = builder.Build();
         configureApp?.Invoke(app);
-        var group = app.MapActions("/api", configureEndpoints);
+        var group = app.MapMediatorActions("/api", configureEndpoints);
         configureGroup?.Invoke(group);
         await app.StartAsync();
         return new TestApp(app);

@@ -6,7 +6,7 @@ Maps [Datapoint.Mediator](https://www.nuget.org/packages/Datapoint.Mediator) act
 [Action("invoices.create", Description = "Creates an invoice for a customer.")]
 public sealed record CreateInvoice(string Customer, decimal Amount) : ICommand<Guid>;
 
-app.MapActions("/api").RequireAuthorization();   // POST /api/invoices/create
+app.MapMediatorActions("/api").RequireAuthorization();   // POST /api/invoices/create
 ```
 
 Invalid arguments return 400, missing authentication 401 and denied access 403, never repeating the request's input. Map your own exceptions, such as validation failures, with `options.MapException`.

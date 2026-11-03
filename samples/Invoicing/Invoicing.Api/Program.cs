@@ -19,7 +19,7 @@ app.UseAuthorization();
 app.MapOpenApi();   // GET /openapi/v1.json describes every action
 
 // One POST endpoint per action: /api/invoices/create, /api/invoices/get, /api/invoices/list, /api/invoices/cancel.
-app.MapActions("/api", o => o.MapException = e => e switch
+app.MapMediatorActions("/api", o => o.MapException = e => e switch
     {
         // Property names and messages only: never the attempted values.
         ValidationException v => Results.ValidationProblem(v.Errors

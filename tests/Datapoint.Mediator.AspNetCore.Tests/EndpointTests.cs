@@ -245,12 +245,12 @@ public sealed class EndpointTests
     }
 
     [Fact]
-    public async Task MapActions_NullArguments_Throw()
+    public async Task MapMediatorActions_NullArguments_Throw()
     {
         await using var app = await TestApp.StartAsync();
 
-        Assert.Equal("endpoints", Assert.Throws<ArgumentNullException>(() => ((IEndpointRouteBuilder)null!).MapActions()).ParamName);
-        Assert.Equal("prefix", Assert.Throws<ArgumentNullException>(() => app.App.MapActions(null!)).ParamName);
+        Assert.Equal("endpoints", Assert.Throws<ArgumentNullException>(() => ((IEndpointRouteBuilder)null!).MapMediatorActions()).ParamName);
+        Assert.Equal("prefix", Assert.Throws<ArgumentNullException>(() => app.App.MapMediatorActions(null!)).ParamName);
     }
 
     private static Task<TestApp> StartWithAuthorizationAsync(ClaimsPrincipal? principal) =>

@@ -106,7 +106,7 @@ public sealed class HttpPrincipalAccessorTests
         Assert.Equal("services", exception.ParamName);
     }
 
-    // A real WebApplication, served in memory, with authentication, the authorization behaviour and MapActions.
+    // A real WebApplication, served in memory, with authentication, the authorization behaviour and MapMediatorActions.
     private static async Task<WebApplication> StartAsync()
     {
         var builder = WebApplication.CreateSlimBuilder();
@@ -121,7 +121,7 @@ public sealed class HttpPrincipalAccessorTests
 
         var app = builder.Build();
         app.UseAuthentication();
-        app.MapActions("/api");
+        app.MapMediatorActions("/api");
         await app.StartAsync();
         return app;
     }

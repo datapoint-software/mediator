@@ -12,7 +12,7 @@ await using var services = new ServiceCollection()
     .AddFixedPrincipalAccessor(await SignInAsync())          // the signed-in user, or null
     .BuildServiceProvider();
 
-var root = new RootCommand("Invoicing").AddActions(services);
+var root = new RootCommand("Invoicing").AddMediatorActions(services);
 return await root.Parse(args).InvokeAsync();
 ```
 
@@ -96,7 +96,7 @@ See [Invalid arguments](../actions.md#invalid-arguments) for how the argument is
 Map your own exceptions to a message with `ErrorMessage`. Return `null` for exceptions it doesn't handle. A mapped exception exits with code 2. `ErrorMessage` also receives `InvalidActionArgumentsException` first, so you can report it your own way:
 
 ```csharp
-root.AddActions(services, o => o.ErrorMessage = e => e switch
+root.AddMediatorActions(services, o => o.ErrorMessage = e => e switch
 {
     InvalidActionArgumentsException { Field: { } field } => $"invalid: {field}",
     ValidationException v => string.Join("; ", v.Errors.Select(f => $"{f.PropertyName}: {f.ErrorMessage}")),   // never AttemptedValue
@@ -166,7 +166,7 @@ invoicing invoices list | jq -r '.customer'
 Map your own exceptions to a message with `ErrorMessage`. Return `null` for exceptions it doesn't handle. A mapped exception exits with code 2:
 
 ```csharp
-root.AddActions(services, o => o.ErrorMessage = e => e switch
+root.AddMediatorActions(services, o => o.ErrorMessage = e => e switch
 {
     ValidationException v => string.Join("; ", v.Errors.Select(f => $"{f.PropertyName}: {f.ErrorMessage}")),   // never AttemptedValue
     InvoiceNotFoundException => e.Message,
@@ -179,7 +179,7 @@ Unhandled exceptions are never printed, because their messages can contain conne
 ## Options
 
 ```csharp
-root.AddActions(services, o =>
+root.AddMediatorActions(services, o =>
 {
     o.Filter = a => !a.Name.StartsWith("admin.");   // add only some actions
     o.SerializerOptions = mySerializerOptions;       // default: web defaults (camelCase)

@@ -12,7 +12,7 @@ namespace Microsoft.AspNetCore.Builder;
 /// <summary>
 /// Extension methods for mapping mediator actions as HTTP endpoints.
 /// </summary>
-public static class ActionEndpointRouteBuilderExtensions
+public static class MediatorEndpointRouteBuilderExtensions
 {
     /// <summary>
     /// Maps every action in <see cref="IActionCatalog"/> as a <c>POST</c> endpoint under <paramref name="prefix"/>.
@@ -49,7 +49,7 @@ public static class ActionEndpointRouteBuilderExtensions
     /// <exception cref="ArgumentNullException">
     /// <paramref name="endpoints"/> or <paramref name="prefix"/> is <see langword="null"/>.
     /// </exception>
-    public static RouteGroupBuilder MapActions(
+    public static RouteGroupBuilder MapMediatorActions(
         this IEndpointRouteBuilder endpoints,
         string prefix = "",
         Action<MediatorEndpointOptions>? configure = null)

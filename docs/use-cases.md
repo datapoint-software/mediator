@@ -7,12 +7,12 @@ The problem: the same operations, such as creating, listing and cancelling invoi
 The approach:
 1. Put the operations in a business layer, as [actions](actions.md) with handlers, validators and authorizers.
 2. Register them once, in a method every host calls, such as `AddInvoicing()`.
-3. Give each host one line: `MapActions`, `AddActions` or `WithMediatorActions`, and the right [principal accessor](authorization.md#the-current-user).
+3. Give each host one line: `MapMediatorActions`, `AddMediatorActions` or `WithMediatorActions`, and the right [principal accessor](authorization.md#the-current-user).
 
 ```mermaid
 graph LR
-    API["API<br/>MapActions"] --> D[IActionDispatcher]
-    CLI["CLI<br/>AddActions"] --> D
+    API["API<br/>MapMediatorActions"] --> D[IActionDispatcher]
+    CLI["CLI<br/>AddMediatorActions"] --> D
     MCP["MCP server<br/>WithMediatorActions"] --> D
     D --> A[Authorization] --> V[Validation] --> T[Transaction] --> H[Handler]
 ```

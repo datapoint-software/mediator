@@ -47,7 +47,7 @@ Each host has a hook for this:
 
 ```csharp
 // ASP.NET Core: a 400 with each property's errors
-app.MapActions("/api", o => o.MapException = e => e is ValidationException v
+app.MapMediatorActions("/api", o => o.MapException = e => e is ValidationException v
     ? Results.ValidationProblem(v.Errors
         .GroupBy(f => f.PropertyName)
         .ToDictionary(g => g.Key, g => g.Select(f => f.ErrorMessage).ToArray()))
