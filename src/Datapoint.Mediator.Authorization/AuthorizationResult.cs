@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
+using System.Linq;
 
 namespace Datapoint.Mediator.Authorization;
 
@@ -19,7 +20,7 @@ public sealed class AuthorizationResult
     /// Initializes a new instance of the <see cref="AuthorizationResult"/> class.
     /// </summary>
     /// <param name="action">The command, query or stream query that was authorized.</param>
-    /// <param name="decisions">The decisions of the authorizers that ran, in the order they ran.</param>
+    /// <param name="decisions">The decisions of the authorizers that ran, in the order they ran. They are copied.</param>
     /// <exception cref="ArgumentNullException">
     /// <paramref name="action"/> or <paramref name="decisions"/> is <see langword="null"/>.
     /// </exception>
@@ -34,10 +35,12 @@ public sealed class AuthorizationResult
         ArgumentNullException.ThrowIfNull(action);
         ArgumentNullException.ThrowIfNull(decisions);
         Action = action;
-        Decisions = decisions;
-        IsAllowed = !failed && decisions.Count > 0;
 
-        foreach (var decision in decisions)
+        // A read-only copy, so an observer can't change the decisions after IsAllowed was computed from them.
+        Decisions = decisions.ToArray().AsReadOnly();
+        IsAllowed = !failed && Decisions.Count > 0;
+
+        foreach (var decision in Decisions)
         {
             IsAllowed &= decision.Decision.IsAllowed;
         }

@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using Xunit;
 
 namespace Datapoint.Mediator.Authorization.Tests;
@@ -31,6 +32,20 @@ public sealed class AuthorizationResultTests
         var result = new AuthorizationResult(new GetInvoice(), [Decision(AuthorizationDecision.Allow()), Decision(AuthorizationDecision.Deny())]);
 
         Assert.False(result.IsAllowed);
+    }
+
+    // Otherwise an observer could cast Decisions back to the caller's list and change it, so it disagreed with IsAllowed.
+    [Fact]
+    public void Decisions_AreAReadOnlyCopy()
+    {
+        var decisions = new List<AuthorizerDecision> { Decision(AuthorizationDecision.Allow()) };
+        var result = new AuthorizationResult(new GetInvoice(), decisions);
+
+        decisions.Add(Decision(AuthorizationDecision.Deny()));
+
+        Assert.True(result.IsAllowed);
+        Assert.Single(result.Decisions);
+        Assert.True(Assert.IsAssignableFrom<IList<AuthorizerDecision>>(result.Decisions).IsReadOnly);
     }
 
     [Fact]
