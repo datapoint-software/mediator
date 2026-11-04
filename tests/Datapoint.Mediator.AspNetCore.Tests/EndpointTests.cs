@@ -217,6 +217,28 @@ public sealed class EndpointTests
     }
 
     [Fact]
+    public async Task MapExceptionThatThrows_ForInvalidArguments_KeepsMediatorsResponse()
+    {
+        await using var app = await TestApp.StartAsync(o => o.MapException = _ => throw new InvalidOperationException("hook failed"));
+
+        var response = await app.Client.PostAsync("/api/invoices/get", JsonContent.Create(new { id = "secret-input" }), Ct);
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        Assert.DoesNotContain("hook failed", await response.Content.ReadAsStringAsync(Ct), StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task MapExceptionThatThrows_RethrowsTheActionsException()
+    {
+        await using var app = await TestApp.StartAsync(o => o.MapException = _ => throw new NotSupportedException("hook failed"));
+
+        // The test server passes unhandled exceptions to the client, so the action's own exception surfaces here.
+        var exception = await Assert.ThrowsAsync<InvalidOperationException>(() => app.Client.PostAsync("/api/reports/fail", null, Ct));
+
+        Assert.Equal("secret internal detail", exception.Message);
+    }
+
+    [Fact]
     public async Task UnhandledException_IsLeftToTheAppsExceptionHandling()
     {
         await using var app = await TestApp.StartAsync(o => o.MapException = _ => null);

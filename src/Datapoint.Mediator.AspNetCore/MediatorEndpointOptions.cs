@@ -44,6 +44,10 @@ public sealed class MediatorEndpointOptions
     /// <c>ProblemDetailsOptions.CustomizeProblemDetails</c>.
     /// </para>
     /// <para>
+    /// If the function throws, its exception is ignored, as if it had returned <see langword="null"/>: Mediator writes its
+    /// own <c>400</c> for invalid arguments, and rethrows any other exception of the action.
+    /// </para>
+    /// <para>
     /// The responses Mediator writes itself never contain argument values, .NET type names, stack traces or paths.
     /// Their <c>title</c> and <c>detail</c> are meant for developers and agents, not for display in a user interface.
     /// </para>

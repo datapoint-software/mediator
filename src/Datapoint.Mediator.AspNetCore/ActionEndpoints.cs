@@ -59,9 +59,16 @@ internal sealed partial class ActionEndpoints(ActionDescriptor action, MediatorE
 
             return action.Kind == ActionKind.Command ? Results.NoContent() : Results.Json(result, serializerOptions);
         }
-        catch (Exception exception) when (!IsCallerCancellation(exception, cancellationToken) && Map(exception) is { } response)
+        catch (Exception exception) when (!IsCallerCancellation(exception, cancellationToken))
         {
-            return response;
+            // Mapped in the catch block rather than in the filter, so the hook runs after the action's finally blocks,
+            // and an exception it throws isn't silently swallowed by the filter.
+            if (Map(exception) is { } response)
+            {
+                return response;
+            }
+
+            throw;
         }
     }
 
@@ -117,13 +124,27 @@ internal sealed partial class ActionEndpoints(ActionDescriptor action, MediatorE
     private IResult? Map(Exception exception) =>
         exception switch
         {
-            InvalidActionArgumentsException invalid => options.MapException?.Invoke(exception) ?? InvalidArguments(invalid),
+            InvalidActionArgumentsException invalid => CallMapException(exception) ?? InvalidArguments(invalid),
             _ when exception.GetType().FullName == "Datapoint.Mediator.Authorization.AuthenticationRequiredException" =>
                 Results.Problem(title: "Authentication is required.", statusCode: StatusCodes.Status401Unauthorized),
             _ when exception.GetType().FullName == "Datapoint.Mediator.Authorization.AccessDeniedException" =>
                 Results.Problem(title: "Access is denied.", statusCode: StatusCodes.Status403Forbidden),
-            _ => options.MapException?.Invoke(exception),
+            _ => CallMapException(exception),
         };
+
+    // An exception from the app's hook is treated as if the hook had returned null, because nothing about it is safe to
+    // send the caller: Mediator's own response is sent, or the action's exception is rethrown.
+    private IResult? CallMapException(Exception exception)
+    {
+        try
+        {
+            return options.MapException?.Invoke(exception);
+        }
+        catch (Exception)
+        {
+            return null;
+        }
+    }
 
     // Built from the field and the reason only, never from the exception's message. A field that doesn't look like a path of property
     // names, which an app's own exception could carry, is left out.

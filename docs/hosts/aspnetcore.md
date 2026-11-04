@@ -151,6 +151,8 @@ app.MapMediatorActions("/api", o => o.MapException = e => e switch
 
 > **Security:** return only text you wrote. Never return an exception's `Message`, or `InnerException.Message` for invalid arguments: they're for logs, and can contain .NET type names, values or property names the caller chose.
 
+If `MapException` throws, its exception is ignored, as if it had returned `null`: Mediator writes its own `400` for invalid arguments, and rethrows any other exception of the action to the app's exception handling.
+
 ### Adding fields to Mediator's responses
 
 The `400`, `401` and `403` responses Mediator writes go through ASP.NET Core's `IProblemDetailsService` when you register it, so `CustomizeProblemDetails` can add your own fields, such as an error code, to them too. Authentication and access-denied responses don't go through `MapException`, so their status can't change, but they can be extended this way:
