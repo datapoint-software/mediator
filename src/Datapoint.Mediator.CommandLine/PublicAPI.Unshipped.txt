@@ -1,4 +1,1 @@
 #nullable enable
-static System.CommandLine.MediatorCommandExtensions.AddMediatorActions<TCommand>(this TCommand! command, System.IServiceProvider! services) -> TCommand!
-*REMOVED*static System.CommandLine.MediatorCommandExtensions.AddMediatorActions<TCommand>(this TCommand! command, System.IServiceProvider! services, System.Action<Datapoint.Mediator.CommandLine.MediatorCommandLineOptions!>? configure = null) -> TCommand!
-static System.CommandLine.MediatorCommandExtensions.AddMediatorActions<TCommand>(this TCommand! command, System.IServiceProvider! services, System.Action<Datapoint.Mediator.CommandLine.MediatorCommandLineOptions!>? configure) -> TCommand!

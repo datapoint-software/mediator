@@ -7,10 +7,10 @@ Datapoint.Mediator.Authorization.AllowAnonymousAccessAttribute
 Datapoint.Mediator.Authorization.AllowAnonymousAccessAttribute.AllowAnonymousAccessAttribute() -> void
 Datapoint.Mediator.Authorization.AuthenticationBehavior
 Datapoint.Mediator.Authorization.AuthenticationBehavior.AuthenticationBehavior(System.IServiceProvider! serviceProvider) -> void
-Datapoint.Mediator.Authorization.AuthenticationBehavior.HandleAsync(Datapoint.Mediator.ICommand! command, System.Func<System.Threading.CancellationToken, System.Threading.Tasks.ValueTask>! next, System.Threading.CancellationToken ct = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask
-Datapoint.Mediator.Authorization.AuthenticationBehavior.HandleAsync<TResult>(Datapoint.Mediator.ICommand<TResult>! command, System.Func<System.Threading.CancellationToken, System.Threading.Tasks.ValueTask<TResult>>! next, System.Threading.CancellationToken ct = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<TResult>
-Datapoint.Mediator.Authorization.AuthenticationBehavior.HandleAsync<TResult>(Datapoint.Mediator.IQuery<TResult>! query, System.Func<System.Threading.CancellationToken, System.Threading.Tasks.ValueTask<TResult>>! next, System.Threading.CancellationToken ct = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<TResult>
-Datapoint.Mediator.Authorization.AuthenticationBehavior.HandleAsync<TResult>(Datapoint.Mediator.IStreamQuery<TResult>! query, System.Func<System.Threading.CancellationToken, System.Collections.Generic.IAsyncEnumerable<TResult>!>! next, System.Threading.CancellationToken ct = default(System.Threading.CancellationToken)) -> System.Collections.Generic.IAsyncEnumerable<TResult>!
+Datapoint.Mediator.Authorization.AuthenticationBehavior.HandleAsync(Datapoint.Mediator.ICommand! command, System.Func<System.Threading.CancellationToken, System.Threading.Tasks.ValueTask>! next, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask
+Datapoint.Mediator.Authorization.AuthenticationBehavior.HandleAsync<TResult>(Datapoint.Mediator.ICommand<TResult>! command, System.Func<System.Threading.CancellationToken, System.Threading.Tasks.ValueTask<TResult>>! next, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<TResult>
+Datapoint.Mediator.Authorization.AuthenticationBehavior.HandleAsync<TResult>(Datapoint.Mediator.IQuery<TResult>! query, System.Func<System.Threading.CancellationToken, System.Threading.Tasks.ValueTask<TResult>>! next, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<TResult>
+Datapoint.Mediator.Authorization.AuthenticationBehavior.HandleAsync<TResult>(Datapoint.Mediator.IStreamQuery<TResult>! query, System.Func<System.Threading.CancellationToken, System.Collections.Generic.IAsyncEnumerable<TResult>!>! next, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Collections.Generic.IAsyncEnumerable<TResult>!
 Datapoint.Mediator.Authorization.AuthenticationRequiredException
 Datapoint.Mediator.Authorization.AuthenticationRequiredException.AuthenticationRequiredException() -> void
 Datapoint.Mediator.Authorization.AuthenticationRequiredException.AuthenticationRequiredException(string! message) -> void
@@ -18,11 +18,11 @@ Datapoint.Mediator.Authorization.AuthenticationRequiredException.AuthenticationR
 Datapoint.Mediator.Authorization.AuthorizationBehavior
 Datapoint.Mediator.Authorization.AuthorizationBehavior.AuthorizationBehavior(System.IServiceProvider! serviceProvider) -> void
 Datapoint.Mediator.Authorization.AuthorizationBehavior.AuthorizationBehavior(System.IServiceProvider! serviceProvider, Datapoint.Mediator.Authorization.AuthorizationBehaviorOptions! options) -> void
-Datapoint.Mediator.Authorization.AuthorizationBehavior.HandleAsync(Datapoint.Mediator.ICommand! command, System.Func<System.Threading.CancellationToken, System.Threading.Tasks.ValueTask>! next, System.Threading.CancellationToken ct = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask
-Datapoint.Mediator.Authorization.AuthorizationBehavior.HandleAsync(Datapoint.Mediator.IMessage! message, System.Func<System.Threading.CancellationToken, System.Threading.Tasks.ValueTask>! next, System.Threading.CancellationToken ct = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask
-Datapoint.Mediator.Authorization.AuthorizationBehavior.HandleAsync<TResult>(Datapoint.Mediator.ICommand<TResult>! command, System.Func<System.Threading.CancellationToken, System.Threading.Tasks.ValueTask<TResult>>! next, System.Threading.CancellationToken ct = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<TResult>
-Datapoint.Mediator.Authorization.AuthorizationBehavior.HandleAsync<TResult>(Datapoint.Mediator.IQuery<TResult>! query, System.Func<System.Threading.CancellationToken, System.Threading.Tasks.ValueTask<TResult>>! next, System.Threading.CancellationToken ct = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<TResult>
-Datapoint.Mediator.Authorization.AuthorizationBehavior.HandleAsync<TResult>(Datapoint.Mediator.IStreamQuery<TResult>! query, System.Func<System.Threading.CancellationToken, System.Collections.Generic.IAsyncEnumerable<TResult>!>! next, System.Threading.CancellationToken ct = default(System.Threading.CancellationToken)) -> System.Collections.Generic.IAsyncEnumerable<TResult>!
+Datapoint.Mediator.Authorization.AuthorizationBehavior.HandleAsync(Datapoint.Mediator.ICommand! command, System.Func<System.Threading.CancellationToken, System.Threading.Tasks.ValueTask>! next, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask
+Datapoint.Mediator.Authorization.AuthorizationBehavior.HandleAsync(Datapoint.Mediator.IMessage! message, System.Func<System.Threading.CancellationToken, System.Threading.Tasks.ValueTask>! next, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask
+Datapoint.Mediator.Authorization.AuthorizationBehavior.HandleAsync<TResult>(Datapoint.Mediator.ICommand<TResult>! command, System.Func<System.Threading.CancellationToken, System.Threading.Tasks.ValueTask<TResult>>! next, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<TResult>
+Datapoint.Mediator.Authorization.AuthorizationBehavior.HandleAsync<TResult>(Datapoint.Mediator.IQuery<TResult>! query, System.Func<System.Threading.CancellationToken, System.Threading.Tasks.ValueTask<TResult>>! next, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<TResult>
+Datapoint.Mediator.Authorization.AuthorizationBehavior.HandleAsync<TResult>(Datapoint.Mediator.IStreamQuery<TResult>! query, System.Func<System.Threading.CancellationToken, System.Collections.Generic.IAsyncEnumerable<TResult>!>! next, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Collections.Generic.IAsyncEnumerable<TResult>!
 Datapoint.Mediator.Authorization.AuthorizationBehaviorOptions
 Datapoint.Mediator.Authorization.AuthorizationBehaviorOptions.AuthorizationBehaviorOptions() -> void
 Datapoint.Mediator.Authorization.AuthorizationBehaviorOptions.RequireTransaction.get -> Datapoint.Mediator.Authorization.TransactionRequirement
@@ -30,7 +30,7 @@ Datapoint.Mediator.Authorization.AuthorizationBehaviorOptions.RequireTransaction
 Datapoint.Mediator.Authorization.AuthorizationContext
 Datapoint.Mediator.Authorization.AuthorizationContext.AuthorizationContext() -> void
 Datapoint.Mediator.Authorization.AuthorizationContext.Current.get -> Datapoint.Mediator.Authorization.AuthorizationResult?
-Datapoint.Mediator.Authorization.AuthorizationContext.For(object! action) -> Datapoint.Mediator.Authorization.AuthorizationResult?
+Datapoint.Mediator.Authorization.AuthorizationContext.GetResultFor(object! action) -> Datapoint.Mediator.Authorization.AuthorizationResult?
 Datapoint.Mediator.Authorization.AuthorizationDecision
 Datapoint.Mediator.Authorization.AuthorizationDecision.Details.get -> object?
 Datapoint.Mediator.Authorization.AuthorizationDecision.Exception.get -> System.Exception?
@@ -63,17 +63,20 @@ Datapoint.Mediator.Authorization.FixedPrincipalAccessor.FixedPrincipalAccessor(S
 Datapoint.Mediator.Authorization.FixedPrincipalAccessor.Principal.get -> System.Security.Claims.ClaimsPrincipal?
 Datapoint.Mediator.Authorization.IAuthorizationContext
 Datapoint.Mediator.Authorization.IAuthorizationContext.Current.get -> Datapoint.Mediator.Authorization.AuthorizationResult?
-Datapoint.Mediator.Authorization.IAuthorizationContext.For(object! action) -> Datapoint.Mediator.Authorization.AuthorizationResult?
+Datapoint.Mediator.Authorization.IAuthorizationContext.GetResultFor(object! action) -> Datapoint.Mediator.Authorization.AuthorizationResult?
 Datapoint.Mediator.Authorization.IAuthorizationObserver
-Datapoint.Mediator.Authorization.IAuthorizationObserver.OnAuthorizedAsync(Datapoint.Mediator.Authorization.AuthorizationEvent! authorization, System.Threading.CancellationToken ct = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask
+Datapoint.Mediator.Authorization.IAuthorizationObserver.OnAuthorizedAsync(Datapoint.Mediator.Authorization.AuthorizationEvent! authorization, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask
 Datapoint.Mediator.Authorization.IAuthorizer<TAction>
-Datapoint.Mediator.Authorization.IAuthorizer<TAction>.AuthorizeAsync(TAction action, System.Security.Claims.ClaimsPrincipal! principal, System.Threading.CancellationToken ct = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<Datapoint.Mediator.Authorization.AuthorizationDecision!>
+Datapoint.Mediator.Authorization.IAuthorizer<TAction>.AuthorizeAsync(TAction action, System.Security.Claims.ClaimsPrincipal! principal, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<Datapoint.Mediator.Authorization.AuthorizationDecision!>
 Datapoint.Mediator.Authorization.IPrincipalAccessor
 Datapoint.Mediator.Authorization.IPrincipalAccessor.Principal.get -> System.Security.Claims.ClaimsPrincipal?
 Datapoint.Mediator.Authorization.TransactionRequirement
 Datapoint.Mediator.Authorization.TransactionRequirement.Commands = 1 -> Datapoint.Mediator.Authorization.TransactionRequirement
 Datapoint.Mediator.Authorization.TransactionRequirement.CommandsAndQueries = 2 -> Datapoint.Mediator.Authorization.TransactionRequirement
 Datapoint.Mediator.Authorization.TransactionRequirement.None = 0 -> Datapoint.Mediator.Authorization.TransactionRequirement
-static Datapoint.Mediator.Authorization.AuthorizationDecision.Allow(object? details = null) -> Datapoint.Mediator.Authorization.AuthorizationDecision!
+static Datapoint.Mediator.Authorization.AuthorizationDecision.Allow() -> Datapoint.Mediator.Authorization.AuthorizationDecision!
+static Datapoint.Mediator.Authorization.AuthorizationDecision.Allow(object? details) -> Datapoint.Mediator.Authorization.AuthorizationDecision!
 static Datapoint.Mediator.Authorization.AuthorizationDecision.AllowIf(bool condition) -> Datapoint.Mediator.Authorization.AuthorizationDecision!
-static Datapoint.Mediator.Authorization.AuthorizationDecision.Deny(object? details = null, System.Exception? exception = null) -> Datapoint.Mediator.Authorization.AuthorizationDecision!
+static Datapoint.Mediator.Authorization.AuthorizationDecision.Deny() -> Datapoint.Mediator.Authorization.AuthorizationDecision!
+static Datapoint.Mediator.Authorization.AuthorizationDecision.Deny(object? details) -> Datapoint.Mediator.Authorization.AuthorizationDecision!
+static Datapoint.Mediator.Authorization.AuthorizationDecision.Deny(object? details, System.Exception? exception) -> Datapoint.Mediator.Authorization.AuthorizationDecision!

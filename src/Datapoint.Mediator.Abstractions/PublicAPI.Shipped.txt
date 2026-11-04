@@ -35,35 +35,37 @@ Datapoint.Mediator.IActionCatalog
 Datapoint.Mediator.IActionCatalog.Actions.get -> System.Collections.Generic.IReadOnlyList<Datapoint.Mediator.ActionDescriptor!>!
 Datapoint.Mediator.IActionCatalog.TryGetAction(string! name, out Datapoint.Mediator.ActionDescriptor? action) -> bool
 Datapoint.Mediator.IActionDispatcher
-Datapoint.Mediator.IActionDispatcher.DispatchAsync(string! name, System.Text.Json.JsonElement arguments, System.Text.Json.JsonSerializerOptions? options = null, System.Threading.CancellationToken ct = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<object?>
-Datapoint.Mediator.IActionDispatcher.StreamAsync(string! name, System.Text.Json.JsonElement arguments, System.Text.Json.JsonSerializerOptions? options = null, System.Threading.CancellationToken ct = default(System.Threading.CancellationToken)) -> System.Collections.Generic.IAsyncEnumerable<object?>!
+Datapoint.Mediator.IActionDispatcher.DispatchAsync(string! name, System.Text.Json.JsonElement arguments, System.Text.Json.JsonSerializerOptions? options, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<object?>
+Datapoint.Mediator.IActionDispatcher.DispatchAsync(string! name, System.Text.Json.JsonElement arguments, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<object?>
+Datapoint.Mediator.IActionDispatcher.StreamAsync(string! name, System.Text.Json.JsonElement arguments, System.Text.Json.JsonSerializerOptions? options, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Collections.Generic.IAsyncEnumerable<object?>!
+Datapoint.Mediator.IActionDispatcher.StreamAsync(string! name, System.Text.Json.JsonElement arguments, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Collections.Generic.IAsyncEnumerable<object?>!
 Datapoint.Mediator.IBehavior
-Datapoint.Mediator.IBehavior.HandleAsync(Datapoint.Mediator.ICommand! command, System.Func<System.Threading.CancellationToken, System.Threading.Tasks.ValueTask>! next, System.Threading.CancellationToken ct = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask
-Datapoint.Mediator.IBehavior.HandleAsync(Datapoint.Mediator.IMessage! message, System.Func<System.Threading.CancellationToken, System.Threading.Tasks.ValueTask>! next, System.Threading.CancellationToken ct = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask
-Datapoint.Mediator.IBehavior.HandleAsync<TResult>(Datapoint.Mediator.ICommand<TResult>! command, System.Func<System.Threading.CancellationToken, System.Threading.Tasks.ValueTask<TResult>>! next, System.Threading.CancellationToken ct = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<TResult>
-Datapoint.Mediator.IBehavior.HandleAsync<TResult>(Datapoint.Mediator.IQuery<TResult>! query, System.Func<System.Threading.CancellationToken, System.Threading.Tasks.ValueTask<TResult>>! next, System.Threading.CancellationToken ct = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<TResult>
-Datapoint.Mediator.IBehavior.HandleAsync<TResult>(Datapoint.Mediator.IStreamQuery<TResult>! query, System.Func<System.Threading.CancellationToken, System.Collections.Generic.IAsyncEnumerable<TResult>!>! next, System.Threading.CancellationToken ct = default(System.Threading.CancellationToken)) -> System.Collections.Generic.IAsyncEnumerable<TResult>!
+Datapoint.Mediator.IBehavior.HandleAsync(Datapoint.Mediator.ICommand! command, System.Func<System.Threading.CancellationToken, System.Threading.Tasks.ValueTask>! next, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask
+Datapoint.Mediator.IBehavior.HandleAsync(Datapoint.Mediator.IMessage! message, System.Func<System.Threading.CancellationToken, System.Threading.Tasks.ValueTask>! next, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask
+Datapoint.Mediator.IBehavior.HandleAsync<TResult>(Datapoint.Mediator.ICommand<TResult>! command, System.Func<System.Threading.CancellationToken, System.Threading.Tasks.ValueTask<TResult>>! next, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<TResult>
+Datapoint.Mediator.IBehavior.HandleAsync<TResult>(Datapoint.Mediator.IQuery<TResult>! query, System.Func<System.Threading.CancellationToken, System.Threading.Tasks.ValueTask<TResult>>! next, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<TResult>
+Datapoint.Mediator.IBehavior.HandleAsync<TResult>(Datapoint.Mediator.IStreamQuery<TResult>! query, System.Func<System.Threading.CancellationToken, System.Collections.Generic.IAsyncEnumerable<TResult>!>! next, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Collections.Generic.IAsyncEnumerable<TResult>!
 Datapoint.Mediator.ICommand
 Datapoint.Mediator.ICommand<TResult>
 Datapoint.Mediator.ICommandHandler<TCommand, TResult>
-Datapoint.Mediator.ICommandHandler<TCommand, TResult>.HandleAsync(TCommand command, System.Threading.CancellationToken ct = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<TResult>
+Datapoint.Mediator.ICommandHandler<TCommand, TResult>.HandleAsync(TCommand command, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<TResult>
 Datapoint.Mediator.ICommandHandler<TCommand>
-Datapoint.Mediator.ICommandHandler<TCommand>.HandleAsync(TCommand command, System.Threading.CancellationToken ct = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask
+Datapoint.Mediator.ICommandHandler<TCommand>.HandleAsync(TCommand command, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask
 Datapoint.Mediator.IMediator
-Datapoint.Mediator.IMediator.PublishAsync(Datapoint.Mediator.IMessage! message, System.Threading.CancellationToken ct = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask
-Datapoint.Mediator.IMediator.QueryAsync<TResult>(Datapoint.Mediator.IQuery<TResult>! query, System.Threading.CancellationToken ct = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<TResult>
-Datapoint.Mediator.IMediator.SendAsync(Datapoint.Mediator.ICommand! command, System.Threading.CancellationToken ct = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask
-Datapoint.Mediator.IMediator.SendAsync<TResult>(Datapoint.Mediator.ICommand<TResult>! command, System.Threading.CancellationToken ct = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<TResult>
-Datapoint.Mediator.IMediator.StreamAsync<TResult>(Datapoint.Mediator.IStreamQuery<TResult>! query, System.Threading.CancellationToken ct = default(System.Threading.CancellationToken)) -> System.Collections.Generic.IAsyncEnumerable<TResult>!
+Datapoint.Mediator.IMediator.PublishAsync(Datapoint.Mediator.IMessage! message, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask
+Datapoint.Mediator.IMediator.QueryAsync<TResult>(Datapoint.Mediator.IQuery<TResult>! query, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<TResult>
+Datapoint.Mediator.IMediator.SendAsync(Datapoint.Mediator.ICommand! command, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask
+Datapoint.Mediator.IMediator.SendAsync<TResult>(Datapoint.Mediator.ICommand<TResult>! command, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<TResult>
+Datapoint.Mediator.IMediator.StreamAsync<TResult>(Datapoint.Mediator.IStreamQuery<TResult>! query, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Collections.Generic.IAsyncEnumerable<TResult>!
 Datapoint.Mediator.IMessage
 Datapoint.Mediator.IMessageHandler<TMessage>
-Datapoint.Mediator.IMessageHandler<TMessage>.HandleAsync(TMessage message, System.Threading.CancellationToken ct = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask
+Datapoint.Mediator.IMessageHandler<TMessage>.HandleAsync(TMessage message, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask
 Datapoint.Mediator.IQuery<TResult>
 Datapoint.Mediator.IQueryHandler<TQuery, TResult>
-Datapoint.Mediator.IQueryHandler<TQuery, TResult>.HandleAsync(TQuery query, System.Threading.CancellationToken ct = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<TResult>
+Datapoint.Mediator.IQueryHandler<TQuery, TResult>.HandleAsync(TQuery query, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<TResult>
 Datapoint.Mediator.IStreamQuery<TResult>
 Datapoint.Mediator.IStreamQueryHandler<TQuery, TResult>
-Datapoint.Mediator.IStreamQueryHandler<TQuery, TResult>.HandleAsync(TQuery query, System.Threading.CancellationToken ct = default(System.Threading.CancellationToken)) -> System.Collections.Generic.IAsyncEnumerable<TResult>!
+Datapoint.Mediator.IStreamQueryHandler<TQuery, TResult>.HandleAsync(TQuery query, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Collections.Generic.IAsyncEnumerable<TResult>!
 Datapoint.Mediator.ITransactionContext
 Datapoint.Mediator.ITransactionContext.Attempt.get -> int
 Datapoint.Mediator.ITransactionContext.AttemptId.get -> System.Guid
@@ -81,7 +83,6 @@ Datapoint.Mediator.InvalidActionArgumentsException.InvalidActionArgumentsExcepti
 Datapoint.Mediator.InvalidActionArgumentsException.InvalidActionArgumentsException(string! message) -> void
 Datapoint.Mediator.InvalidActionArgumentsException.InvalidActionArgumentsException(string! message, System.Exception! innerException) -> void
 Datapoint.Mediator.InvalidActionArgumentsException.InvalidActionArgumentsException(string! message, string? actionName, string? field, Datapoint.Mediator.InvalidActionArgumentReason? reason, System.Exception? innerException) -> void
-Datapoint.Mediator.InvalidActionArgumentsException.InvalidActionArgumentsException(string! message, string? actionName, string? field, System.Exception? innerException) -> void
 Datapoint.Mediator.InvalidActionArgumentsException.Reason.get -> Datapoint.Mediator.InvalidActionArgumentReason?
 Datapoint.Mediator.ModelContextProtocolAttribute
 Datapoint.Mediator.ModelContextProtocolAttribute.ModelContextProtocolAttribute() -> void

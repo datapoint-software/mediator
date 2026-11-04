@@ -15,4 +15,5 @@ const Datapoint.Mediator.CommandLine.ActionExitCodes.InvalidArguments = 2 -> int
 const Datapoint.Mediator.CommandLine.ActionExitCodes.InvalidCommandLine = 1 -> int
 const Datapoint.Mediator.CommandLine.ActionExitCodes.Success = 0 -> int
 const Datapoint.Mediator.CommandLine.ActionExitCodes.UnexpectedError = 70 -> int
-static System.CommandLine.MediatorCommandExtensions.AddMediatorActions<TCommand>(this TCommand! command, System.IServiceProvider! services, System.Action<Datapoint.Mediator.CommandLine.MediatorCommandLineOptions!>? configure = null) -> TCommand!
+static System.CommandLine.MediatorCommandExtensions.AddMediatorActions<TCommand>(this TCommand! command, System.IServiceProvider! services) -> TCommand!
+static System.CommandLine.MediatorCommandExtensions.AddMediatorActions<TCommand>(this TCommand! command, System.IServiceProvider! services, System.Action<Datapoint.Mediator.CommandLine.MediatorCommandLineOptions!>? configure) -> TCommand!

@@ -1,4 +1,1 @@
 #nullable enable
-static Microsoft.Extensions.DependencyInjection.MediatorMcpServerBuilderExtensions.WithMediatorActions(this Microsoft.Extensions.DependencyInjection.IMcpServerBuilder! builder) -> Microsoft.Extensions.DependencyInjection.IMcpServerBuilder!
-*REMOVED*static Microsoft.Extensions.DependencyInjection.MediatorMcpServerBuilderExtensions.WithMediatorActions(this Microsoft.Extensions.DependencyInjection.IMcpServerBuilder! builder, System.Action<Datapoint.Mediator.ModelContextProtocol.MediatorMcpOptions!>? configure = null) -> Microsoft.Extensions.DependencyInjection.IMcpServerBuilder!
-static Microsoft.Extensions.DependencyInjection.MediatorMcpServerBuilderExtensions.WithMediatorActions(this Microsoft.Extensions.DependencyInjection.IMcpServerBuilder! builder, System.Action<Datapoint.Mediator.ModelContextProtocol.MediatorMcpOptions!>? configure) -> Microsoft.Extensions.DependencyInjection.IMcpServerBuilder!

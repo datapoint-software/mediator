@@ -4,6 +4,75 @@ All notable changes to the Datapoint.Mediator packages are documented in this fi
 
 The format is based on [Keep a Changelog 1.1.0](https://keepachangelog.com/en/1.1.0/), and the packages follow [Semantic Versioning 2.0.0](https://semver.org/spec/v2.0.0.html).
 
+## [4.0.0-beta.7](https://github.com/datapoint-software/mediator/releases/tag/4.0.0-beta.7) - 2026-11-04
+
+### Fixed
+
+- **Breaking:** **model-context-protocol:** Check host-provided names on the dispatched arguments ([570eeb4](https://github.com/datapoint-software/mediator/commit/570eeb46043525d071387f0a566403f41dd46268))
+- **Breaking:** **entity-framework-core:** Discard what a failed read-only query changed ([4db1540](https://github.com/datapoint-software/mediator/commit/4db1540ea4fd4b195f4d7d4f8a7a6f0d6f596c5c))
+- **Breaking:** **command-line:** Keep every failure inside the adapter's error mapping ([4443893](https://github.com/datapoint-software/mediator/commit/4443893c56901173826cfbc1cd0a23c6a54865c7))
+- **Breaking:** **model-context-protocol:** Never rethrow an exception to the MCP SDK ([b85d4cd](https://github.com/datapoint-software/mediator/commit/b85d4cdb3d20ee6737002a4645186801c11d7e0f))
+- **Breaking:** **command-line:** Name the expected format in parse errors, not the value ([c956936](https://github.com/datapoint-software/mediator/commit/c9569360e5ffaed2a8bab9937f8c6e5adc7df77c))
+- **samples:** Bound invoice lists, and warn about roles taken from the environment ([dd65da2](https://github.com/datapoint-software/mediator/commit/dd65da2ccb022200aa15db63ab80ea73b4b657fb))
+- **Breaking:** Check an ActionDescriptor's kind against its action type ([990d9e2](https://github.com/datapoint-software/mediator/commit/990d9e2fce05cc9b509c1ea679cbdd0cbe23606b))
+- **Breaking:** **command-line:** Build options from the serializer's contract ([7c0ccc0](https://github.com/datapoint-software/mediator/commit/7c0ccc0a5e6517097b4b673fa22650d245a68844))
+- **Breaking:** Treat an exception as cancellation only when the caller cancelled ([cbb8a24](https://github.com/datapoint-software/mediator/commit/cbb8a2421da39039ae093e4821c636cf47ee1942))
+- **dependency-injection:** Name the type parameter in the generic Add* overloads' exceptions ([d601233](https://github.com/datapoint-software/mediator/commit/d60123336c708925765b6ca2ae7eef9ece4aacc3))
+- **aspnetcore:** Call MapException in the catch block, and ignore its exceptions ([ca0186c](https://github.com/datapoint-software/mediator/commit/ca0186c323c95de0e444822c72f04aa152dc85bb))
+- **authorization:** Keep a read-only copy of AuthorizationResult's decisions ([b9631c9](https://github.com/datapoint-software/mediator/commit/b9631c95cf2412966c765349f4b3ce8911d18c0c))
+- Dispose asynchronously with ConfigureAwait(false) ([36df67d](https://github.com/datapoint-software/mediator/commit/36df67d5057c059904620e702e242b29de9c272f))
+- Check the public behaviours' arguments for null ([2a5dca5](https://github.com/datapoint-software/mediator/commit/2a5dca5b325095a2eb655cb45bbc86089f8fea08))
+- Name the property, the valid values and the fix in error messages ([d907ea1](https://github.com/datapoint-software/mediator/commit/d907ea17fb1e09c8367d72bd9073996a71878914))
+- **abstractions:** Check the arguments of IBehavior's default methods ([e1b30f6](https://github.com/datapoint-software/mediator/commit/e1b30f6a8e56ae4edafe2a2a912ef9bb298be2f3))
+
+### Documentation
+
+- Add a release-candidate stage before 4.0.0 ([3874d71](https://github.com/datapoint-software/mediator/commit/3874d71c5fe7bbf1031bba622dc64ad6833a1781))
+- Add coding guidelines based on Microsoft's .NET guidance ([b33021b](https://github.com/datapoint-software/mediator/commit/b33021bc735e401447afcf9ee70deed78ffbb5af))
+- Complete the exception lists, and drop the hidden-action wording ([4f7d5cd](https://github.com/datapoint-software/mediator/commit/4f7d5cdf6b2acd30a2350fc7eb2542831937b03f))
+- Record the catch-all hooks as a deviation, and the samples' and AsyncLocal exceptions ([c4579c3](https://github.com/datapoint-software/mediator/commit/c4579c3969d0842db9e2a93a8f0f956b0221906c))
+
+### Refactor
+
+- **Breaking:** Name CancellationToken parameters cancellationToken ([730a7f1](https://github.com/datapoint-software/mediator/commit/730a7f15de271bd3b903f476c057010290b0f074))
+- **Breaking:** **authorization:** Rename IAuthorizationContext.For to GetResultFor ([91c6248](https://github.com/datapoint-software/mediator/commit/91c6248de6435cec614fb1a601cfaf73e6dd1ee3))
+- **Breaking:** Rename the Mediator class to ServiceProviderMediator ([2f16d03](https://github.com/datapoint-software/mediator/commit/2f16d0396863e99eeacb54675cd4009772edf3f0))
+- **Breaking:** Replace the dispatcher's optional options with overloads ([5e77240](https://github.com/datapoint-software/mediator/commit/5e772404525affc3a19e0eccdfb250c75afbee27))
+- **Breaking:** Replace optional parameters with overloads ([8d35ba1](https://github.com/datapoint-software/mediator/commit/8d35ba127cb94f9e2ceaae3ab5f5cb2e5f632508))
+- **Breaking:** Remove InvalidActionArgumentsException's four-argument constructor ([20f28ee](https://github.com/datapoint-software/mediator/commit/20f28eeb47547616e80d457a4a9f969221b5d357))
+
+### Migrating from 4.0.0-beta.6
+
+These changes are breaking: review each one before adopting `4.0.0-beta.7`. Most are renames that the compiler finds. Binaries compiled against `4.0.0-beta.6` must be rebuilt, because several signatures changed.
+
+- **Renames** ([ADR 0039](https://github.com/datapoint-software/mediator/blob/main/docs/adr/0039-public-names-follow-microsofts-rules.md)):
+
+  | Before | After |
+  |---|---|
+  | `ct:` as a named argument | `cancellationToken:` |
+  | `Mediator` | `ServiceProviderMediator` |
+  | `authorizationContext.For(action)` | `authorizationContext.GetResultFor(action)` |
+
+- **Optional parameters became overloads.** Calls that skipped an argument by naming the next one no longer compile: pass the arguments positionally.
+
+  | Before | After |
+  |---|---|
+  | `AuthorizationDecision.Deny(exception: e)` | `AuthorizationDecision.Deny(null, e)` |
+  | `AddHandler<T>(lifetime: null)` | `AddHandler<T>()` |
+  | `new InvalidActionArgumentsException(message, name, field, inner)` | `new InvalidActionArgumentsException(message, name, field, null, inner)` |
+
+  An `IActionDispatcher` decorator keeps compiling: the overloads without options are default interface methods.
+- **Cancellation:** an exception counts as cancellation only when the caller's token is cancelled. A handler's own `OperationCanceledException`, such as a timeout, now goes to `MapException` in ASP.NET Core, exits with code 70 in the CLI, and is an unexpected error in MCP.
+- **Read-only queries:** changes a failed query made are discarded, so a later command in the same scope no longer saves them.
+- **CLI:**
+  - Options come from the serializer's contract: properties marked `[JsonIgnore]`, and read-only properties, no longer get an option.
+  - Every failure, including one while preparing the call, exits with code 70 (or its mapped code) instead of 1, and prints no exception details.
+  - A parse error names the option and the expected format, not the value ([ADR 0038](https://github.com/datapoint-software/mediator/blob/main/docs/adr/0038-cli-parse-errors-name-the-expected-format.md)).
+- **MCP:**
+  - The tools never rethrow to the SDK. An unknown error reads "An unexpected error occurred." ([ADR 0037](https://github.com/datapoint-software/mediator/blob/main/docs/adr/0037-mcp-never-rethrows.md)).
+  - A key that the app's `DictionaryKeyPolicy` turns into a host-provided property's name is refused.
+- **Custom `IActionCatalog`:** an `ActionDescriptor` whose kind doesn't match its action type now fails when it's created, instead of at its first dispatch.
+
 ## [4.0.0-beta.6](https://github.com/datapoint-software/mediator/releases/tag/4.0.0-beta.6) - 2026-11-03
 
 ### Added
