@@ -7,7 +7,7 @@ namespace Datapoint.Mediator.Authorization;
 /// <para>
 /// Inject it into handlers and behaviours that run after <see cref="AuthorizationBehavior"/>, to read the details of the
 /// decision that allowed the action, such as the role and constraints that apply, instead of evaluating the rules again.
-/// Handlers should use <see cref="For"/> with the request they received, so they never read a decision made for another
+/// Handlers should use <see cref="GetResultFor"/> with the request they received, so they never read a decision made for another
 /// request.
 /// </para>
 /// <para>
@@ -33,5 +33,5 @@ public interface IAuthorizationContext
     /// replaces the request with a new instance after authorization gets <see langword="null"/>, so a handler that
     /// requires a decision fails closed.
     /// </returns>
-    AuthorizationResult? For(object action);
+    AuthorizationResult? GetResultFor(object action);
 }

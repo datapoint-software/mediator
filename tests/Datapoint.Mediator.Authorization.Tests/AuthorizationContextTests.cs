@@ -182,14 +182,14 @@ public sealed class AuthorizationContextTests
 
         await _behavior.HandleAsync(command, _ =>
         {
-            same = _context.For(command);
-            equalButOther = _context.For(new DeleteInvoice(1));   // equal record, different instance
+            same = _context.GetResultFor(command);
+            equalButOther = _context.GetResultFor(new DeleteInvoice(1));   // equal record, different instance
             return default;
         }, Ct);
 
         Assert.Same(command, same!.Action);
         Assert.Null(equalButOther);
-        Assert.Null(_context.For(command));
+        Assert.Null(_context.GetResultFor(command));
     }
 
     private static string? Details(AuthorizationResult? result) =>

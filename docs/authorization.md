@@ -114,9 +114,9 @@ public sealed class DownloadItemHandler(IAuthorizationContext authorization, Fil
 {
     public async ValueTask<FileDownload> HandleAsync(DownloadItem query, CancellationToken cancellationToken = default)
     {
-        // For(query) returns the decision only if it was made for this exact request.
+        // GetResultFor(query) returns the decision only if it was made for this exact request.
         // Fail closed: without a grant, don't guess the constraints.
-        if (authorization.For(query)?.TryGetDetails<ReadGrant>(out var grant) != true)
+        if (authorization.GetResultFor(query)?.TryGetDetails<ReadGrant>(out var grant) != true)
         {
             throw new InvalidOperationException("DownloadItem was not authorized with a ReadGrant.");
         }
@@ -127,7 +127,7 @@ public sealed class DownloadItemHandler(IAuthorizationContext authorization, Fil
 ```
 
 - `For(request)` returns an `AuthorizationResult` only when the current decision was made for that exact instance (reference equality), and `null` otherwise. The result has the `Action`, `IsAllowed`, the `Decisions` of each authorizer (its type and its decision), and `TryGetDetails<T>`, which returns the first details of type `T`.
-- `Current` returns the current decision without that check. Behaviours registered after authorization can use it, but handlers should use `For`.
+- `Current` returns the current decision without that check. Behaviours registered after authorization can use it, but handlers should use `GetResultFor`.
 - The decision flows with the call, like `IHttpContextAccessor`: a command sent from a handler sees its own decision, then the outer one again; parallel dispatches see their own.
 - Message handlers aren't authorized, so they see `null`, and so do `[AllowAnonymousAccess]` actions.
 - A behaviour that replaces the request with a new instance between authorization and the handler, for example to normalise it, makes `For(newInstance)` return `null`, so a handler that needs a decision fails. **That's intended:** the new instance wasn't authorized. Normalise before authorization instead, or change the instance in place.

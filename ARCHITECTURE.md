@@ -91,7 +91,7 @@ Behaviours that read attributes, such as `[AllowAnonymousAccess]` or `[NonTransa
 
 `AuthorizationBehavior` gets the user from `IPrincipalAccessor`, then runs the action's authorizers through a cached `ActionAuthorization<TAction>`, stopping at the first denial. The combined `AuthorizationResult` goes to every `IAuthorizationObserver`, then either an exception is thrown or the result is stored in `AuthorizationContext`'s static `AsyncLocal` before `next` runs ([ADR 0025](docs/adr/0025-decisions-bound-to-their-request.md)):
 - The value is set inside an `async` method, so it flows into `next` and the caller gets its own value back when the method returns. Don't set it from a non-`async` method.
-- Anonymous actions and messages clear it, so they never see an outer decision. Handlers read it with `For(action)`, which checks that the decision was made for that instance.
+- Anonymous actions and messages clear it, so they never see an outer decision. Handlers read it with `GetResultFor(action)`, which checks that the decision was made for that instance.
 - For stream queries, the behaviour enumerates `next` itself and sets the value before every `MoveNextAsync`, because an async iterator runs each step in its consumer's context.
 - Decision details never go into exception messages.
 
