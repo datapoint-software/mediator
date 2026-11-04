@@ -25,7 +25,9 @@ internal static class Authentication
     {
         var accessor = serviceProvider.GetService(typeof(IPrincipalAccessor)) as IPrincipalAccessor
             ?? throw new InvalidOperationException(
-                $"No '{typeof(IPrincipalAccessor)}' is registered. Register one that returns the current user.");
+                $"No '{typeof(IPrincipalAccessor)}' is registered, so the current user is unknown. Register one with " +
+                "AddHttpPrincipalAccessor in ASP.NET Core, AddFixedPrincipalAccessor in a CLI or a local MCP server, or " +
+                "your own implementation.");
 
         var principal = accessor.Principal;
 

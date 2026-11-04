@@ -49,9 +49,10 @@ public sealed class AuthorizationBehaviorTests
     {
         var behavior = new AuthorizationBehavior(new ServiceCollection().BuildServiceProvider());
 
-        await Assert.ThrowsAsync<InvalidOperationException>(
+        var exception = await Assert.ThrowsAsync<InvalidOperationException>(
             async () => await behavior.HandleAsync(new DeleteInvoice(1), Next, TestContext.Current.CancellationToken));
 
+        Assert.Contains("AddHttpPrincipalAccessor", exception.Message, StringComparison.Ordinal);
         Assert.False(_nextCalled);
     }
 

@@ -240,6 +240,17 @@ public sealed class TransactionOptionsTests : IAsyncLifetime
     }
 
     [Fact]
+    public void Options_UndefinedValue_NamesThePropertyAndTheValidValues()
+    {
+        var exception = Assert.Throws<ArgumentOutOfRangeException>(() => new TransactionBehaviorOptions { Queries = (QueryTransactions)7 });
+
+        Assert.StartsWith(
+            $"TransactionBehaviorOptions.Queries must be one of {string.Join(", ", Enum.GetNames<QueryTransactions>())}.",
+            exception.Message,
+            StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void Options_RejectUndefinedValues()
     {
         var options = new TransactionBehaviorOptions();

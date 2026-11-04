@@ -24,7 +24,9 @@ public sealed class RequireTransactionTests
     [Fact]
     public void Options_RejectUndefinedValues()
     {
-        Assert.Throws<ArgumentOutOfRangeException>(() => new AuthorizationBehaviorOptions { RequireTransaction = (TransactionRequirement)9 });
+        var exception = Assert.Throws<ArgumentOutOfRangeException>(() => new AuthorizationBehaviorOptions { RequireTransaction = (TransactionRequirement)9 });
+
+        Assert.StartsWith("AuthorizationBehaviorOptions.RequireTransaction must be one of None, ", exception.Message, StringComparison.Ordinal);
         Assert.Equal(TransactionRequirement.None, new AuthorizationBehaviorOptions().RequireTransaction);
     }
 

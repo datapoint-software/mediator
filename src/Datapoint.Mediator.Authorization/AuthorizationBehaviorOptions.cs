@@ -25,7 +25,10 @@ public sealed class AuthorizationBehaviorOptions
         get => _requireTransaction;
         set => _requireTransaction = Enum.IsDefined(value)
             ? value
-            : throw new ArgumentOutOfRangeException(nameof(value), value, "The value is not defined.");
+            : throw new ArgumentOutOfRangeException(
+                nameof(value),
+                value,
+                $"AuthorizationBehaviorOptions.RequireTransaction must be one of {string.Join(", ", Enum.GetNames<TransactionRequirement>())}.");
     }
 
     internal AuthorizationBehaviorOptions Copy() => (AuthorizationBehaviorOptions)MemberwiseClone();

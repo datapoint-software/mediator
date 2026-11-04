@@ -1,5 +1,6 @@
 using System;
 using System.Data;
+using System.Runtime.CompilerServices;
 
 namespace Datapoint.Mediator.EntityFrameworkCore;
 
@@ -83,9 +84,15 @@ public sealed class TransactionBehaviorOptions
     // A copy, so changing these options after they're passed to the behaviour has no effect.
     internal TransactionBehaviorOptions Copy() => (TransactionBehaviorOptions)MemberwiseClone();
 
-    private static T Defined<T>(T value)
+    // property is the setter's property, which the compiler fills in, so the message names it.
+    private static T Defined<T>(T value, [CallerMemberName] string property = "")
         where T : struct, Enum =>
-        Enum.IsDefined(value) ? value : throw new ArgumentOutOfRangeException(nameof(value), value, "The value is not defined.");
+        Enum.IsDefined(value)
+            ? value
+            : throw new ArgumentOutOfRangeException(
+                nameof(value),
+                value,
+                $"TransactionBehaviorOptions.{property} must be one of {string.Join(", ", Enum.GetNames<T>())}.");
 }
 
 /// <summary>
