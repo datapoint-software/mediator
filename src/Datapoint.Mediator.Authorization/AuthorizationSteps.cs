@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 namespace Datapoint.Mediator.Authorization;
 
 // Shared by AuthenticationBehavior and AuthorizationBehavior: anonymous actions, the current user, and observers.
-internal static class Authentication
+internal static class AuthorizationSteps
 {
     private static readonly ConcurrentDictionary<Type, bool> AnonymousActions = new();
 

@@ -51,7 +51,7 @@ public sealed class AuthenticationBehavior : IBehavior
         ArgumentNullException.ThrowIfNull(command);
         ArgumentNullException.ThrowIfNull(next);
 
-        return Authentication.IsAnonymous(command.GetType()) ? next(cancellationToken) : AuthenticateThenHandleAsync(command, next, cancellationToken);
+        return AuthorizationSteps.IsAnonymous(command.GetType()) ? next(cancellationToken) : AuthenticateThenHandleAsync(command, next, cancellationToken);
     }
 
     /// <inheritdoc/>
@@ -70,7 +70,7 @@ public sealed class AuthenticationBehavior : IBehavior
         ArgumentNullException.ThrowIfNull(command);
         ArgumentNullException.ThrowIfNull(next);
 
-        return Authentication.IsAnonymous(command.GetType()) ? next(cancellationToken) : AuthenticateThenHandleAsync(command, next, cancellationToken);
+        return AuthorizationSteps.IsAnonymous(command.GetType()) ? next(cancellationToken) : AuthenticateThenHandleAsync(command, next, cancellationToken);
     }
 
     /// <inheritdoc/>
@@ -89,7 +89,7 @@ public sealed class AuthenticationBehavior : IBehavior
         ArgumentNullException.ThrowIfNull(query);
         ArgumentNullException.ThrowIfNull(next);
 
-        return Authentication.IsAnonymous(query.GetType()) ? next(cancellationToken) : AuthenticateThenHandleAsync(query, next, cancellationToken);
+        return AuthorizationSteps.IsAnonymous(query.GetType()) ? next(cancellationToken) : AuthenticateThenHandleAsync(query, next, cancellationToken);
     }
 
     /// <inheritdoc/>
@@ -111,7 +111,7 @@ public sealed class AuthenticationBehavior : IBehavior
         ArgumentNullException.ThrowIfNull(query);
         ArgumentNullException.ThrowIfNull(next);
 
-        return Authentication.IsAnonymous(query.GetType()) ? next(cancellationToken) : AuthenticateThenStreamAsync(query, next, cancellationToken);
+        return AuthorizationSteps.IsAnonymous(query.GetType()) ? next(cancellationToken) : AuthenticateThenStreamAsync(query, next, cancellationToken);
     }
 
     private async ValueTask AuthenticateThenHandleAsync(object action, Func<CancellationToken, ValueTask> next, CancellationToken cancellationToken)
@@ -143,6 +143,6 @@ public sealed class AuthenticationBehavior : IBehavior
     }
 
     private async ValueTask AuthenticateAsync(object action, CancellationToken cancellationToken) =>
-        await Authentication.RequirePrincipalAsync(_serviceProvider, action, Authentication.GetObservers(_serviceProvider), cancellationToken)
+        await AuthorizationSteps.RequirePrincipalAsync(_serviceProvider, action, AuthorizationSteps.GetObservers(_serviceProvider), cancellationToken)
             .ConfigureAwait(false);
 }

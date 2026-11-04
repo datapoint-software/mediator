@@ -74,7 +74,7 @@ internal sealed partial class ActionTool : McpServerTool
         // Checked before the dispatcher is resolved, so a decorator of the dispatcher can still set the value.
         if (HostProvidedNames.FindIn(_hostProvided, arguments) is { } name)
         {
-            return Error(AdapterMessages.HostProvided(name));
+            return CreateErrorResult(AdapterMessages.HostProvided(name));
         }
 
         var dispatcher = services.GetRequiredService<IActionDispatcher>();
@@ -103,7 +103,7 @@ internal sealed partial class ActionTool : McpServerTool
         }
         catch (Exception exception) when (!AdapterErrors.IsCallerCancellation(exception, cancellationToken))
         {
-            return ErrorResult(exception);
+            return CreateErrorResult(exception);
         }
     }
 
@@ -161,17 +161,17 @@ internal sealed partial class ActionTool : McpServerTool
     // Errors are returned as results, not thrown, so the MCP SDK doesn't prefix their text. Content from the app's hook
     // is sent both as structured content and as its JSON text, as MCP recommends for clients that only read text.
     // Nothing is ever rethrown, because the SDK sends an McpException's message to the agent.
-    private CallToolResult ErrorResult(Exception exception)
+    private CallToolResult CreateErrorResult(Exception exception)
     {
         if (CallHook(() => _options.ErrorContent?.Invoke(exception)) is { } content)
         {
             // Content that isn't a JSON object is a bug in the hook, not something to show the agent.
             return Serialize(content) is { ValueKind: JsonValueKind.Object } structured
-                ? Error(structured.GetRawText(), structured)
-                : Error(AdapterErrors.UnexpectedError);
+                ? CreateErrorResult(structured.GetRawText(), structured)
+                : CreateErrorResult(AdapterErrors.UnexpectedError);
         }
 
-        return Error(SafeMessage(exception) ?? AdapterErrors.UnexpectedError);
+        return CreateErrorResult(SafeMessage(exception) ?? AdapterErrors.UnexpectedError);
     }
 
     // An exception from the app's hook is treated as if the hook had returned null, because nothing about it is safe to
@@ -201,7 +201,7 @@ internal sealed partial class ActionTool : McpServerTool
         }
     }
 
-    private static CallToolResult Error(string text, JsonElement? structured = null) =>
+    private static CallToolResult CreateErrorResult(string text, JsonElement? structured = null) =>
         new()
         {
             IsError = true,

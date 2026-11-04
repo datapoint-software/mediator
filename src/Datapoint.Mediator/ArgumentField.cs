@@ -126,7 +126,7 @@ internal static class ArgumentField
     {
         foreach (var property in typeInfo.Properties)
         {
-            if (string.Equals(property.Name, name, Comparison(typeInfo)))
+            if (string.Equals(property.Name, name, GetComparison(typeInfo)))
             {
                 return property;
             }
@@ -137,10 +137,10 @@ internal static class ArgumentField
 
     private static JsonPropertyInfo? FindMissingRequired(JsonTypeInfo typeInfo, JsonElement json) =>
         typeInfo.Properties.FirstOrDefault(property => property.IsRequired
-            && !json.EnumerateObject().Any(member => string.Equals(member.Name, property.Name, Comparison(typeInfo))));
+            && !json.EnumerateObject().Any(member => string.Equals(member.Name, property.Name, GetComparison(typeInfo))));
 
     // Matches property names the way the serializer binds them.
-    private static StringComparison Comparison(JsonTypeInfo typeInfo) =>
+    private static StringComparison GetComparison(JsonTypeInfo typeInfo) =>
         typeInfo.Options.PropertyNameCaseInsensitive ? StringComparison.OrdinalIgnoreCase : StringComparison.Ordinal;
 
     // Parses the ".name", "['name']" and "[0]" segments that follow the path's "$". Parsing stops at anything else,

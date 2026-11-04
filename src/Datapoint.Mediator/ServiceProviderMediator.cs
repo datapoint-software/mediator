@@ -80,7 +80,7 @@ public sealed class ServiceProviderMediator : IMediator
         ArgumentNullException.ThrowIfNull(query);
         var dispatcher = StreamQueryDispatcher<TResult>.Get(query.GetType());
         return MediatorTelemetry.IsEnabled
-            ? StreamObserved(dispatcher, query, cancellationToken)
+            ? StreamObservedAsync(dispatcher, query, cancellationToken)
             : dispatcher.Dispatch(query, _serviceProvider, cancellationToken);
     }
 
@@ -163,7 +163,7 @@ public sealed class ServiceProviderMediator : IMediator
     }
 
     // The handler is still resolved here, so a missing handler fails immediately, as it does when unobserved.
-    private IAsyncEnumerable<TResult> StreamObserved<TResult>(
+    private IAsyncEnumerable<TResult> StreamObservedAsync<TResult>(
         StreamQueryDispatcher<TResult> dispatcher,
         IStreamQuery<TResult> query,
         CancellationToken cancellationToken)
@@ -181,11 +181,11 @@ public sealed class ServiceProviderMediator : IMediator
             throw;
         }
 
-        return StreamObservedAsync(results, query.GetType(), cancellationToken);
+        return EnumerateObservedAsync(results, query.GetType(), cancellationToken);
     }
 
     // The span covers the enumeration, from the first result requested to the last one produced.
-    private static async IAsyncEnumerable<TResult> StreamObservedAsync<TResult>(
+    private static async IAsyncEnumerable<TResult> EnumerateObservedAsync<TResult>(
         IAsyncEnumerable<TResult> results,
         Type queryType,
         [EnumeratorCancellation] CancellationToken cancellationToken)

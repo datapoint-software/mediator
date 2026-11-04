@@ -33,7 +33,7 @@ namespace Datapoint.Mediator.FluentValidation;
 /// </remarks>
 public sealed class ValidationBehavior : IBehavior
 {
-    private static readonly ConcurrentDictionary<Type, Type> ValidatorsTypes = new();
+    private static readonly ConcurrentDictionary<Type, Type> ValidatorEnumerableTypes = new();
 
     private readonly IServiceProvider _serviceProvider;
 
@@ -115,11 +115,11 @@ public sealed class ValidationBehavior : IBehavior
 
     private IValidator[] GetValidators(object action)
     {
-        var validatorsType = ValidatorsTypes.GetOrAdd(
+        var validatorEnumerableType = ValidatorEnumerableTypes.GetOrAdd(
             action.GetType(),
             static type => typeof(IEnumerable<>).MakeGenericType(typeof(IValidator<>).MakeGenericType(type)));
 
-        return Services.GetAll<IValidator>(_serviceProvider, validatorsType);
+        return Services.GetAll<IValidator>(_serviceProvider, validatorEnumerableType);
     }
 
     private static async ValueTask ValidateThenHandleAsync(

@@ -205,7 +205,7 @@ public sealed class AuthorizationBehavior : IBehavior
         return HandleAnonymousAsync(next, cancellationToken);
     }
 
-    private static bool IsAnonymous(object action) => Authentication.IsAnonymous(action.GetType());
+    private static bool IsAnonymous(object action) => AuthorizationSteps.IsAnonymous(action.GetType());
 
     // An anonymous action or a message, sent from an authorized action, must not see its decision.
     private static ValueTask HandleAnonymousAsync(Func<CancellationToken, ValueTask> next, CancellationToken cancellationToken) =>
@@ -274,8 +274,8 @@ public sealed class AuthorizationBehavior : IBehavior
     {
         RequireTransaction(action, isCommand);
 
-        var observers = Authentication.GetObservers(_serviceProvider);
-        var principal = await Authentication.RequirePrincipalAsync(_serviceProvider, action, observers, cancellationToken).ConfigureAwait(false);
+        var observers = AuthorizationSteps.GetObservers(_serviceProvider);
+        var principal = await AuthorizationSteps.RequirePrincipalAsync(_serviceProvider, action, observers, cancellationToken).ConfigureAwait(false);
         var decisions = new List<AuthorizerDecision>();
 
         try
@@ -288,7 +288,7 @@ public sealed class AuthorizationBehavior : IBehavior
         {
             // The authorizer's exception propagates unchanged, so a bug isn't hidden as a denial.
             var failed = new AuthorizationResult(action, decisions, failed: true);
-            await Authentication.ObserveAsync(observers, action, principal, AuthorizationOutcome.Failed, failed, exception, cancellationToken)
+            await AuthorizationSteps.ObserveAsync(observers, action, principal, AuthorizationOutcome.Failed, failed, exception, cancellationToken)
                 .ConfigureAwait(false);
 
             throw;
@@ -296,7 +296,7 @@ public sealed class AuthorizationBehavior : IBehavior
 
         var result = new AuthorizationResult(action, decisions);
         var outcome = result.IsAllowed ? AuthorizationOutcome.Allowed : AuthorizationOutcome.Denied;
-        await Authentication.ObserveAsync(observers, action, principal, outcome, result, null, cancellationToken).ConfigureAwait(false);
+        await AuthorizationSteps.ObserveAsync(observers, action, principal, outcome, result, null, cancellationToken).ConfigureAwait(false);
 
         // Fail closed: an action that nobody wrote a rule for is not allowed. The message never includes the details.
         if (decisions.Count == 0)

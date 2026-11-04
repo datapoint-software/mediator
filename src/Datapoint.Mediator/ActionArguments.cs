@@ -69,14 +69,14 @@ public static class ActionArguments
         catch (JsonException exception)
         {
             var field = ArgumentField.Find(exception, arguments, options.GetTypeInfo(action.ActionType), out var reason);
-            throw new InvalidActionArgumentsException(Message(action.Name, field, reason), action.Name, field, reason, exception);
+            throw new InvalidActionArgumentsException(DescribeFailure(action.Name, field, reason), action.Name, field, reason, exception);
         }
 
         return result
             ?? throw new InvalidActionArgumentsException($"The arguments for action '{action.Name}' are missing.", action.Name, null, null, null);
     }
 
-    private static string Message(string actionName, string? field, InvalidActionArgumentReason? reason)
+    private static string DescribeFailure(string actionName, string? field, InvalidActionArgumentReason? reason)
     {
         if (field is null)
         {

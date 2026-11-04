@@ -109,24 +109,24 @@ internal sealed class ActionCommand
         var memberName = (property.AttributeProvider as MemberInfo)?.Name ?? property.Name;
         var nullable = property.IsGetNullable || property.IsSetNullable || parameter?.IsNullable == true;
         var required = !nullable && parameter?.HasDefaultValue != true;
-        var description = Description(property.AttributeProvider) ?? Description(parameter?.AttributeProvider);
+        var description = GetDescription(property.AttributeProvider) ?? GetDescription(parameter?.AttributeProvider);
 
         // Never null: Activator.CreateInstance returns null only for Nullable<T>, and Option<T> is a class.
         var option = (Option)Activator.CreateInstance(
             typeof(Option<>).MakeGenericType(property.PropertyType),
             $"--{JsonNamingPolicy.KebabCaseLower.ConvertName(memberName)}",
             Array.Empty<string>())!;
-        option.Description = required ? RequiredDescription(description) : description;
+        option.Description = required ? DescribeRequired(description) : description;
         UseInvariantCulture(option, property.PropertyType);
 
         _properties.Add((property, option, required));
         return option;
     }
 
-    private static string RequiredDescription(string? description) =>
+    private static string DescribeRequired(string? description) =>
         description is null ? "(required)" : $"{description} (required)";
 
-    private static string? Description(ICustomAttributeProvider? provider) =>
+    private static string? GetDescription(ICustomAttributeProvider? provider) =>
         provider?.GetCustomAttributes(typeof(DescriptionAttribute), inherit: true) is [DescriptionAttribute attribute, ..]
             ? attribute.Description
             : null;
@@ -150,11 +150,11 @@ internal sealed class ActionCommand
         var createParser = isNumber ? CreateNumberParserMethod : CreateParserMethod;
         var parser = createParser.MakeGenericMethod(valueType).Invoke(null, null);
         var useParser = underlyingType is null ? UseParserMethod : UseNullableParserMethod;
-        useParser.MakeGenericMethod(valueType).Invoke(null, [option, parser, InvalidValueMessage(option.Name, valueType, isNumber)]);
+        useParser.MakeGenericMethod(valueType).Invoke(null, [option, parser, DescribeInvalidValue(option.Name, valueType, isNumber)]);
     }
 
     // Says what the option expects, never the value given or a .NET type name (ADR 0038).
-    private static string InvalidValueMessage(string optionName, Type valueType, bool isNumber) =>
+    private static string DescribeInvalidValue(string optionName, Type valueType, bool isNumber) =>
         !isNumber
             ? $"Option '{optionName}' has a value that isn't valid. Write dates and times in ISO 8601, such as 2026-11-01."
             : Implements(valueType, typeof(IFloatingPoint<>))
