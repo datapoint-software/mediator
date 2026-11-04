@@ -26,7 +26,7 @@ public sealed record GetInvoice(
 [ModelContextProtocol]
 [Action("invoices.list", "Lists invoices, newest first.")]
 public sealed record ListInvoices(
-    [property: Description("The maximum number of invoices to return.")] int Max = 50) : IStreamQuery<InvoiceView>;
+    [property: Description("The maximum number of invoices to return, from 1 to 100.")] int Max = 50) : IStreamQuery<InvoiceView>;
 
 [Api]
 [CommandLine]

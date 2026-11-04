@@ -16,7 +16,11 @@ await app.Services.EnsureInvoicingDatabaseAsync();
 
 app.UseAuthentication();
 app.UseAuthorization();
-app.MapOpenApi();   // GET /openapi/v1.json describes every action
+if (app.Environment.IsDevelopment())
+{
+    // GET /openapi/v1.json describes every action. It's outside the authorized group, so it's only mapped in development.
+    app.MapOpenApi();
+}
 
 // One POST endpoint per action: /api/invoices/create, /api/invoices/get, /api/invoices/list, /api/invoices/cancel.
 app.MapMediatorActions("/api", o => o.MapException = e => e switch

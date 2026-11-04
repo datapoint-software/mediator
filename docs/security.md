@@ -14,7 +14,7 @@ Every security consideration in this manual, as one checklist. Each item links t
 
 ## Errors and data exposure
 
-- [ ] **Validation errors are reported without `AttemptedValue`,** only the property name and message. → [Validation](validation.md#reporting-errors-safely)
+- [ ] **Validation errors are reported without `AttemptedValue`,** only the property name and message, and rules whose default message repeats the value, such as `InclusiveBetween`, have their own message. → [Validation](validation.md#reporting-errors-safely)
 - [ ] **Error hooks (`MapException`, `ErrorMessage`) return only text you wrote,** never an exception's `Message`, even for your own exceptions: it's for logs, and a message that later gains an id or a value would reach callers without anyone changing the hook.
 - [ ] **Hooks report invalid arguments from `Field` and `Reason`,** never from `InvalidActionArgumentsException`'s message or `InnerException.Message`, which can contain .NET type names and property names the caller chose. → [Actions](actions.md#invalid-arguments)
 - [ ] **`CustomizeProblemDetails` adds no input or exception details,** because it also runs on Mediator's own `400`, `401` and `403` responses. → [ASP.NET Core](hosts/aspnetcore.md#adding-fields-to-mediators-responses)

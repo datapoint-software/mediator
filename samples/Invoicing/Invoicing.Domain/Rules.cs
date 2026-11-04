@@ -13,6 +13,16 @@ public sealed class CreateInvoiceValidator : AbstractValidator<CreateInvoice>
     }
 }
 
+// Without an upper bound, any caller could read the whole table. Without a lower one, SQLite reads LIMIT -1 as "no limit".
+public sealed class ListInvoicesValidator : AbstractValidator<ListInvoices>
+{
+    public ListInvoicesValidator()
+    {
+        // FluentValidation's default message for InclusiveBetween repeats the value the caller sent, so it's replaced.
+        RuleFor(q => q.Max).InclusiveBetween(1, 100).WithMessage("'Max' must be between 1 and 100.");
+    }
+}
+
 public sealed class CancelInvoiceValidator : AbstractValidator<CancelInvoice>
 {
     public CancelInvoiceValidator()

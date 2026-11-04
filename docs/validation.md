@@ -42,6 +42,12 @@ services.AddMediator(o => o
 ## Reporting errors safely
 
 > **Security:** each failure's `AttemptedValue` is whatever the caller sent, which can be a password, personal data or an attack payload. Never return it, and don't log validation exceptions as they are. Report only `PropertyName` and `ErrorMessage`.
+>
+> Some default messages contain the value too: `InclusiveBetween` and `ExclusiveBetween` end with "You entered {PropertyValue}.", and translations may add it elsewhere. Give those rules your own message with `WithMessage`, and never use `{PropertyValue}` in one:
+>
+> ```csharp
+> RuleFor(q => q.Max).InclusiveBetween(1, 100).WithMessage("'Max' must be between 1 and 100.");
+> ```
 
 Each host has a hook for this:
 
