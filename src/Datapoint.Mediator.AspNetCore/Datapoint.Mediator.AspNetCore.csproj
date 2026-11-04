@@ -5,6 +5,11 @@
     <PackageTags>$(PackageTags);aspnetcore;minimal-api;openapi</PackageTags>
   </PropertyGroup>
 
+  <!-- Shared with the other host adapters as source: see src/Shared. -->
+  <ItemGroup>
+    <Compile Include="..\Shared\AdapterErrors.cs" Link="Shared\AdapterErrors.cs" />
+  </ItemGroup>
+
   <ItemGroup>
     <FrameworkReference Include="Microsoft.AspNetCore.App" />
   </ItemGroup>

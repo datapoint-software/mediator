@@ -5,6 +5,13 @@
     <PackageTags>$(PackageTags);cli;command-line;system-commandline</PackageTags>
   </PropertyGroup>
 
+  <!-- Shared with the other host adapters as source: see src/Shared. -->
+  <ItemGroup>
+    <Compile Include="..\Shared\AdapterErrors.cs" Link="Shared\AdapterErrors.cs" />
+    <Compile Include="..\Shared\AdapterMessages.cs" Link="Shared\AdapterMessages.cs" />
+    <Compile Include="..\Shared\HostProvidedNames.cs" Link="Shared\HostProvidedNames.cs" />
+  </ItemGroup>
+
   <ItemGroup>
     <ProjectReference Include="..\Datapoint.Mediator.Abstractions\Datapoint.Mediator.Abstractions.csproj" />
   </ItemGroup>

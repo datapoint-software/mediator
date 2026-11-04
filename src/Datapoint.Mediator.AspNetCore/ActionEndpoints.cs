@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Text.Json;
-using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Builder;
@@ -14,7 +13,7 @@ using Microsoft.Extensions.Options;
 namespace Datapoint.Mediator.AspNetCore;
 
 // Handles a request for one action: reads the JSON body, dispatches the action by name, and writes the result.
-internal sealed partial class ActionEndpoints(ActionDescriptor action, MediatorEndpointOptions options)
+internal sealed class ActionEndpoints(ActionDescriptor action, MediatorEndpointOptions options)
 {
     public async Task<IResult> HandleAsync(HttpContext context)
     {
@@ -59,7 +58,7 @@ internal sealed partial class ActionEndpoints(ActionDescriptor action, MediatorE
 
             return action.Kind == ActionKind.Command ? Results.NoContent() : Results.Json(result, serializerOptions);
         }
-        catch (Exception exception) when (!IsCallerCancellation(exception, cancellationToken))
+        catch (Exception exception) when (!AdapterErrors.IsCallerCancellation(exception, cancellationToken))
         {
             // Mapped in the catch block rather than in the filter, so the hook runs after the action's finally blocks,
             // and an exception it throws isn't silently swallowed by the filter.
@@ -114,21 +113,16 @@ internal sealed partial class ActionEndpoints(ActionDescriptor action, MediatorE
         }
     }
 
-    // Only the caller's own cancellation is left to ASP.NET Core as one. A handler's timeout also throws an
-    // OperationCanceledException, and is an error like any other.
-    private static bool IsCallerCancellation(Exception exception, CancellationToken cancellationToken) =>
-        exception is OperationCanceledException && cancellationToken.IsCancellationRequested;
-
     // Our own exceptions get fixed, safe responses. Invalid arguments go to the app's hook first, so it can report them
     // with its own codes. Anything else goes to the hook, and is otherwise rethrown for the app's exception handling.
     private IResult? Map(Exception exception) =>
         exception switch
         {
             InvalidActionArgumentsException invalid => CallMapException(exception) ?? InvalidArguments(invalid),
-            _ when exception.GetType().FullName == "Datapoint.Mediator.Authorization.AuthenticationRequiredException" =>
-                Results.Problem(title: "Authentication is required.", statusCode: StatusCodes.Status401Unauthorized),
-            _ when exception.GetType().FullName == "Datapoint.Mediator.Authorization.AccessDeniedException" =>
-                Results.Problem(title: "Access is denied.", statusCode: StatusCodes.Status403Forbidden),
+            _ when AdapterErrors.IsAuthenticationRequired(exception) =>
+                Results.Problem(title: AdapterErrors.AuthenticationRequired, statusCode: StatusCodes.Status401Unauthorized),
+            _ when AdapterErrors.IsAccessDenied(exception) =>
+                Results.Problem(title: AdapterErrors.AccessDenied, statusCode: StatusCodes.Status403Forbidden),
             _ => CallMapException(exception),
         };
 
@@ -146,22 +140,18 @@ internal sealed partial class ActionEndpoints(ActionDescriptor action, MediatorE
         }
     }
 
-    // Built from the field and the reason only, never from the exception's message. A field that doesn't look like a path of property
-    // names, which an app's own exception could carry, is left out.
-    private IResult InvalidArguments(InvalidActionArgumentsException exception) =>
-        exception.Field is { Length: <= 128 } field && FieldPattern().IsMatch(field)
-            ? Results.ValidationProblem(
-                new Dictionary<string, string[]> { [field] = [IsRequired(exception) ? "The argument is required." : "The argument is not valid."] },
-                title: "Invalid arguments")
-            : Results.Problem(
+    // Built from the field and the reason only, never from the exception's message.
+    private IResult InvalidArguments(InvalidActionArgumentsException exception)
+    {
+        if (AdapterErrors.SafeField(exception) is not { } field)
+        {
+            return Results.Problem(
                 title: "Invalid arguments",
                 detail: $"The arguments for action '{action.Name}' are not valid.",
                 statusCode: StatusCodes.Status400BadRequest);
+        }
 
-    // A missing or null argument is reported as required.
-    private static bool IsRequired(InvalidActionArgumentsException exception) =>
-        exception.Reason is InvalidActionArgumentReason.Missing or InvalidActionArgumentReason.Null;
-
-    [GeneratedRegex(@"^[A-Za-z0-9_$-]+(\[[0-9]+\])*(\.[A-Za-z0-9_$-]+(\[[0-9]+\])*)*$", RegexOptions.CultureInvariant)]
-    private static partial Regex FieldPattern();
+        var error = AdapterErrors.IsRequired(exception) ? "The argument is required." : "The argument is not valid.";
+        return Results.ValidationProblem(new Dictionary<string, string[]> { [field] = [error] }, title: "Invalid arguments");
+    }
 }

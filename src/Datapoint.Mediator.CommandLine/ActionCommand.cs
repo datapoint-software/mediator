@@ -10,7 +10,6 @@ using System.Reflection;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using System.Text.Json.Serialization.Metadata;
-using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.DependencyInjection;
@@ -18,7 +17,7 @@ using Microsoft.Extensions.DependencyInjection;
 namespace Datapoint.Mediator.CommandLine;
 
 // Builds the command for one action: a typed option per property, a --json fallback, and an action that dispatches it.
-internal sealed partial class ActionCommand
+internal sealed class ActionCommand
 {
     private static readonly MethodInfo CreateParserMethod = GetMethod(nameof(CreateParser));
     private static readonly MethodInfo CreateNumberParserMethod = GetMethod(nameof(CreateNumberParser));
@@ -42,7 +41,7 @@ internal sealed partial class ActionCommand
         _services = services;
         _options = options;
         _serializerOptions = options.SerializerOptions ?? JsonSerializerOptions.Web;
-        _hostProvided = HostProvidedJsonNames(action, _serializerOptions);
+        _hostProvided = HostProvidedNames.Of(action, _serializerOptions);
     }
 
     public static Command Create(string name, ActionDescriptor action, IServiceProvider services, MediatorCommandLineOptions options) =>
@@ -187,43 +186,6 @@ internal sealed partial class ActionCommand
         return false;
     }
 
-    // The JSON names the serializer binds host-provided properties to, including [JsonPropertyName]. They're compared
-    // with OrdinalIgnoreCase, like System.Text.Json's case-insensitive binding, so "TenantId" can't slip past "tenantId".
-    private static HashSet<string> HostProvidedJsonNames(ActionDescriptor action, JsonSerializerOptions options)
-    {
-        var names = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-
-        if (action.HostProvidedProperties.Count > 0)
-        {
-            foreach (var property in options.GetTypeInfo(action.ActionType).Properties)
-            {
-                if (property.AttributeProvider is PropertyInfo member && action.HostProvidedProperties.Any(p => p.Name == member.Name))
-                {
-                    names.Add(property.Name);
-                }
-            }
-        }
-
-        return names;
-    }
-
-    // Returns the contract's spelling of the name, never the caller's, so the message doesn't echo input.
-    private string? FindHostProvided(JsonElement arguments)
-    {
-        if (_hostProvided.Count > 0 && arguments.ValueKind == JsonValueKind.Object)
-        {
-            foreach (var argument in arguments.EnumerateObject())
-            {
-                if (_hostProvided.TryGetValue(argument.Name, out var name))
-                {
-                    return name;
-                }
-            }
-        }
-
-        return null;
-    }
-
     // Everything that can fail runs inside the try, including resolving the dispatcher and disposing the scope, so no
     // exception reaches System.CommandLine's default handler, which would print its message and stack trace.
     private async Task<int> RunAsync(ParseResult parseResult, CancellationToken cancellationToken)
@@ -232,18 +194,13 @@ internal sealed partial class ActionCommand
         {
             return await DispatchAsync(parseResult, cancellationToken).ConfigureAwait(false);
         }
-        catch (Exception exception) when (!IsCallerCancellation(exception, cancellationToken))
+        catch (Exception exception) when (!AdapterErrors.IsCallerCancellation(exception, cancellationToken))
         {
             var (message, code) = Describe(exception);
             await parseResult.InvocationConfiguration.Error.WriteLineAsync(message).ConfigureAwait(false);
             return code;
         }
     }
-
-    // Only Ctrl+C is left to System.CommandLine as a cancellation. A handler's timeout also throws an
-    // OperationCanceledException, and is an error like any other.
-    private static bool IsCallerCancellation(Exception exception, CancellationToken cancellationToken) =>
-        exception is OperationCanceledException && cancellationToken.IsCancellationRequested;
 
     private async Task<int> DispatchAsync(ParseResult parseResult, CancellationToken cancellationToken)
     {
@@ -265,9 +222,9 @@ internal sealed partial class ActionCommand
             }
 
             // Checked before the dispatcher is resolved, so a decorator of the dispatcher can still set the value.
-            if (FindHostProvided(arguments) is { } name)
+            if (HostProvidedNames.FindIn(_hostProvided, arguments) is { } name)
             {
-                await error.WriteLineAsync($"'{name}' is set by the server and cannot be given.").ConfigureAwait(false);
+                await error.WriteLineAsync(AdapterMessages.HostProvided(name)).ConfigureAwait(false);
                 return ActionExitCodes.InvalidArguments;
             }
         }
@@ -322,13 +279,13 @@ internal sealed partial class ActionCommand
         exception switch
         {
             InvalidActionArgumentsException invalid =>
-                (Word(exception) ?? InvalidArguments(invalid), ActionExitCodes.InvalidArguments),
-            _ when exception.GetType().FullName == "Datapoint.Mediator.Authorization.AuthenticationRequiredException" =>
-                (Word(exception) ?? "Authentication is required.", ActionExitCodes.AuthenticationRequired),
-            _ when exception.GetType().FullName == "Datapoint.Mediator.Authorization.AccessDeniedException" =>
-                (Word(exception) ?? "Access is denied.", ActionExitCodes.AccessDenied),
+                (Word(exception) ?? AdapterMessages.InvalidArguments(_action.Name, invalid), ActionExitCodes.InvalidArguments),
+            _ when AdapterErrors.IsAuthenticationRequired(exception) =>
+                (Word(exception) ?? AdapterErrors.AuthenticationRequired, ActionExitCodes.AuthenticationRequired),
+            _ when AdapterErrors.IsAccessDenied(exception) =>
+                (Word(exception) ?? AdapterErrors.AccessDenied, ActionExitCodes.AccessDenied),
             _ when Word(exception) is { } message => (message, ActionExitCodes.InvalidArguments),
-            _ => ("An unexpected error occurred.", ActionExitCodes.UnexpectedError),
+            _ => (AdapterErrors.UnexpectedError, ActionExitCodes.UnexpectedError),
         };
 
     // Every exception from the app's hook is caught, because nothing about it is safe to print: the default message is
@@ -344,18 +301,4 @@ internal sealed partial class ActionCommand
             return null;
         }
     }
-
-    // Built from the field and the reason only, never from the exception's message. A field that doesn't look like a path of property
-    // names, which an app's own exception could carry, is left out.
-    private string InvalidArguments(InvalidActionArgumentsException exception) =>
-        exception.Field is { Length: <= 128 } field && FieldPattern().IsMatch(field)
-            ? $"The argument '{field}' of action '{_action.Name}' is {(IsRequired(exception) ? "required" : "not valid")}."
-            : $"The arguments for action '{_action.Name}' are not valid.";
-
-    // A missing or null argument is reported as required.
-    private static bool IsRequired(InvalidActionArgumentsException exception) =>
-        exception.Reason is InvalidActionArgumentReason.Missing or InvalidActionArgumentReason.Null;
-
-    [GeneratedRegex(@"^[A-Za-z0-9_$-]+(\[[0-9]+\])*(\.[A-Za-z0-9_$-]+(\[[0-9]+\])*)*$", RegexOptions.CultureInvariant)]
-    private static partial Regex FieldPattern();
 }

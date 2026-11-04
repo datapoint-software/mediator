@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Reflection;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using System.Text.RegularExpressions;
@@ -18,8 +17,6 @@ namespace Datapoint.Mediator.ModelContextProtocol;
 // Offers one action as an MCP tool. Calls are dispatched by name, so every behaviour runs.
 internal sealed partial class ActionTool : McpServerTool
 {
-    private const string UnexpectedError = "An unexpected error occurred.";
-
     private readonly ActionDescriptor _action;
     private readonly MediatorMcpOptions _options;
     private readonly JsonSerializerOptions _serializerOptions;
@@ -30,7 +27,7 @@ internal sealed partial class ActionTool : McpServerTool
         _action = action;
         _options = options;
         _serializerOptions = options.SerializerOptions ?? JsonSerializerOptions.Web;
-        _hostProvided = HostProvidedJsonNames(action, _serializerOptions);
+        _hostProvided = HostProvidedNames.Of(action, _serializerOptions);
 
         // Many AI model APIs only accept tool names made of letters, digits, underscores and hyphens. Action names
         // can't contain underscores, so replacing dots with underscores can't make two tools share a name.
@@ -75,9 +72,9 @@ internal sealed partial class ActionTool : McpServerTool
         // Checked on the arguments that are dispatched, not on the agent's keys, because serializing applies the app's
         // DictionaryKeyPolicy: with snake_case, "TenantId" would pass a check on the keys, then become "tenant_id".
         // Checked before the dispatcher is resolved, so a decorator of the dispatcher can still set the value.
-        if (FindHostProvided(arguments) is { } name)
+        if (HostProvidedNames.FindIn(_hostProvided, arguments) is { } name)
         {
-            return Error($"'{name}' is set by the server and cannot be given.");
+            return Error(AdapterMessages.HostProvided(name));
         }
 
         var dispatcher = services.GetRequiredService<IActionDispatcher>();
@@ -101,16 +98,11 @@ internal sealed partial class ActionTool : McpServerTool
                 StructuredContent = structured,
             };
         }
-        catch (Exception exception) when (!IsCallerCancellation(exception, cancellationToken))
+        catch (Exception exception) when (!AdapterErrors.IsCallerCancellation(exception, cancellationToken))
         {
             return ErrorResult(exception);
         }
     }
-
-    // Only the agent's own cancellation is left to the MCP SDK as one. A handler's timeout also throws an
-    // OperationCanceledException, and is an error like any other.
-    private static bool IsCallerCancellation(Exception exception, CancellationToken cancellationToken) =>
-        exception is OperationCanceledException && cancellationToken.IsCancellationRequested;
 
     private async Task<JsonObject> StreamAsync(IActionDispatcher dispatcher, JsonElement arguments, CancellationToken cancellationToken)
     {
@@ -130,26 +122,6 @@ internal sealed partial class ActionTool : McpServerTool
         }
 
         return new JsonObject { ["items"] = items, ["truncated"] = truncated };
-    }
-
-    // The JSON names the serializer binds host-provided properties to, including [JsonPropertyName]. They're compared
-    // with OrdinalIgnoreCase, like System.Text.Json's case-insensitive binding, so "TenantId" can't slip past "tenantId".
-    private static HashSet<string> HostProvidedJsonNames(ActionDescriptor action, JsonSerializerOptions options)
-    {
-        var names = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-
-        if (action.HostProvidedProperties.Count > 0)
-        {
-            foreach (var property in options.GetTypeInfo(action.ActionType).Properties)
-            {
-                if (property.AttributeProvider is PropertyInfo member && action.HostProvidedProperties.Any(p => p.Name == member.Name))
-                {
-                    names.Add(property.Name);
-                }
-            }
-        }
-
-        return names;
     }
 
     // Host-provided properties are left out of the schema, so an agent is never asked for them.
@@ -181,21 +153,6 @@ internal sealed partial class ActionTool : McpServerTool
         return JsonSerializer.SerializeToElement(json, AIJsonUtilities.DefaultOptions);
     }
 
-    // Returns the contract's spelling of the name, never the agent's, so the error doesn't echo input.
-    // The arguments are a serialized dictionary, so always a JSON object.
-    private string? FindHostProvided(JsonElement arguments)
-    {
-        foreach (var property in arguments.EnumerateObject())
-        {
-            if (_hostProvided.TryGetValue(property.Name, out var name))
-            {
-                return name;
-            }
-        }
-
-        return null;
-    }
-
     // Errors are returned as results, not thrown, so the MCP SDK doesn't prefix their text. Content from the app's hook
     // is sent both as structured content and as its JSON text, as MCP recommends for clients that only read text.
     // Nothing is ever rethrown, because the SDK sends an McpException's message to the agent.
@@ -206,10 +163,10 @@ internal sealed partial class ActionTool : McpServerTool
             // Content that isn't a JSON object is a bug in the hook, not something to show the agent.
             return Serialize(content) is { ValueKind: JsonValueKind.Object } structured
                 ? Error(structured.GetRawText(), structured)
-                : Error(UnexpectedError);
+                : Error(AdapterErrors.UnexpectedError);
         }
 
-        return Error(SafeMessage(exception) ?? UnexpectedError);
+        return Error(SafeMessage(exception) ?? AdapterErrors.UnexpectedError);
     }
 
     // An exception from the app's hook is treated as if the hook had returned null, because nothing about it is safe to
@@ -255,28 +212,12 @@ internal sealed partial class ActionTool : McpServerTool
 
         return exception switch
         {
-            InvalidActionArgumentsException invalid => message ?? InvalidArguments(invalid),
-            _ when exception.GetType().FullName == "Datapoint.Mediator.Authorization.AuthenticationRequiredException" =>
-                message ?? "Authentication is required.",
-            _ when exception.GetType().FullName == "Datapoint.Mediator.Authorization.AccessDeniedException" =>
-                message ?? "Access is denied.",
+            InvalidActionArgumentsException invalid => message ?? AdapterMessages.InvalidArguments(_action.Name, invalid),
+            _ when AdapterErrors.IsAuthenticationRequired(exception) => message ?? AdapterErrors.AuthenticationRequired,
+            _ when AdapterErrors.IsAccessDenied(exception) => message ?? AdapterErrors.AccessDenied,
             _ => message,
         };
     }
-
-    // Built from the field and the reason only, never from the exception's message. A field that doesn't look like a path of property
-    // names, which an app's own exception could carry, is left out.
-    private string InvalidArguments(InvalidActionArgumentsException exception) =>
-        exception.Field is { Length: <= 128 } field && FieldPattern().IsMatch(field)
-            ? $"The argument '{field}' of action '{_action.Name}' is {(IsRequired(exception) ? "required" : "not valid")}."
-            : $"The arguments for action '{_action.Name}' are not valid.";
-
-    // A missing or null argument is reported as required.
-    private static bool IsRequired(InvalidActionArgumentsException exception) =>
-        exception.Reason is InvalidActionArgumentReason.Missing or InvalidActionArgumentReason.Null;
-
-    [GeneratedRegex(@"^[A-Za-z0-9_$-]+(\[[0-9]+\])*(\.[A-Za-z0-9_$-]+(\[[0-9]+\])*)*$", RegexOptions.CultureInvariant)]
-    private static partial Regex FieldPattern();
 
     [GeneratedRegex("^[a-zA-Z0-9_-]{1,64}$", RegexOptions.CultureInvariant)]
     private static partial Regex ToolNamePattern();

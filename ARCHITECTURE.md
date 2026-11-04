@@ -120,6 +120,8 @@ Actions let hosts dispatch commands and queries by name, with JSON arguments ([A
 
 The adapters recognise the authorization exceptions by their full type name, so they don't depend on the authorization package ([ADR 0013](docs/adr/0013-adapters-match-authorization-exceptions-by-name.md)). They describe invalid arguments from `InvalidActionArgumentsException.Field`, never from its message, after passing it to the app's hook, and never describe any other exception. The CLI and MCP adapters also pass the authorization exceptions to their hook, which words them but can't change the exit code or turn the result into a success ([ADR 0034](docs/adr/0034-hooks-word-every-known-error.md)).
 
+These rules are written once, in `src/Shared/`, and compiled into each adapter as linked source (`<Compile Include … Link>`), so no adapter depends on another and a change applies to all of them: `AdapterErrors` (the safe messages, the exception checks, caller cancellation and the safe field name), `AdapterMessages` (the CLI and MCP wording) and `HostProvidedNames` (the CLI and MCP host-provided check).
+
 The CLI and MCP adapters hide host-provided properties, and refuse a caller's value for one, matching JSON names with `StringComparer.OrdinalIgnoreCase`. They check the caller's arguments before resolving `IActionDispatcher`, so an app's decorator of the dispatcher can set the value afterwards. ASP.NET Core and the dispatcher don't treat them differently.
 
 ## Telemetry
