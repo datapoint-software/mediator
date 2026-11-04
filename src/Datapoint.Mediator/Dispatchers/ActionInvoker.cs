@@ -26,6 +26,7 @@ internal abstract class ActionInvoker
     // kind is added; CS8524 is about unnamed values, which the constructor already refuses.
     private static ActionInvoker Create(ActionDescriptor action)
     {
+        // Every kind except Command has a result type: the ActionDescriptor constructor checks it.
 #pragma warning disable CS8524
         var invokerType = action.Kind switch
         {

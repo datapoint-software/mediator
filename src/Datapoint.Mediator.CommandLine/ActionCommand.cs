@@ -111,6 +111,7 @@ internal sealed class ActionCommand
         var required = !nullable && parameter?.HasDefaultValue != true;
         var description = Description(property.AttributeProvider) ?? Description(parameter?.AttributeProvider);
 
+        // Never null: Activator.CreateInstance returns null only for Nullable<T>, and Option<T> is a class.
         var option = (Option)Activator.CreateInstance(
             typeof(Option<>).MakeGenericType(property.PropertyType),
             $"--{JsonNamingPolicy.KebabCaseLower.ConvertName(memberName)}",
@@ -162,12 +163,14 @@ internal sealed class ActionCommand
 
     private delegate bool Parser<T>(string token, out T value);
 
+    // Never null: the names come from nameof, so the methods exist.
     private static MethodInfo GetMethod(string name) =>
         typeof(ActionCommand).GetMethod(name, BindingFlags.NonPublic | BindingFlags.Static)!;
 
     private static bool Implements(Type type, Type genericInterface) =>
         type.GetInterfaces().Any(i => i.IsGenericType && i.GetGenericTypeDefinition() == genericInterface && i.GetGenericArguments()[0] == type);
 
+    // TryParse can leave the value null when it fails, but the value is only read when it succeeds.
     private static Parser<T> CreateParser<T>()
         where T : IParsable<T> =>
         (string token, out T value) => T.TryParse(token, CultureInfo.InvariantCulture, out value!);

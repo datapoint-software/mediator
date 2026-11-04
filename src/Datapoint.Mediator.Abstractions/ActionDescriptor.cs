@@ -137,6 +137,7 @@ public sealed class ActionDescriptor
         var parameters = actionType.GetConstructors()
             .SelectMany(constructor => constructor.GetParameters())
             .Where(parameter => parameter.IsDefined(typeof(HostProvidedAttribute), inherit: false))
+            // Constructor parameters always have a name; only a delegate's return parameter has none.
             .Select(parameter => parameter.Name!)
             .ToHashSet(StringComparer.OrdinalIgnoreCase);
 

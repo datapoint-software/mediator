@@ -12,6 +12,7 @@ internal abstract class CommandDispatcher
     public static CommandDispatcher Get(Type commandType) =>
         Cache.GetOrAdd(
             commandType,
+            // Never null: Activator.CreateInstance returns null only for Nullable<T>, and this type is a class.
             static type => (CommandDispatcher)Activator.CreateInstance(typeof(CommandDispatcher<>).MakeGenericType(type))!);
 
     public abstract ValueTask DispatchAsync(ICommand command, IServiceProvider serviceProvider, CancellationToken cancellationToken);

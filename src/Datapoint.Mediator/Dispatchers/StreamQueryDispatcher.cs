@@ -12,6 +12,7 @@ internal abstract class StreamQueryDispatcher<TResult>
     public static StreamQueryDispatcher<TResult> Get(Type queryType) =>
         Cache.GetOrAdd(
             queryType,
+            // Never null: Activator.CreateInstance returns null only for Nullable<T>, and this type is a class.
             static type => (StreamQueryDispatcher<TResult>)Activator.CreateInstance(
                 typeof(StreamQueryDispatcher<,>).MakeGenericType(type, typeof(TResult)))!);
 

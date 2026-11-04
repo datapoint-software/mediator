@@ -135,6 +135,7 @@ internal sealed partial class ActionTool : McpServerTool
             return schema;
         }
 
+        // Not null: the SDK always describes an action's arguments as a JSON object.
         var json = JsonObject.Create(schema)!;
 
         if (json["properties"] is JsonObject properties)
@@ -147,6 +148,7 @@ internal sealed partial class ActionTool : McpServerTool
 
         if (json["required"] is JsonArray required)
         {
+            // A schema's required list only holds property names, never null.
             foreach (var item in required.Where(r => _hostProvided.Contains(r!.GetValue<string>())).ToList())
             {
                 required.Remove(item);

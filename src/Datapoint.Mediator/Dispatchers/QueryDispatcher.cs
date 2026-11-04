@@ -12,6 +12,7 @@ internal abstract class QueryDispatcher<TResult>
     public static QueryDispatcher<TResult> Get(Type queryType) =>
         Cache.GetOrAdd(
             queryType,
+            // Never null: Activator.CreateInstance returns null only for Nullable<T>, and this type is a class.
             static type => (QueryDispatcher<TResult>)Activator.CreateInstance(
                 typeof(QueryDispatcher<,>).MakeGenericType(type, typeof(TResult)))!);
 

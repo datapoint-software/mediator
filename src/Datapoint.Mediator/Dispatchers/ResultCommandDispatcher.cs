@@ -12,6 +12,7 @@ internal abstract class ResultCommandDispatcher<TResult>
     public static ResultCommandDispatcher<TResult> Get(Type commandType) =>
         Cache.GetOrAdd(
             commandType,
+            // Never null: Activator.CreateInstance returns null only for Nullable<T>, and this type is a class.
             static type => (ResultCommandDispatcher<TResult>)Activator.CreateInstance(
                 typeof(ResultCommandDispatcher<,>).MakeGenericType(type, typeof(TResult)))!);
 

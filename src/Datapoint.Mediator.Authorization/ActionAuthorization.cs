@@ -15,6 +15,7 @@ internal abstract class ActionAuthorization
     public static ActionAuthorization Get(Type actionType) =>
         Cache.GetOrAdd(
             actionType,
+            // Never null: Activator.CreateInstance returns null only for Nullable<T>, and this type is a class.
             static type => (ActionAuthorization)Activator.CreateInstance(typeof(ActionAuthorization<>).MakeGenericType(type))!);
 
     // Adds each authorizer's decision to the list, so the caller keeps them when an authorizer throws. The list stays

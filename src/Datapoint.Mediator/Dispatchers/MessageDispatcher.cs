@@ -12,6 +12,7 @@ internal abstract class MessageDispatcher
     public static MessageDispatcher Get(Type messageType) =>
         Cache.GetOrAdd(
             messageType,
+            // Never null: Activator.CreateInstance returns null only for Nullable<T>, and this type is a class.
             static type => (MessageDispatcher)Activator.CreateInstance(typeof(MessageDispatcher<>).MakeGenericType(type))!);
 
     public abstract ValueTask DispatchAsync(IMessage message, IServiceProvider serviceProvider, CancellationToken cancellationToken);

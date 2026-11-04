@@ -62,6 +62,7 @@ public static class MediatorServiceCollectionExtensions
         AddActions(services, options);
 
         AddBehaviors(services, options);
+        // Never null: AddActions has just registered the builder, if it wasn't already.
         FindActionCatalogBuilder(services)!.Check(options.StartupChecks);
 
         return services;
