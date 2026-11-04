@@ -46,6 +46,14 @@ public sealed class AddBehaviorTests
     }
 
     [Fact]
+    public void AddBehavior_GenericInvalidType_NamesTheTypeParameter()
+    {
+        var exception = Assert.Throws<ArgumentException>(() => new MediatorOptions().AddBehavior<AbstractBehavior>());
+
+        Assert.Equal("TBehavior", exception.ParamName);
+    }
+
+    [Fact]
     public void AddBehavior_NullType_Throws()
     {
         var exception = Assert.Throws<ArgumentNullException>(() => new MediatorOptions().AddBehavior(null!));

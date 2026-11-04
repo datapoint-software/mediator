@@ -37,7 +37,7 @@ public sealed class MediatorOptions
     /// <exception cref="ArgumentException"><typeparamref name="THandler"/> is not a valid handler type.</exception>
     public MediatorOptions AddHandler<THandler>()
         where THandler : class =>
-        AddHandlerCore(typeof(THandler), null);
+        AddHandlerCore(typeof(THandler), null, nameof(THandler));
 
     /// <summary>
     /// Registers a handler for every command, query and message handler interface it implements.
@@ -48,7 +48,7 @@ public sealed class MediatorOptions
     /// <exception cref="ArgumentException"><typeparamref name="THandler"/> is not a valid handler type.</exception>
     public MediatorOptions AddHandler<THandler>(ServiceLifetime lifetime)
         where THandler : class =>
-        AddHandlerCore(typeof(THandler), lifetime);
+        AddHandlerCore(typeof(THandler), lifetime, nameof(THandler));
 
     /// <summary>
     /// Registers a handler, with <see cref="DefaultLifetime"/>, for every command, query and message handler interface it
@@ -59,7 +59,7 @@ public sealed class MediatorOptions
     /// <exception cref="ArgumentNullException"><paramref name="handlerType"/> is <see langword="null"/>.</exception>
     /// <exception cref="ArgumentException"><paramref name="handlerType"/> is not a valid handler type.</exception>
     public MediatorOptions AddHandler(Type handlerType) =>
-        AddHandlerCore(handlerType, null);
+        AddHandlerCore(handlerType, null, nameof(handlerType));
 
     /// <summary>
     /// Registers a handler for every command, query and message handler interface it implements.
@@ -70,7 +70,7 @@ public sealed class MediatorOptions
     /// <exception cref="ArgumentNullException"><paramref name="handlerType"/> is <see langword="null"/>.</exception>
     /// <exception cref="ArgumentException"><paramref name="handlerType"/> is not a valid handler type.</exception>
     public MediatorOptions AddHandler(Type handlerType, ServiceLifetime lifetime) =>
-        AddHandlerCore(handlerType, lifetime);
+        AddHandlerCore(handlerType, lifetime, nameof(handlerType));
 
     /// <summary>
     /// Registers every command, query and message handler in an assembly, with <see cref="DefaultLifetime"/>. Behaviours
@@ -126,7 +126,7 @@ public sealed class MediatorOptions
     /// <exception cref="ArgumentException"><typeparamref name="TBehavior"/> is not a concrete class.</exception>
     public MediatorOptions AddBehavior<TBehavior>()
         where TBehavior : class, IBehavior =>
-        AddBehaviorCore(typeof(TBehavior), null);
+        AddBehaviorCore(typeof(TBehavior), null, nameof(TBehavior));
 
     /// <summary>
     /// Registers a behaviour. Behaviours run in the order they are registered, with the first one outermost.
@@ -137,7 +137,7 @@ public sealed class MediatorOptions
     /// <exception cref="ArgumentException"><typeparamref name="TBehavior"/> is not a concrete class.</exception>
     public MediatorOptions AddBehavior<TBehavior>(ServiceLifetime lifetime)
         where TBehavior : class, IBehavior =>
-        AddBehaviorCore(typeof(TBehavior), lifetime);
+        AddBehaviorCore(typeof(TBehavior), lifetime, nameof(TBehavior));
 
     /// <summary>
     /// Registers a behaviour, with <see cref="DefaultLifetime"/>. Behaviours run in the order they are registered, with
@@ -148,7 +148,7 @@ public sealed class MediatorOptions
     /// <exception cref="ArgumentNullException"><paramref name="behaviorType"/> is <see langword="null"/>.</exception>
     /// <exception cref="ArgumentException"><paramref name="behaviorType"/> is not a valid behaviour type.</exception>
     public MediatorOptions AddBehavior(Type behaviorType) =>
-        AddBehaviorCore(behaviorType, null);
+        AddBehaviorCore(behaviorType, null, nameof(behaviorType));
 
     /// <summary>
     /// Registers a behaviour. Behaviours run in the order they are registered, with the first one outermost.
@@ -159,7 +159,7 @@ public sealed class MediatorOptions
     /// <exception cref="ArgumentNullException"><paramref name="behaviorType"/> is <see langword="null"/>.</exception>
     /// <exception cref="ArgumentException"><paramref name="behaviorType"/> is not a valid behaviour type.</exception>
     public MediatorOptions AddBehavior(Type behaviorType, ServiceLifetime lifetime) =>
-        AddBehaviorCore(behaviorType, lifetime);
+        AddBehaviorCore(behaviorType, lifetime, nameof(behaviorType));
 
     /// <summary>
     /// Registers a behaviour created by a factory, with <see cref="DefaultLifetime"/>, for behaviours that need settings
@@ -219,17 +219,18 @@ public sealed class MediatorOptions
         return this;
     }
 
-    // A null lifetime means DefaultLifetime, read when AddMediator applies the registrations.
-    private MediatorOptions AddHandlerCore(Type handlerType, ServiceLifetime? lifetime)
+    // A null lifetime means DefaultLifetime, read when AddMediator applies the registrations. paramName is the public
+    // overload's parameter, or its type parameter, such as THandler.
+    private MediatorOptions AddHandlerCore(Type handlerType, ServiceLifetime? lifetime, string paramName)
     {
-        ArgumentNullException.ThrowIfNull(handlerType);
-        EnsureConcrete(handlerType, nameof(handlerType));
+        ArgumentNullException.ThrowIfNull(handlerType, paramName);
+        EnsureConcrete(handlerType, paramName);
 
         if (HandlerInterfaces.Of(handlerType).Count == 0)
         {
             throw new ArgumentException(
                 $"'{handlerType}' does not implement any command, query or message handler interface.",
-                nameof(handlerType));
+                paramName);
         }
 
         Handlers.Add(new Registration(handlerType, lifetime));
@@ -253,14 +254,14 @@ public sealed class MediatorOptions
         return this;
     }
 
-    private MediatorOptions AddBehaviorCore(Type behaviorType, ServiceLifetime? lifetime)
+    private MediatorOptions AddBehaviorCore(Type behaviorType, ServiceLifetime? lifetime, string paramName)
     {
-        ArgumentNullException.ThrowIfNull(behaviorType);
-        EnsureConcrete(behaviorType, nameof(behaviorType));
+        ArgumentNullException.ThrowIfNull(behaviorType, paramName);
+        EnsureConcrete(behaviorType, paramName);
 
         if (!typeof(IBehavior).IsAssignableFrom(behaviorType))
         {
-            throw new ArgumentException($"'{behaviorType}' does not implement '{typeof(IBehavior)}'.", nameof(behaviorType));
+            throw new ArgumentException($"'{behaviorType}' does not implement '{typeof(IBehavior)}'.", paramName);
         }
 
         Behaviors.Add(new Registration(behaviorType, lifetime));

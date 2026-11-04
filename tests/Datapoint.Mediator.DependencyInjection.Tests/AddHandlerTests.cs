@@ -95,6 +95,14 @@ public sealed class AddHandlerTests
         Assert.Equal("handlerType", exception.ParamName);
     }
 
+    [Fact]
+    public void AddHandler_GenericInvalidType_NamesTheTypeParameter()
+    {
+        var exception = Assert.Throws<ArgumentException>(() => new MediatorOptions().AddHandler<AbstractHandler>());
+
+        Assert.Equal("THandler", exception.ParamName);
+    }
+
     private static ServiceLifetime LifetimeOf<TService>(IServiceCollection services) =>
         Assert.Single(services, d => d.ServiceType == typeof(TService)).Lifetime;
 }
