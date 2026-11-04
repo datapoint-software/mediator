@@ -4,6 +4,7 @@ using System.ComponentModel;
 using System.Globalization;
 using System.Runtime.CompilerServices;
 using System.Security.Claims;
+using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using Datapoint.Mediator.Authorization;
@@ -173,4 +174,16 @@ public sealed class DenyWithStepUp<TAction> : IAuthorizer<TAction>
 {
     public ValueTask<AuthorizationDecision> AuthorizeAsync(TAction action, ClaimsPrincipal principal, CancellationToken ct = default) =>
         new(AuthorizationDecision.Deny("TOP-SECRET", new StepUpRequiredException()));
+}
+
+// Fails when its scope is disposed, after the action has run.
+public sealed class FailingToDisposeDispatcher(ActionDispatcher inner) : IActionDispatcher, IAsyncDisposable
+{
+    public ValueTask<object?> DispatchAsync(string name, JsonElement arguments, JsonSerializerOptions? options = null, CancellationToken ct = default) =>
+        inner.DispatchAsync(name, arguments, options, ct);
+
+    public IAsyncEnumerable<object?> StreamAsync(string name, JsonElement arguments, JsonSerializerOptions? options = null, CancellationToken ct = default) =>
+        inner.StreamAsync(name, arguments, options, ct);
+
+    public ValueTask DisposeAsync() => throw new InvalidOperationException("secret internal detail");
 }

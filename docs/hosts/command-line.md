@@ -83,7 +83,7 @@ invoicing invoices list | jq -r '.customer'
 | 2 | `InvalidArguments` | Invalid arguments, or another exception with a message from `ErrorMessage`, such as validation errors. |
 | 3 | `AuthenticationRequired` | No signed-in user. |
 | 4 | `AccessDenied` | The user may not run the action. |
-| 70 | `UnexpectedError` | Any other failure. "An unexpected error occurred." is printed, with no details. |
+| 70 | `UnexpectedError` | Any other failure, including one while resolving services or disposing the invocation's scope. "An unexpected error occurred." is printed, with no details. |
 
 ## Errors
 
@@ -97,7 +97,7 @@ A missing argument, or `null` where it isn't accepted, reads "... is required." 
 
 See [Invalid arguments](../actions.md#invalid-arguments) for how the argument is spelled. The messages Mediator writes never contain argument values, .NET type names, stack traces or paths.
 
-Map your own exceptions to a message with `ErrorMessage`. Return `null` for exceptions it doesn't handle. A mapped exception exits with code 2. `ErrorMessage` also receives `InvalidActionArgumentsException`, `AuthenticationRequiredException` and `AccessDeniedException` first, so you can word them your own way, and `null` keeps Mediator's text. Their exit codes stay 2, 3 and 4 whatever it returns:
+Map your own exceptions to a message with `ErrorMessage`. Return `null` for exceptions it doesn't handle. A mapped exception exits with code 2. `ErrorMessage` also receives `InvalidActionArgumentsException`, `AuthenticationRequiredException` and `AccessDeniedException` first, so you can word them your own way, and `null` keeps Mediator's text. If `ErrorMessage` throws, Mediator's text is used too. Their exit codes stay 2, 3 and 4 whatever it returns:
 
 ```csharp
 root.AddMediatorActions(services, o => o.ErrorMessage = e => e switch

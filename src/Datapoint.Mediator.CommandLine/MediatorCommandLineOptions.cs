@@ -47,6 +47,10 @@ public sealed class MediatorCommandLineOptions
     /// such as a role or who owns a resource.
     /// </para>
     /// <para>
+    /// If the function throws, its exception is ignored and Mediator's own message is written, as if it had returned
+    /// <see langword="null"/>.
+    /// </para>
+    /// <para>
     /// The messages Mediator writes itself never contain argument values, .NET type names, stack traces or paths. They
     /// are meant for developers and agents, not for display in a user interface.
     /// </para>

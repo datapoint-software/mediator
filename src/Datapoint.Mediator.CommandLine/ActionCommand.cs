@@ -211,7 +211,23 @@ internal sealed partial class ActionCommand
             : nullability.Create(property).WriteState is NullabilityState.Nullable
               || nullability.Create(property).ReadState is NullabilityState.Nullable;
 
+    // Everything that can fail runs inside the try, including resolving the dispatcher and disposing the scope, so no
+    // exception reaches System.CommandLine's default handler, which would print its message and stack trace.
     private async Task<int> RunAsync(ParseResult parseResult, CancellationToken ct)
+    {
+        try
+        {
+            return await DispatchAsync(parseResult, ct).ConfigureAwait(false);
+        }
+        catch (Exception exception) when (exception is not OperationCanceledException)
+        {
+            var (message, code) = Describe(exception);
+            await parseResult.InvocationConfiguration.Error.WriteLineAsync(message).ConfigureAwait(false);
+            return code;
+        }
+    }
+
+    private async Task<int> DispatchAsync(ParseResult parseResult, CancellationToken ct)
     {
         var output = parseResult.InvocationConfiguration.Output;
         var error = parseResult.InvocationConfiguration.Error;
@@ -253,11 +269,12 @@ internal sealed partial class ActionCommand
         }
 
         // One DI scope per invocation, like a request in an API.
-        await using var scope = _services.CreateAsyncScope();
-        var dispatcher = scope.ServiceProvider.GetRequiredService<IActionDispatcher>();
+        var scope = _services.CreateAsyncScope();
 
-        try
+        await using (scope.ConfigureAwait(false))
         {
+            var dispatcher = scope.ServiceProvider.GetRequiredService<IActionDispatcher>();
+
             if (_action.Kind == ActionKind.StreamQuery)
             {
                 // JSON Lines: one result per line, written as it arrives.
@@ -275,15 +292,9 @@ internal sealed partial class ActionCommand
                     await output.WriteLineAsync(JsonSerializer.Serialize(result, _serializerOptions)).ConfigureAwait(false);
                 }
             }
+        }
 
-            return ActionExitCodes.Success;
-        }
-        catch (Exception exception) when (exception is not OperationCanceledException)
-        {
-            var (message, code) = Describe(exception);
-            await error.WriteLineAsync(message).ConfigureAwait(false);
-            return code;
-        }
+        return ActionExitCodes.Success;
     }
 
     // Only messages known to be safe are printed. Invalid arguments and authorization failures go to the app's hook
@@ -293,14 +304,28 @@ internal sealed partial class ActionCommand
         exception switch
         {
             InvalidActionArgumentsException invalid =>
-                (_options.ErrorMessage?.Invoke(exception) ?? InvalidArguments(invalid), ActionExitCodes.InvalidArguments),
+                (Word(exception) ?? InvalidArguments(invalid), ActionExitCodes.InvalidArguments),
             _ when exception.GetType().FullName == "Datapoint.Mediator.Authorization.AuthenticationRequiredException" =>
-                (_options.ErrorMessage?.Invoke(exception) ?? "Authentication is required.", ActionExitCodes.AuthenticationRequired),
+                (Word(exception) ?? "Authentication is required.", ActionExitCodes.AuthenticationRequired),
             _ when exception.GetType().FullName == "Datapoint.Mediator.Authorization.AccessDeniedException" =>
-                (_options.ErrorMessage?.Invoke(exception) ?? "Access is denied.", ActionExitCodes.AccessDenied),
-            _ when _options.ErrorMessage?.Invoke(exception) is { } message => (message, ActionExitCodes.InvalidArguments),
+                (Word(exception) ?? "Access is denied.", ActionExitCodes.AccessDenied),
+            _ when Word(exception) is { } message => (message, ActionExitCodes.InvalidArguments),
             _ => ("An unexpected error occurred.", ActionExitCodes.UnexpectedError),
         };
+
+    // Every exception from the app's hook is caught, because nothing about it is safe to print: the default message is
+    // used instead.
+    private string? Word(Exception exception)
+    {
+        try
+        {
+            return _options.ErrorMessage?.Invoke(exception);
+        }
+        catch (Exception)
+        {
+            return null;
+        }
+    }
 
     // Built from the field and the reason only, never from the exception's message. A field that doesn't look like a path of property
     // names, which an app's own exception could carry, is left out.

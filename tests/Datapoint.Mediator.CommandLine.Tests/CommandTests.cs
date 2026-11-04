@@ -269,6 +269,46 @@ public sealed class CommandTests
     }
 
     [Fact]
+    public async Task DispatcherThatFailsToResolve_IsReportedWithoutDetails()
+    {
+        await using var cli = new Cli(configureServices: services =>
+            services.AddScoped<IActionDispatcher>(_ => throw new InvalidOperationException("secret internal detail")));
+
+        var (exitCode, output, error) = await cli.RunAsync("ping");
+
+        Assert.Equal(ActionExitCodes.UnexpectedError, exitCode);
+        Assert.Equal("An unexpected error occurred.", error.Trim());
+        Assert.DoesNotContain("secret internal detail", output + error);
+    }
+
+    [Fact]
+    public async Task ScopeThatFailsToDispose_IsReportedWithoutDetails()
+    {
+        await using var cli = new Cli(configureServices: services =>
+            services.AddScoped<ActionDispatcher>().AddScoped<IActionDispatcher, FailingToDisposeDispatcher>());
+
+        var (exitCode, output, error) = await cli.RunAsync("ping");
+
+        Assert.Equal(ActionExitCodes.UnexpectedError, exitCode);
+        Assert.Equal("An unexpected error occurred.", error.Trim());
+        Assert.DoesNotContain("secret internal detail", output + error);
+    }
+
+    [Theory]
+    [InlineData("reject", ActionExitCodes.InvalidArguments, "The arguments for action 'reports.reject' are not valid.")]
+    [InlineData("fail", ActionExitCodes.UnexpectedError, "An unexpected error occurred.")]
+    public async Task ErrorMessageThatThrows_FallsBackToTheDefaultMessage(string action, int expectedExitCode, string expectedError)
+    {
+        await using var cli = new Cli(o => o.ErrorMessage = _ => throw new InvalidOperationException("secret internal detail"));
+
+        var (exitCode, output, error) = await cli.RunAsync("reports", action);
+
+        Assert.Equal(expectedExitCode, exitCode);
+        Assert.Equal(expectedError, error.Trim());
+        Assert.DoesNotContain("secret internal detail", output + error);
+    }
+
+    [Fact]
     public async Task EachInvocation_RunsInItsOwnScope()
     {
         await using var cli = new Cli();
