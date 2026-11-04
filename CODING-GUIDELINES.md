@@ -36,7 +36,7 @@ Follow [Microsoft's naming guidelines](https://learn.microsoft.com/dotnet/standa
 
 These follow the [C# coding conventions](https://learn.microsoft.com/dotnet/csharp/fundamentals/coding-style/coding-conventions) and the [.NET runtime coding style](https://github.com/dotnet/runtime/blob/main/docs/coding-guidelines/coding-style.md):
 
-- One type per file, named after the type. Generic variants of the same name share one file, such as `ICommand` and `ICommand<TResult>` in `ICommand.cs`.
+- One type per file, named after the type. Generic variants of the same name share one file, such as `ICommand` and `ICommand<TResult>` in `ICommand.cs`. The samples group a feature's small types in one file, as [their README](samples/README.md) explains.
 - File-scoped namespaces (`namespace Datapoint.Mediator;`), with `using` directives outside them.
 - Four spaces, no tabs. Allman braces, each on its own line. One statement per line.
 - Use the language keywords (`string`, `int`), not the runtime types (`String`, `Int32`).
@@ -74,7 +74,7 @@ Follow the [Task-based Asynchronous Pattern](https://learn.microsoft.com/dotnet/
 - Take a `CancellationToken` named `cancellationToken` as the last, optional parameter, and pass it to every call that accepts one.
 - In `src/`, end every `await` with `.ConfigureAwait(false)`, including `await using` and `await foreach`. Library code doesn't know whether the caller has a synchronization context, and continuing on it can deadlock or slow the caller ([CA2007](https://learn.microsoft.com/dotnet/fundamentals/code-analysis/quality-rules/ca2007)). Tests and samples are applications, so they don't need it.
 - Never block on asynchronous code with `.Result`, `.Wait()` or `GetAwaiter().GetResult()`. Never write `async void`.
-- Set an `AsyncLocal` value only inside an `async` method, so the caller gets its own value back ([ARCHITECTURE.md](ARCHITECTURE.md#authorization)).
+- Set an `AsyncLocal` value only inside an `async` method, so the caller gets its own value back ([ARCHITECTURE.md](ARCHITECTURE.md#authorization)). A synchronous helper may set it for an `async` method that calls it, because a value set in an `async` method that the caller awaits is lost when that method returns.
 
 ## Errors and exceptions
 
@@ -159,6 +159,7 @@ These are deliberate. Keep them, unless a new decision record changes them.
 | Private static fields in `PascalCase` | `s_camelCase` in the .NET runtime and C# docs | The Framework Design Guidelines don't regulate private names, and the existing code is consistent. |
 | `IBehavior`'s `next` parameter | Avoid names that are keywords in other languages ([CA1716](https://learn.microsoft.com/dotnet/fundamentals/code-analysis/quality-rules/ca1716)) | ASP.NET Core middleware and other mediator libraries call this delegate `next`, and the rule only affects Visual Basic implementers ([ADR 0039](docs/adr/0039-public-names-follow-microsofts-rules.md)). |
 | Empty marker interfaces (`ICommand`, `IMessage`) | Avoid empty interfaces ([CA1040](https://learn.microsoft.com/dotnet/fundamentals/code-analysis/quality-rules/ca1040)) | They constrain generic methods at compile time, which is the case CA1040 allows. |
+| Error hooks and the MCP serializer catch every exception | Catch specific exceptions ([CA1031](https://learn.microsoft.com/dotnet/fundamentals/code-analysis/quality-rules/ca1031)) | An exception from the app's hook or from serializing a result could carry anything, so the adapters fall back to their own safe message instead of letting it reach the caller ([ADR 0034](docs/adr/0034-hooks-word-every-known-error.md)). |
 | Test names with underscores | No underscores in identifiers ([CA1707](https://learn.microsoft.com/dotnet/fundamentals/code-analysis/quality-rules/ca1707)) | Test names are read as sentences, and Microsoft's testing guidance uses this pattern. |
 
 ## Analyzers
