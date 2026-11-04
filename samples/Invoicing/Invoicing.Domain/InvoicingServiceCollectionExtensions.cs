@@ -2,6 +2,7 @@ using System.Security.Claims;
 using FluentValidation;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 
 namespace Invoicing.Domain;
 
@@ -10,14 +11,18 @@ public static class InvoicingServiceCollectionExtensions
     // Every host calls this, so all three share the same handlers, rules and behaviours.
     public static IServiceCollection AddInvoicing(this IServiceCollection services)
     {
+        services.TryAddSingleton(TimeProvider.System);
         services.AddDbContext<InvoicingDbContext>(o => o.UseSqlite($"Data Source={DatabasePath}"));
         services.AddValidatorsFromAssemblyContaining<CreateInvoiceValidator>();
         services.AddAuthorizersFromAssemblyContaining<InvoiceAuthorizer>();
         services.AddMediator(o => o
             .AddHandlersFromAssemblyContaining<CreateInvoiceHandler>()
-            .AddAuthorizationBehavior()                       // first: refuse before anything else runs
-            .AddValidationBehavior()                          // then: refuse invalid arguments
-            .AddTransactionBehavior<InvoicingDbContext>());   // last: only allowed, valid commands open a transaction
+            // First: refuse before anything else runs.
+            .AddAuthorizationBehavior()
+            // Then: refuse invalid arguments.
+            .AddValidationBehavior()
+            // Last: only allowed, valid commands open a transaction.
+            .AddTransactionBehavior<InvoicingDbContext>());
         return services;
     }
 
@@ -55,9 +60,4 @@ public static class InvoicingServiceCollectionExtensions
         Claim[] claims = [new(ClaimTypes.Name, name), .. roles.Select(r => new Claim(ClaimTypes.Role, r))];
         return new ClaimsPrincipal(new ClaimsIdentity(claims, authenticationType: "environment"));
     }
-
-    // Validation failures as "Property: message" lines, without the attempted values, which could be anything the
-    // caller sent and must never be echoed back.
-    public static string Describe(ValidationException exception) =>
-        string.Join("; ", exception.Errors.Select(f => $"{f.PropertyName}: {f.ErrorMessage}"));
 }

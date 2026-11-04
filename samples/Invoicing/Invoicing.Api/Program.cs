@@ -8,7 +8,8 @@ builder.Services.AddInvoicing();
 // The request's user comes from a JWT bearer token. In development, create one with `dotnet user-jwts`.
 builder.Services.AddAuthentication().AddJwtBearer();
 builder.Services.AddAuthorization();
-builder.Services.AddHttpPrincipalAccessor();   // commands and queries run as the request's user
+// Commands and queries run as the request's user.
+builder.Services.AddHttpPrincipalAccessor();
 builder.Services.AddOpenApi();
 
 var app = builder.Build();
@@ -29,9 +30,12 @@ app.MapMediatorActions("/api", o => o.MapException = e => e switch
         ValidationException v => Results.ValidationProblem(v.Errors
             .GroupBy(f => f.PropertyName)
             .ToDictionary(g => g.Key, g => g.Select(f => f.ErrorMessage).ToArray())),
-        InvoiceNotFoundException => Results.Problem(statusCode: StatusCodes.Status404NotFound, title: "The invoice doesn't exist."),
-        _ => null,   // anything else goes to ASP.NET Core's exception handling, without details
-    })
-    .RequireAuthorization();   // ASP.NET Core refuses anonymous requests; the mediator then checks each action's rules
+        InvoiceNotFoundException => Results.Problem(statusCode: StatusCodes.Status404NotFound, title: InvoicingErrors.InvoiceNotFound),
 
-app.Run();
+        // Anything else goes to ASP.NET Core's exception handling, without details.
+        _ => null,
+    })
+    // ASP.NET Core refuses anonymous requests; the mediator then checks each action's rules.
+    .RequireAuthorization();
+
+await app.RunAsync();

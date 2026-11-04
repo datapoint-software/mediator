@@ -1,5 +1,4 @@
 using System.CommandLine;
-using FluentValidation;
 using Invoicing.Domain;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -13,11 +12,7 @@ await services.EnsureInvoicingDatabaseAsync();
 
 // One command per action: `invoicing invoices create --customer Ana --amount 100`. Results are printed as JSON.
 var root = new RootCommand("Invoicing sample: the same actions as the API and the MCP server.")
-    .AddMediatorActions(services, o => o.ErrorMessage = e => e switch
-    {
-        ValidationException v => InvoicingServiceCollectionExtensions.Describe(v),
-        InvoiceNotFoundException => "The invoice doesn't exist.",
-        _ => null,   // anything else: "An unexpected error occurred." and exit code 70
-    });
+    // Anything InvoicingErrors doesn't describe is reported as "An unexpected error occurred.", with exit code 70.
+    .AddMediatorActions(services, o => o.ErrorMessage = InvoicingErrors.Describe);
 
 return await root.Parse(args).InvokeAsync();

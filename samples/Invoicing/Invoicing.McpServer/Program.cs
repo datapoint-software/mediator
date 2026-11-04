@@ -1,4 +1,3 @@
-using FluentValidation;
 using Invoicing.Domain;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -18,12 +17,8 @@ builder.Services.AddFixedPrincipalAccessor(InvoicingServiceCollectionExtensions.
 // One tool per action: invoices_create, invoices_get, invoices_list and invoices_cancel.
 builder.Services.AddMcpServer()
     .WithStdioServerTransport()
-    .WithMediatorActions(o => o.ErrorMessage = e => e switch
-    {
-        ValidationException v => InvoicingServiceCollectionExtensions.Describe(v),
-        InvoiceNotFoundException => "The invoice doesn't exist.",
-        _ => null,   // anything else: a generic error that reveals nothing
-    });
+    // Anything InvoicingErrors doesn't describe is reported as a generic error that reveals nothing.
+    .WithMediatorActions(o => o.ErrorMessage = InvoicingErrors.Describe);
 
 var app = builder.Build();
 await app.Services.EnsureInvoicingDatabaseAsync();

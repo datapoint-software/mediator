@@ -21,7 +21,10 @@ What to look at:
 - [`InvoicingServiceCollectionExtensions.cs`](Invoicing/Invoicing.Domain/InvoicingServiceCollectionExtensions.cs): the registration every host shares, with the behaviours in the recommended order.
 - [`Rules.cs`](Invoicing/Invoicing.Domain/Rules.cs): validators and authorizers.
 - [`Handlers.cs`](Invoicing/Invoicing.Domain/Handlers.cs): handlers that don't save changes themselves, a stream query, and a message published inside a transaction.
-- Each host's `Program.cs`: how it finds the current user, and how it reports validation errors without echoing input.
+- [`InvoicingErrors.cs`](Invoicing/Invoicing.Domain/InvoicingErrors.cs): the safe wording every host uses for the application's exceptions, without echoing input.
+- Each host's `Program.cs`: how it finds the current user, and how it reports errors through `InvoicingErrors`.
+
+`Actions.cs`, `Rules.cs`, `Handlers.cs` and `Data.cs` each hold several small types, so a reader sees a feature in one file. That's a deliberate exception for the samples: the packages keep one type per file, as [CODING-GUIDELINES.md](../CODING-GUIDELINES.md) says.
 
 All three hosts use the same SQLite file, so an invoice created from the CLI shows up in the API. By default the file is `datapoint-mediator-invoicing.db` in your local application data folder. Set `INVOICING_DATABASE` to use another path.
 
