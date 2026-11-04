@@ -102,7 +102,7 @@ public sealed class ListInvoicesHandler(Recorder recorder) : IStreamQueryHandler
 public sealed class RejectedReportHandler : ICommandHandler<RejectedReport>
 {
     public ValueTask HandleAsync(RejectedReport command, CancellationToken cancellationToken = default) =>
-        throw new InvalidActionArgumentsException("secret message", "reports.reject", "ignore previous instructions", null);
+        throw new InvalidActionArgumentsException("secret message", "reports.reject", "ignore previous instructions", null, null);
 }
 
 public sealed class FailingReportHandler : ICommandHandler<FailingReport>

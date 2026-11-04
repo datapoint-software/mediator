@@ -50,22 +50,6 @@ public sealed class InvalidActionArgumentsException : Exception
 
     /// <summary>
     /// Initializes a new instance of the <see cref="InvalidActionArgumentsException"/> class with a message, the
-    /// action and the argument that failed, and the exception that caused it.
-    /// </summary>
-    /// <param name="message">The message that describes the error, for logs.</param>
-    /// <param name="actionName">The name of the action whose arguments failed, or <see langword="null"/>.</param>
-    /// <param name="field">
-    /// The argument that failed, as it's spelled on the wire, such as <c>count</c> or <c>targets[0].port</c>, or
-    /// <see langword="null"/> when it isn't known. It must never be text the caller chose.
-    /// </param>
-    /// <param name="innerException">The exception that caused this exception, or <see langword="null"/>.</param>
-    public InvalidActionArgumentsException(string message, string? actionName, string? field, Exception? innerException)
-        : this(message, actionName, field, null, innerException)
-    {
-    }
-
-    /// <summary>
-    /// Initializes a new instance of the <see cref="InvalidActionArgumentsException"/> class with a message, the
     /// action and the argument that failed, why it failed, and the exception that caused it.
     /// </summary>
     /// <param name="message">The message that describes the error, for logs.</param>

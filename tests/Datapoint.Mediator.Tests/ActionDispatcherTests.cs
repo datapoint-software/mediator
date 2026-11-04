@@ -156,7 +156,7 @@ public sealed class ActionDispatcherTests
     {
         var inner = new InvalidOperationException();
 
-        var exception = new InvalidActionArgumentsException("message", "invoice.get", "id", inner);
+        var exception = new InvalidActionArgumentsException("message", "invoice.get", "id", null, inner);
 
         Assert.Equal("message", exception.Message);
         Assert.Equal("invoice.get", exception.ActionName);

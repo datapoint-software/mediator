@@ -79,6 +79,6 @@ public static class ActionArguments
         }
 
         return result
-            ?? throw new InvalidActionArgumentsException($"The arguments for action '{action.Name}' are missing.", action.Name, null, null);
+            ?? throw new InvalidActionArgumentsException($"The arguments for action '{action.Name}' are missing.", action.Name, null, null, null);
     }
 }
