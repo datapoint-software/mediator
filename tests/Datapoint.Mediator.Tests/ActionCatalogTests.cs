@@ -145,6 +145,38 @@ public sealed class ActionCatalogTests
         Assert.Equal("actionType", Assert.Throws<ArgumentNullException>(() => new ActionDescriptor("a", "d", ActionKind.Command, null!, null)).ParamName);
     }
 
+    [Theory]
+    [InlineData(ActionKind.Command, typeof(AlphaCommand), null)]
+    [InlineData(ActionKind.CommandWithResult, typeof(ResultCommand), typeof(int))]
+    [InlineData(ActionKind.Query, typeof(ZetaQuery), typeof(string))]
+    [InlineData(ActionKind.StreamQuery, typeof(NumberStream), typeof(int))]
+    public void ActionDescriptor_KindThatMatchesTheType_IsAccepted(ActionKind kind, Type actionType, Type? resultType)
+    {
+        var descriptor = new ActionDescriptor("a", "d", kind, actionType, resultType);
+
+        Assert.Equal(kind, descriptor.Kind);
+        Assert.Equal(resultType, descriptor.ResultType);
+    }
+
+    // A wrong descriptor would otherwise fail at its first dispatch, or dispatch through the wrong method.
+    [Theory]
+    [InlineData(ActionKind.Command, typeof(ResultCommand), null)]
+    [InlineData(ActionKind.Command, typeof(AlphaCommand), typeof(int))]
+    [InlineData(ActionKind.CommandWithResult, typeof(ResultCommand), typeof(string))]
+    [InlineData(ActionKind.CommandWithResult, typeof(ResultCommand), null)]
+    [InlineData(ActionKind.Query, typeof(ResultCommand), typeof(int))]
+    [InlineData(ActionKind.Query, typeof(ZetaQuery), null)]
+    [InlineData(ActionKind.StreamQuery, typeof(ZetaQuery), typeof(string))]
+    [InlineData(ActionKind.StreamQuery, typeof(NumberStream), null)]
+    [InlineData((ActionKind)99, typeof(AlphaCommand), null)]
+    public void ActionDescriptor_KindThatDoesNotMatchTheType_Throws(ActionKind kind, Type actionType, Type? resultType)
+    {
+        var exception = Assert.Throws<ArgumentException>(() => new ActionDescriptor("a", "d", kind, actionType, resultType));
+
+        Assert.Equal("actionType", exception.ParamName);
+        Assert.Contains($"'{actionType}' doesn't", exception.Message, StringComparison.Ordinal);
+    }
+
     private static void AssertDescriptor(ActionCatalog catalog, string name, ActionKind kind, Type actionType, Type? resultType, string description)
     {
         Assert.True(catalog.TryGetAction(name, out var action));

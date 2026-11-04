@@ -21,16 +21,22 @@ internal abstract class ActionInvoker
     public virtual IAsyncEnumerable<object?> StreamAsync(IMediator mediator, object action, CancellationToken cancellationToken) =>
         throw new InvalidOperationException("Use DispatchAsync to dispatch a command or query.");
 
+    // The ActionDescriptor constructor checks that the kind is defined and that every kind but Command has a result
+    // type, so ResultType is never null here. Every named kind has a case, so the compiler fails the build when a new
+    // kind is added; CS8524 is about unnamed values, which the constructor already refuses.
     private static ActionInvoker Create(ActionDescriptor action)
     {
+#pragma warning disable CS8524
         var invokerType = action.Kind switch
         {
             ActionKind.Command => typeof(CommandInvoker),
             ActionKind.CommandWithResult => typeof(CommandInvoker<>).MakeGenericType(action.ResultType!),
             ActionKind.Query => typeof(QueryInvoker<>).MakeGenericType(action.ResultType!),
-            _ => typeof(StreamQueryInvoker<>).MakeGenericType(action.ResultType!),
+            ActionKind.StreamQuery => typeof(StreamQueryInvoker<>).MakeGenericType(action.ResultType!),
         };
+#pragma warning restore CS8524
 
+        // Never null: every invoker type is a class with a public parameterless constructor.
         return (ActionInvoker)Activator.CreateInstance(invokerType)!;
     }
 
