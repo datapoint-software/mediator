@@ -173,4 +173,13 @@ public sealed class RegistrationTests
 
         Assert.All(services, d => Assert.Equal(ServiceLifetime.Transient, d.Lifetime));
     }
+
+    [Fact]
+    public void AddAuthorizersFromAssemblyContaining_WithLifetime_AppliesIt()
+    {
+        var services = new ServiceCollection().AddAuthorizersFromAssemblyContaining<RegistrationTests>(ServiceLifetime.Singleton);
+
+        Assert.NotEmpty(services);
+        Assert.All(services, d => Assert.Equal(ServiceLifetime.Singleton, d.Lifetime));
+    }
 }

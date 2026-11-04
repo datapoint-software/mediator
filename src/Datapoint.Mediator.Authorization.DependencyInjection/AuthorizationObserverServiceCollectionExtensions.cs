@@ -11,11 +11,27 @@ namespace Microsoft.Extensions.DependencyInjection;
 public static class AuthorizationObserverServiceCollectionExtensions
 {
     /// <summary>
+    /// Registers an <see cref="IAuthorizationObserver"/> as a scoped service. It is told every authorization outcome,
+    /// allowed or not.
+    /// </summary>
+    /// <typeparam name="TObserver">The type of the observer.</typeparam>
+    /// <param name="services">The service collection.</param>
+    /// <returns>The service collection, for chaining.</returns>
+    /// <remarks>
+    /// Observers run in registration order. If one throws, the action does not run. Registering the same observer
+    /// again has no effect.
+    /// </remarks>
+    /// <exception cref="ArgumentNullException"><paramref name="services"/> is <see langword="null"/>.</exception>
+    public static IServiceCollection AddAuthorizationObserver<TObserver>(this IServiceCollection services)
+        where TObserver : class, IAuthorizationObserver =>
+        services.AddAuthorizationObserver<TObserver>(ServiceLifetime.Scoped);
+
+    /// <summary>
     /// Registers an <see cref="IAuthorizationObserver"/>, which is told every authorization outcome, allowed or not.
     /// </summary>
     /// <typeparam name="TObserver">The type of the observer.</typeparam>
     /// <param name="services">The service collection.</param>
-    /// <param name="lifetime">The observer's lifetime. The default is <see cref="ServiceLifetime.Scoped"/>.</param>
+    /// <param name="lifetime">The observer's lifetime.</param>
     /// <returns>The service collection, for chaining.</returns>
     /// <remarks>
     /// Observers run in registration order. If one throws, the action does not run. Registering the same observer
@@ -24,7 +40,7 @@ public static class AuthorizationObserverServiceCollectionExtensions
     /// <exception cref="ArgumentNullException"><paramref name="services"/> is <see langword="null"/>.</exception>
     public static IServiceCollection AddAuthorizationObserver<TObserver>(
         this IServiceCollection services,
-        ServiceLifetime lifetime = ServiceLifetime.Scoped)
+        ServiceLifetime lifetime)
         where TObserver : class, IAuthorizationObserver
     {
         ArgumentNullException.ThrowIfNull(services);

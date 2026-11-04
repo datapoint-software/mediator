@@ -23,7 +23,7 @@ public static class AuthorizationMediatorOptionsExtensions
     /// </para>
     /// <para>
     /// The host must also register an <see cref="IPrincipalAccessor"/>, and authorizers must be registered, for example
-    /// with <see cref="AuthorizerServiceCollectionExtensions.AddAuthorizersFromAssembly"/>. The behaviour is always
+    /// with <see cref="AuthorizerServiceCollectionExtensions.AddAuthorizersFromAssembly(IServiceCollection, System.Reflection.Assembly)"/>. The behaviour is always
     /// scoped, whatever <see cref="MediatorOptions.DefaultLifetime"/> is. Calling this method more than once has no
     /// effect.
     /// </para>

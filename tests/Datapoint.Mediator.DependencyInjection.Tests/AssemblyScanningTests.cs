@@ -63,6 +63,15 @@ public sealed class AssemblyScanningTests
     }
 
     [Fact]
+    public void AddHandlersFromAssemblyContaining_WithLifetime_MatchesAddHandlersFromAssembly()
+    {
+        var byAssembly = new ServiceCollection().AddMediator(o => o.AddHandlersFromAssembly(FixturesAssembly, ServiceLifetime.Singleton));
+        var byType = new ServiceCollection().AddMediator(o => o.AddHandlersFromAssemblyContaining<FixtureCommand>(ServiceLifetime.Singleton));
+
+        Assert.Equal(Describe(byAssembly), Describe(byType));
+    }
+
+    [Fact]
     public void AddHandlersFromAssembly_NullAssembly_Throws()
     {
         var exception = Assert.Throws<ArgumentNullException>(() => new MediatorOptions().AddHandlersFromAssembly(null!));

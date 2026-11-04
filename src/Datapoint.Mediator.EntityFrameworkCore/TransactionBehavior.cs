@@ -77,6 +77,19 @@ public sealed class TransactionBehavior<TDbContext> : IBehavior
     }
 
     /// <summary>
+    /// Initializes a new instance of the <see cref="TransactionBehavior{TDbContext}"/> class, with the default settings.
+    /// </summary>
+    /// <param name="dbContext">The database context to run requests in a transaction of.</param>
+    /// <param name="initializers">The initializers that prepare each transaction, in order.</param>
+    /// <exception cref="ArgumentNullException">
+    /// <paramref name="dbContext"/> or <paramref name="initializers"/> is <see langword="null"/>.
+    /// </exception>
+    public TransactionBehavior(TDbContext dbContext, IEnumerable<ITransactionInitializer<TDbContext>> initializers)
+        : this(dbContext, initializers, null)
+    {
+    }
+
+    /// <summary>
     /// Initializes a new instance of the <see cref="TransactionBehavior{TDbContext}"/> class.
     /// </summary>
     /// <param name="dbContext">The database context to run requests in a transaction of.</param>
@@ -88,7 +101,7 @@ public sealed class TransactionBehavior<TDbContext> : IBehavior
     public TransactionBehavior(
         TDbContext dbContext,
         IEnumerable<ITransactionInitializer<TDbContext>> initializers,
-        TransactionBehaviorOptions? options = null)
+        TransactionBehaviorOptions? options)
     {
         ArgumentNullException.ThrowIfNull(dbContext);
         ArgumentNullException.ThrowIfNull(initializers);

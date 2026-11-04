@@ -46,14 +46,36 @@ public sealed class AuthorizationDecision
     public Exception? Exception { get; }
 
     /// <summary>
+    /// Creates a decision without details that allows the action.
+    /// </summary>
+    /// <returns>A decision that allows the action.</returns>
+    public static AuthorizationDecision Allow() => Allowed;
+
+    /// <summary>
     /// Creates a decision that allows the action.
     /// </summary>
     /// <param name="details">
     /// An application-defined value that explains why the action is allowed, or <see langword="null"/>.
     /// </param>
     /// <returns>A decision that allows the action.</returns>
-    public static AuthorizationDecision Allow(object? details = null) =>
+    public static AuthorizationDecision Allow(object? details) =>
         details is null ? Allowed : new(isAllowed: true, details);
+
+    /// <summary>
+    /// Creates a decision without details that denies the action with an <see cref="AccessDeniedException"/>.
+    /// </summary>
+    /// <returns>A decision that denies the action.</returns>
+    public static AuthorizationDecision Deny() => Denied;
+
+    /// <summary>
+    /// Creates a decision that denies the action with an <see cref="AccessDeniedException"/>.
+    /// </summary>
+    /// <param name="details">
+    /// An application-defined value that explains why the action is denied, or <see langword="null"/>. It is never
+    /// reported to the caller.
+    /// </param>
+    /// <returns>A decision that denies the action.</returns>
+    public static AuthorizationDecision Deny(object? details) => Deny(details, null);
 
     /// <summary>
     /// Creates a decision that denies the action.
@@ -69,7 +91,7 @@ public sealed class AuthorizationDecision
     /// that mapping is safe. When a transaction is retried, the same instance is thrown again.
     /// </param>
     /// <returns>A decision that denies the action.</returns>
-    public static AuthorizationDecision Deny(object? details = null, Exception? exception = null) =>
+    public static AuthorizationDecision Deny(object? details, Exception? exception) =>
         details is null && exception is null ? Denied : new(isAllowed: false, details, exception);
 
     /// <summary>

@@ -30,13 +30,30 @@ public static class TransactionServiceCollectionExtensions
     }
 
     /// <summary>
+    /// Registers an <see cref="ITransactionInitializer{TDbContext}"/> as a scoped service. It prepares each transaction
+    /// of <typeparamref name="TDbContext"/> before anything else runs in it.
+    /// </summary>
+    /// <typeparam name="TDbContext">The type of the database context.</typeparam>
+    /// <typeparam name="TInitializer">The type of the initializer.</typeparam>
+    /// <param name="services">The service collection.</param>
+    /// <returns>The service collection, for chaining.</returns>
+    /// <remarks>
+    /// Initializers run in registration order. Registering the same initializer again has no effect.
+    /// </remarks>
+    /// <exception cref="ArgumentNullException"><paramref name="services"/> is <see langword="null"/>.</exception>
+    public static IServiceCollection AddTransactionInitializer<TDbContext, TInitializer>(this IServiceCollection services)
+        where TDbContext : DbContext
+        where TInitializer : class, ITransactionInitializer<TDbContext> =>
+        services.AddTransactionInitializer<TDbContext, TInitializer>(ServiceLifetime.Scoped);
+
+    /// <summary>
     /// Registers an <see cref="ITransactionInitializer{TDbContext}"/>, which prepares each transaction of
     /// <typeparamref name="TDbContext"/> before anything else runs in it.
     /// </summary>
     /// <typeparam name="TDbContext">The type of the database context.</typeparam>
     /// <typeparam name="TInitializer">The type of the initializer.</typeparam>
     /// <param name="services">The service collection.</param>
-    /// <param name="lifetime">The initializer's lifetime. The default is <see cref="ServiceLifetime.Scoped"/>.</param>
+    /// <param name="lifetime">The initializer's lifetime.</param>
     /// <returns>The service collection, for chaining.</returns>
     /// <remarks>
     /// Initializers run in registration order. Registering the same initializer again has no effect.
@@ -44,7 +61,7 @@ public static class TransactionServiceCollectionExtensions
     /// <exception cref="ArgumentNullException"><paramref name="services"/> is <see langword="null"/>.</exception>
     public static IServiceCollection AddTransactionInitializer<TDbContext, TInitializer>(
         this IServiceCollection services,
-        ServiceLifetime lifetime = ServiceLifetime.Scoped)
+        ServiceLifetime lifetime)
         where TDbContext : DbContext
         where TInitializer : class, ITransactionInitializer<TDbContext>
     {

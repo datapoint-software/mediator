@@ -268,12 +268,27 @@ public sealed class EndpointTests
     }
 
     [Fact]
+    public async Task MapMediatorActions_WithOnlyConfigure_MapsTheChosenActionsAtTheRoot()
+    {
+        // The test app's /api group leaves the action out, because endpoint names must be unique.
+        await using var app = await TestApp.StartAsync(
+            configureEndpoints: o => o.Filter = d => d.Name != "invoices.get",
+            configureApp: a => a.MapMediatorActions(o => o.Filter = d => d.Name == "invoices.get"));
+
+        var json = await PostAsync(app, "/invoices/get", """{ "id": 3 }""");
+        var create = await app.Client.PostAsync("/invoices/create", null, Ct);
+
+        Assert.Equal(3, json.GetProperty("id").GetInt32());
+        Assert.Equal(HttpStatusCode.NotFound, create.StatusCode);
+    }
+
+    [Fact]
     public async Task MapMediatorActions_NullArguments_Throw()
     {
         await using var app = await TestApp.StartAsync();
 
         Assert.Equal("endpoints", Assert.Throws<ArgumentNullException>(() => ((IEndpointRouteBuilder)null!).MapMediatorActions()).ParamName);
-        Assert.Equal("prefix", Assert.Throws<ArgumentNullException>(() => app.App.MapMediatorActions(null!)).ParamName);
+        Assert.Equal("prefix", Assert.Throws<ArgumentNullException>(() => app.App.MapMediatorActions((string)null!)).ParamName);
     }
 
     private static Task<TestApp> StartWithAuthorizationAsync(ClaimsPrincipal? principal) =>

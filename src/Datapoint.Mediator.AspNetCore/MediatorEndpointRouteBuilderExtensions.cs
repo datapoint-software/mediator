@@ -16,6 +16,45 @@ public static class MediatorEndpointRouteBuilderExtensions
 {
     /// <summary>
     /// Maps every action in <see cref="IActionCatalog"/> marked with <see cref="ApiAttribute"/> as a <c>POST</c>
+    /// endpoint at the root, with the default options.
+    /// </summary>
+    /// <param name="endpoints">The endpoint route builder.</param>
+    /// <returns>A group builder for the endpoints, so conventions such as <c>RequireAuthorization</c> apply to all of them.</returns>
+    /// <remarks>See <see cref="MapMediatorActions(IEndpointRouteBuilder, string, Action{MediatorEndpointOptions}?)"/>.</remarks>
+    /// <exception cref="ArgumentNullException"><paramref name="endpoints"/> is <see langword="null"/>.</exception>
+    public static RouteGroupBuilder MapMediatorActions(this IEndpointRouteBuilder endpoints) =>
+        endpoints.MapMediatorActions(string.Empty, null);
+
+    /// <summary>
+    /// Maps every action in <see cref="IActionCatalog"/> marked with <see cref="ApiAttribute"/> as a <c>POST</c>
+    /// endpoint under <paramref name="prefix"/>, with the default options.
+    /// </summary>
+    /// <param name="endpoints">The endpoint route builder.</param>
+    /// <param name="prefix">The route prefix, such as <c>/api</c>.</param>
+    /// <returns>A group builder for the endpoints, so conventions such as <c>RequireAuthorization</c> apply to all of them.</returns>
+    /// <remarks>See <see cref="MapMediatorActions(IEndpointRouteBuilder, string, Action{MediatorEndpointOptions}?)"/>.</remarks>
+    /// <exception cref="ArgumentNullException">
+    /// <paramref name="endpoints"/> or <paramref name="prefix"/> is <see langword="null"/>.
+    /// </exception>
+    public static RouteGroupBuilder MapMediatorActions(this IEndpointRouteBuilder endpoints, string prefix) =>
+        endpoints.MapMediatorActions(prefix, null);
+
+    /// <summary>
+    /// Maps every action in <see cref="IActionCatalog"/> marked with <see cref="ApiAttribute"/> as a <c>POST</c>
+    /// endpoint at the root.
+    /// </summary>
+    /// <param name="endpoints">The endpoint route builder.</param>
+    /// <param name="configure">Configures which actions are mapped and how, or <see langword="null"/>.</param>
+    /// <returns>A group builder for the endpoints, so conventions such as <c>RequireAuthorization</c> apply to all of them.</returns>
+    /// <remarks>See <see cref="MapMediatorActions(IEndpointRouteBuilder, string, Action{MediatorEndpointOptions}?)"/>.</remarks>
+    /// <exception cref="ArgumentNullException"><paramref name="endpoints"/> is <see langword="null"/>.</exception>
+    public static RouteGroupBuilder MapMediatorActions(
+        this IEndpointRouteBuilder endpoints,
+        Action<MediatorEndpointOptions>? configure) =>
+        endpoints.MapMediatorActions(string.Empty, configure);
+
+    /// <summary>
+    /// Maps every action in <see cref="IActionCatalog"/> marked with <see cref="ApiAttribute"/> as a <c>POST</c>
     /// endpoint under <paramref name="prefix"/>.
     /// </summary>
     /// <param name="endpoints">The endpoint route builder.</param>
@@ -57,8 +96,8 @@ public static class MediatorEndpointRouteBuilderExtensions
     /// </exception>
     public static RouteGroupBuilder MapMediatorActions(
         this IEndpointRouteBuilder endpoints,
-        string prefix = "",
-        Action<MediatorEndpointOptions>? configure = null)
+        string prefix,
+        Action<MediatorEndpointOptions>? configure)
     {
         ArgumentNullException.ThrowIfNull(endpoints);
         ArgumentNullException.ThrowIfNull(prefix);

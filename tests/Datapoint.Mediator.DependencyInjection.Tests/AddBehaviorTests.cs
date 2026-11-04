@@ -24,6 +24,14 @@ public sealed class AddBehaviorTests
     }
 
     [Fact]
+    public void AddBehavior_ByTypeWithLifetime_OverridesDefaultLifetime()
+    {
+        var services = new ServiceCollection().AddMediator(o => o.AddBehavior(typeof(OuterBehavior), ServiceLifetime.Singleton));
+
+        Assert.Equal(ServiceLifetime.Singleton, Assert.Single(services, d => d.ServiceType == typeof(IBehavior)).Lifetime);
+    }
+
+    [Fact]
     public void AddBehavior_AppliesDefaultAndExplicitLifetimes()
     {
         var services = new ServiceCollection().AddMediator(o =>

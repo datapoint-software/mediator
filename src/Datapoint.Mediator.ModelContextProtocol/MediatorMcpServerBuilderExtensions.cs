@@ -12,6 +12,16 @@ namespace Microsoft.Extensions.DependencyInjection;
 public static class MediatorMcpServerBuilderExtensions
 {
     /// <summary>
+    /// Offers every action in <see cref="IActionCatalog"/> as an MCP tool, with the default options.
+    /// </summary>
+    /// <param name="builder">The MCP server builder.</param>
+    /// <returns>The MCP server builder, for chaining.</returns>
+    /// <remarks>See <see cref="WithMediatorActions(IMcpServerBuilder, Action{MediatorMcpOptions}?)"/>.</remarks>
+    /// <exception cref="ArgumentNullException"><paramref name="builder"/> is <see langword="null"/>.</exception>
+    public static IMcpServerBuilder WithMediatorActions(this IMcpServerBuilder builder) =>
+        builder.WithMediatorActions(null);
+
+    /// <summary>
     /// Offers every action in <see cref="IActionCatalog"/> as an MCP tool.
     /// </summary>
     /// <param name="builder">The MCP server builder.</param>
@@ -39,7 +49,7 @@ public static class MediatorMcpServerBuilderExtensions
     /// <exception cref="InvalidOperationException">
     /// Both <see cref="MediatorMcpOptions.ErrorMessage"/> and <see cref="MediatorMcpOptions.ErrorContent"/> are set.
     /// </exception>
-    public static IMcpServerBuilder WithMediatorActions(this IMcpServerBuilder builder, Action<MediatorMcpOptions>? configure = null)
+    public static IMcpServerBuilder WithMediatorActions(this IMcpServerBuilder builder, Action<MediatorMcpOptions>? configure)
     {
         ArgumentNullException.ThrowIfNull(builder);
 

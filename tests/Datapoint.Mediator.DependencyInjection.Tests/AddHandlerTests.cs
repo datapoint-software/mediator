@@ -68,6 +68,14 @@ public sealed class AddHandlerTests
     }
 
     [Fact]
+    public void AddHandler_ByTypeWithLifetime_OverridesDefaultLifetime()
+    {
+        var services = new ServiceCollection().AddMediator(o => o.AddHandler(typeof(PingHandler), ServiceLifetime.Singleton));
+
+        Assert.Equal(ServiceLifetime.Singleton, LifetimeOf<ICommandHandler<Ping>>(services));
+    }
+
+    [Fact]
     public void AddHandler_NullType_Throws()
     {
         var exception = Assert.Throws<ArgumentNullException>(() => new MediatorOptions().AddHandler(null!));

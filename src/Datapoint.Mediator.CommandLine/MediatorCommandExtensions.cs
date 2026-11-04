@@ -12,6 +12,22 @@ namespace System.CommandLine;
 public static class MediatorCommandExtensions
 {
     /// <summary>
+    /// Adds every action in <see cref="IActionCatalog"/> as a subcommand of <paramref name="command"/>, with the default
+    /// options.
+    /// </summary>
+    /// <typeparam name="TCommand">The type of the command, such as <see cref="RootCommand"/>.</typeparam>
+    /// <param name="command">The command to add the actions to.</param>
+    /// <param name="services">The app's service provider, which the mediator is registered in.</param>
+    /// <returns>The command, for chaining.</returns>
+    /// <remarks>See <see cref="AddMediatorActions{TCommand}(TCommand, IServiceProvider, Action{MediatorCommandLineOptions}?)"/>.</remarks>
+    /// <exception cref="ArgumentNullException">
+    /// <paramref name="command"/> or <paramref name="services"/> is <see langword="null"/>.
+    /// </exception>
+    public static TCommand AddMediatorActions<TCommand>(this TCommand command, IServiceProvider services)
+        where TCommand : Command =>
+        command.AddMediatorActions(services, null);
+
+    /// <summary>
     /// Adds every action in <see cref="IActionCatalog"/> as a subcommand of <paramref name="command"/>.
     /// </summary>
     /// <typeparam name="TCommand">The type of the command, such as <see cref="RootCommand"/>.</typeparam>
@@ -44,7 +60,7 @@ public static class MediatorCommandExtensions
     public static TCommand AddMediatorActions<TCommand>(
         this TCommand command,
         IServiceProvider services,
-        Action<MediatorCommandLineOptions>? configure = null)
+        Action<MediatorCommandLineOptions>? configure)
         where TCommand : Command
     {
         ArgumentNullException.ThrowIfNull(command);

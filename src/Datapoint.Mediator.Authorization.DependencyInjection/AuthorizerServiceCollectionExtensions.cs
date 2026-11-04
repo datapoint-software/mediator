@@ -15,11 +15,27 @@ namespace Microsoft.Extensions.DependencyInjection;
 public static class AuthorizerServiceCollectionExtensions
 {
     /// <summary>
+    /// Registers every <see cref="IAuthorizer{TAction}"/> implementation in an assembly, as scoped services.
+    /// </summary>
+    /// <param name="services">The service collection.</param>
+    /// <param name="assembly">The assembly to scan.</param>
+    /// <returns>The service collection, for chaining.</returns>
+    /// <remarks>
+    /// Only concrete, non-generic classes are registered, ordered by their full name. Non-public classes are included.
+    /// Registering the same authorizer again has no effect.
+    /// </remarks>
+    /// <exception cref="ArgumentNullException">
+    /// <paramref name="services"/> or <paramref name="assembly"/> is <see langword="null"/>.
+    /// </exception>
+    public static IServiceCollection AddAuthorizersFromAssembly(this IServiceCollection services, Assembly assembly) =>
+        services.AddAuthorizersFromAssembly(assembly, ServiceLifetime.Scoped);
+
+    /// <summary>
     /// Registers every <see cref="IAuthorizer{TAction}"/> implementation in an assembly.
     /// </summary>
     /// <param name="services">The service collection.</param>
     /// <param name="assembly">The assembly to scan.</param>
-    /// <param name="lifetime">The authorizers' lifetime. The default is <see cref="ServiceLifetime.Scoped"/>.</param>
+    /// <param name="lifetime">The authorizers' lifetime.</param>
     /// <returns>The service collection, for chaining.</returns>
     /// <remarks>
     /// Only concrete, non-generic classes are registered, ordered by their full name. Non-public classes are included.
@@ -31,7 +47,7 @@ public static class AuthorizerServiceCollectionExtensions
     public static IServiceCollection AddAuthorizersFromAssembly(
         this IServiceCollection services,
         Assembly assembly,
-        ServiceLifetime lifetime = ServiceLifetime.Scoped)
+        ServiceLifetime lifetime)
     {
         ArgumentNullException.ThrowIfNull(services);
         ArgumentNullException.ThrowIfNull(assembly);
@@ -56,16 +72,27 @@ public static class AuthorizerServiceCollectionExtensions
 
     /// <summary>
     /// Registers every <see cref="IAuthorizer{TAction}"/> implementation in the assembly that contains
+    /// <typeparamref name="T"/>, as scoped services.
+    /// </summary>
+    /// <typeparam name="T">A type in the assembly to scan.</typeparam>
+    /// <param name="services">The service collection.</param>
+    /// <returns>The service collection, for chaining.</returns>
+    /// <exception cref="ArgumentNullException"><paramref name="services"/> is <see langword="null"/>.</exception>
+    public static IServiceCollection AddAuthorizersFromAssemblyContaining<T>(this IServiceCollection services) =>
+        services.AddAuthorizersFromAssembly(typeof(T).Assembly, ServiceLifetime.Scoped);
+
+    /// <summary>
+    /// Registers every <see cref="IAuthorizer{TAction}"/> implementation in the assembly that contains
     /// <typeparamref name="T"/>.
     /// </summary>
     /// <typeparam name="T">A type in the assembly to scan.</typeparam>
     /// <param name="services">The service collection.</param>
-    /// <param name="lifetime">The authorizers' lifetime. The default is <see cref="ServiceLifetime.Scoped"/>.</param>
+    /// <param name="lifetime">The authorizers' lifetime.</param>
     /// <returns>The service collection, for chaining.</returns>
     /// <exception cref="ArgumentNullException"><paramref name="services"/> is <see langword="null"/>.</exception>
     public static IServiceCollection AddAuthorizersFromAssemblyContaining<T>(
         this IServiceCollection services,
-        ServiceLifetime lifetime = ServiceLifetime.Scoped) =>
+        ServiceLifetime lifetime) =>
         services.AddAuthorizersFromAssembly(typeof(T).Assembly, lifetime);
 
     // Excluded from coverage: ReflectionTypeLoadException only occurs when an assembly references a dependency that is
