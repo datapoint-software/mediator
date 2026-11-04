@@ -23,6 +23,9 @@ public static class MediatorCommandExtensions
     /// <exception cref="ArgumentNullException">
     /// <paramref name="command"/> or <paramref name="services"/> is <see langword="null"/>.
     /// </exception>
+    /// <exception cref="InvalidOperationException">
+    /// <c>AddMediator</c> wasn't called, so no <see cref="IActionCatalog"/> is registered.
+    /// </exception>
     public static TCommand AddMediatorActions<TCommand>(this TCommand command, IServiceProvider services)
         where TCommand : Command =>
         command.AddMediatorActions(services, null);
@@ -57,6 +60,9 @@ public static class MediatorCommandExtensions
     /// </remarks>
     /// <exception cref="ArgumentNullException">
     /// <paramref name="command"/> or <paramref name="services"/> is <see langword="null"/>.
+    /// </exception>
+    /// <exception cref="InvalidOperationException">
+    /// <c>AddMediator</c> wasn't called, so no <see cref="IActionCatalog"/> is registered.
     /// </exception>
     public static TCommand AddMediatorActions<TCommand>(
         this TCommand command,

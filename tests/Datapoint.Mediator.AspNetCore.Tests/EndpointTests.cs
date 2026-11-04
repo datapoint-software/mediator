@@ -318,6 +318,14 @@ public sealed class EndpointTests
     }
 
     [Fact]
+    public async Task MapMediatorActions_WithoutAddMediator_Throws()
+    {
+        await using var app = WebApplication.CreateSlimBuilder().Build();
+
+        Assert.Throws<InvalidOperationException>(() => app.MapMediatorActions());
+    }
+
+    [Fact]
     public async Task MapMediatorActions_NullArguments_Throw()
     {
         await using var app = await TestApp.StartAsync();

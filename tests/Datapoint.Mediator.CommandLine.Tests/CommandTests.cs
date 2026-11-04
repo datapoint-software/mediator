@@ -56,6 +56,14 @@ public sealed class CommandTests
     }
 
     [Fact]
+    public async Task AddMediatorActions_WithoutAddMediator_Throws()
+    {
+        await using var provider = new ServiceCollection().BuildServiceProvider();
+
+        Assert.Throws<InvalidOperationException>(() => new RootCommand().AddMediatorActions(provider));
+    }
+
+    [Fact]
     public async Task Help_ShowsDescriptionsAndRequiredOptions()
     {
         await using var cli = new Cli();

@@ -3,11 +3,11 @@ using System;
 namespace Datapoint.Mediator;
 
 /// <summary>
-/// The exception thrown when no action that isn't hidden has the requested name.
+/// The exception thrown when the action catalog has no action with the requested name.
 /// </summary>
 /// <remarks>
-/// The same exception is thrown whether the action doesn't exist or is hidden, so callers can't learn which
-/// internal actions exist. The message doesn't include the requested name, which comes from the caller's input.
+/// Host adapters report an action they don't offer exactly like an unknown one, so callers can't learn which other
+/// actions exist. The message doesn't include the requested name, which comes from the caller's input.
 /// </remarks>
 public sealed class ActionNotFoundException : Exception
 {

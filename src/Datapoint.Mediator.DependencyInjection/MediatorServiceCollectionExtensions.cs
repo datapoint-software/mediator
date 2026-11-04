@@ -41,8 +41,11 @@ public static class MediatorServiceCollectionExtensions
     /// <paramref name="services"/> or <paramref name="configure"/> is <see langword="null"/>.
     /// </exception>
     /// <exception cref="InvalidOperationException">
-    /// A command or query would have more than one handler, or an action's name is not valid or is used twice, a message
-    /// is marked as an action, or an action implements more than one action interface.
+    /// The configuration isn't valid: a command or query would have more than one handler; a behaviour with settings
+    /// would be registered twice; an action's name isn't valid or is used twice; an action has no description, or no
+    /// adapter attribute such as <see cref="ApiAttribute"/>; a message is marked as an action; an action implements more
+    /// than one action interface; or a startup check added with <see cref="MediatorOptions.AddStartupCheck"/> refuses
+    /// the configuration.
     /// </exception>
     public static IServiceCollection AddMediator(this IServiceCollection services, Action<MediatorOptions> configure)
     {

@@ -22,6 +22,9 @@ public static class MediatorEndpointRouteBuilderExtensions
     /// <returns>A group builder for the endpoints, so conventions such as <c>RequireAuthorization</c> apply to all of them.</returns>
     /// <remarks>See <see cref="MapMediatorActions(IEndpointRouteBuilder, string, Action{MediatorEndpointOptions}?)"/>.</remarks>
     /// <exception cref="ArgumentNullException"><paramref name="endpoints"/> is <see langword="null"/>.</exception>
+    /// <exception cref="InvalidOperationException">
+    /// <c>AddMediator</c> wasn't called, so no <see cref="IActionCatalog"/> is registered.
+    /// </exception>
     public static RouteGroupBuilder MapMediatorActions(this IEndpointRouteBuilder endpoints) =>
         endpoints.MapMediatorActions(string.Empty, null);
 
@@ -36,6 +39,9 @@ public static class MediatorEndpointRouteBuilderExtensions
     /// <exception cref="ArgumentNullException">
     /// <paramref name="endpoints"/> or <paramref name="prefix"/> is <see langword="null"/>.
     /// </exception>
+    /// <exception cref="InvalidOperationException">
+    /// <c>AddMediator</c> wasn't called, so no <see cref="IActionCatalog"/> is registered.
+    /// </exception>
     public static RouteGroupBuilder MapMediatorActions(this IEndpointRouteBuilder endpoints, string prefix) =>
         endpoints.MapMediatorActions(prefix, null);
 
@@ -48,6 +54,9 @@ public static class MediatorEndpointRouteBuilderExtensions
     /// <returns>A group builder for the endpoints, so conventions such as <c>RequireAuthorization</c> apply to all of them.</returns>
     /// <remarks>See <see cref="MapMediatorActions(IEndpointRouteBuilder, string, Action{MediatorEndpointOptions}?)"/>.</remarks>
     /// <exception cref="ArgumentNullException"><paramref name="endpoints"/> is <see langword="null"/>.</exception>
+    /// <exception cref="InvalidOperationException">
+    /// <c>AddMediator</c> wasn't called, so no <see cref="IActionCatalog"/> is registered.
+    /// </exception>
     public static RouteGroupBuilder MapMediatorActions(
         this IEndpointRouteBuilder endpoints,
         Action<MediatorEndpointOptions>? configure) =>
@@ -93,6 +102,9 @@ public static class MediatorEndpointRouteBuilderExtensions
     /// </remarks>
     /// <exception cref="ArgumentNullException">
     /// <paramref name="endpoints"/> or <paramref name="prefix"/> is <see langword="null"/>.
+    /// </exception>
+    /// <exception cref="InvalidOperationException">
+    /// <c>AddMediator</c> wasn't called, so no <see cref="IActionCatalog"/> is registered.
     /// </exception>
     public static RouteGroupBuilder MapMediatorActions(
         this IEndpointRouteBuilder endpoints,

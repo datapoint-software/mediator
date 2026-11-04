@@ -92,6 +92,11 @@ public sealed class AuthorizationBehavior : IBehavior
     /// <exception cref="ArgumentNullException">
     /// <paramref name="command"/> or <paramref name="next"/> is <see langword="null"/>.
     /// </exception>
+    /// <exception cref="InvalidOperationException">
+    /// The action isn't anonymous and no <see cref="IPrincipalAccessor"/> is registered, or
+    /// <see cref="AuthorizationBehaviorOptions.RequireTransaction"/> requires a transaction for the action, and none is
+    /// active.
+    /// </exception>
     public ValueTask HandleAsync(ICommand command, Func<CancellationToken, ValueTask> next, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(command);
@@ -105,6 +110,11 @@ public sealed class AuthorizationBehavior : IBehavior
     /// <exception cref="AccessDeniedException">The user may not run the command.</exception>
     /// <exception cref="ArgumentNullException">
     /// <paramref name="command"/> or <paramref name="next"/> is <see langword="null"/>.
+    /// </exception>
+    /// <exception cref="InvalidOperationException">
+    /// The action isn't anonymous and no <see cref="IPrincipalAccessor"/> is registered, or
+    /// <see cref="AuthorizationBehaviorOptions.RequireTransaction"/> requires a transaction for the action, and none is
+    /// active.
     /// </exception>
     public ValueTask<TResult> HandleAsync<TResult>(
         ICommand<TResult> command,
@@ -122,6 +132,11 @@ public sealed class AuthorizationBehavior : IBehavior
     /// <exception cref="AccessDeniedException">The user may not run the query.</exception>
     /// <exception cref="ArgumentNullException">
     /// <paramref name="query"/> or <paramref name="next"/> is <see langword="null"/>.
+    /// </exception>
+    /// <exception cref="InvalidOperationException">
+    /// The action isn't anonymous and no <see cref="IPrincipalAccessor"/> is registered, or
+    /// <see cref="AuthorizationBehaviorOptions.RequireTransaction"/> requires a transaction for the action, and none is
+    /// active.
     /// </exception>
     public ValueTask<TResult> HandleAsync<TResult>(
         IQuery<TResult> query,
@@ -143,6 +158,11 @@ public sealed class AuthorizationBehavior : IBehavior
     /// </exception>
     /// <exception cref="ArgumentNullException">
     /// <paramref name="query"/> or <paramref name="next"/> is <see langword="null"/>.
+    /// </exception>
+    /// <exception cref="InvalidOperationException">
+    /// The action isn't anonymous and no <see cref="IPrincipalAccessor"/> is registered, or
+    /// <see cref="AuthorizationBehaviorOptions.RequireTransaction"/> requires a transaction for the action, and none is
+    /// active. Thrown when the results are first enumerated.
     /// </exception>
     public IAsyncEnumerable<TResult> HandleAsync<TResult>(
         IStreamQuery<TResult> query,

@@ -43,6 +43,9 @@ public sealed class AuthenticationBehavior : IBehavior
     /// <exception cref="ArgumentNullException">
     /// <paramref name="command"/> or <paramref name="next"/> is <see langword="null"/>.
     /// </exception>
+    /// <exception cref="InvalidOperationException">
+    /// The action isn't anonymous and no <see cref="IPrincipalAccessor"/> is registered.
+    /// </exception>
     public ValueTask HandleAsync(ICommand command, Func<CancellationToken, ValueTask> next, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(command);
@@ -55,6 +58,9 @@ public sealed class AuthenticationBehavior : IBehavior
     /// <exception cref="AuthenticationRequiredException">There is no signed-in user.</exception>
     /// <exception cref="ArgumentNullException">
     /// <paramref name="command"/> or <paramref name="next"/> is <see langword="null"/>.
+    /// </exception>
+    /// <exception cref="InvalidOperationException">
+    /// The action isn't anonymous and no <see cref="IPrincipalAccessor"/> is registered.
     /// </exception>
     public ValueTask<TResult> HandleAsync<TResult>(
         ICommand<TResult> command,
@@ -71,6 +77,9 @@ public sealed class AuthenticationBehavior : IBehavior
     /// <exception cref="AuthenticationRequiredException">There is no signed-in user.</exception>
     /// <exception cref="ArgumentNullException">
     /// <paramref name="query"/> or <paramref name="next"/> is <see langword="null"/>.
+    /// </exception>
+    /// <exception cref="InvalidOperationException">
+    /// The action isn't anonymous and no <see cref="IPrincipalAccessor"/> is registered.
     /// </exception>
     public ValueTask<TResult> HandleAsync<TResult>(
         IQuery<TResult> query,
@@ -89,6 +98,10 @@ public sealed class AuthenticationBehavior : IBehavior
     /// </exception>
     /// <exception cref="ArgumentNullException">
     /// <paramref name="query"/> or <paramref name="next"/> is <see langword="null"/>.
+    /// </exception>
+    /// <exception cref="InvalidOperationException">
+    /// The action isn't anonymous and no <see cref="IPrincipalAccessor"/> is registered. Thrown when the results are
+    /// first enumerated.
     /// </exception>
     public IAsyncEnumerable<TResult> HandleAsync<TResult>(
         IStreamQuery<TResult> query,
