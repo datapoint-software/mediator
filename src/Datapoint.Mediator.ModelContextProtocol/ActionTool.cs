@@ -66,16 +66,19 @@ internal sealed partial class ActionTool : McpServerTool
         var services = request.Services
             ?? throw new InvalidOperationException("The MCP request has no service provider to resolve the action dispatcher from.");
 
+        var arguments = JsonSerializer.SerializeToElement(
+            request.Params?.Arguments ?? new Dictionary<string, JsonElement>(),
+            _serializerOptions);
+
+        // Checked on the arguments that are dispatched, not on the agent's keys, because serializing applies the app's
+        // DictionaryKeyPolicy: with snake_case, "TenantId" would pass a check on the keys, then become "tenant_id".
         // Checked before the dispatcher is resolved, so a decorator of the dispatcher can still set the value.
-        if (FindHostProvided(request.Params?.Arguments) is { } name)
+        if (FindHostProvided(arguments) is { } name)
         {
             return Error($"'{name}' is set by the server and cannot be given.");
         }
 
         var dispatcher = services.GetRequiredService<IActionDispatcher>();
-        var arguments = JsonSerializer.SerializeToElement(
-            request.Params?.Arguments ?? new Dictionary<string, JsonElement>(),
-            _serializerOptions);
 
         try
         {
@@ -177,16 +180,14 @@ internal sealed partial class ActionTool : McpServerTool
     }
 
     // Returns the contract's spelling of the name, never the agent's, so the error doesn't echo input.
-    private string? FindHostProvided(IDictionary<string, JsonElement>? arguments)
+    // The arguments are a serialized dictionary, so always a JSON object.
+    private string? FindHostProvided(JsonElement arguments)
     {
-        if (arguments is not null)
+        foreach (var property in arguments.EnumerateObject())
         {
-            foreach (var key in arguments.Keys)
+            if (_hostProvided.TryGetValue(property.Name, out var name))
             {
-                if (_hostProvided.TryGetValue(key, out var name))
-                {
-                    return name;
-                }
+                return name;
             }
         }
 

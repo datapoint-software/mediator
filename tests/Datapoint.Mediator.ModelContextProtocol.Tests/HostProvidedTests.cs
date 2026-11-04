@@ -93,6 +93,30 @@ public sealed class HostProvidedTests
         Assert.Empty(mcp.Recorder.Log);
     }
 
+    // With a DictionaryKeyPolicy, the agent's keys are renamed when they're serialized, so "TenantId" becomes "tenant_id".
+    [Theory]
+    [InlineData("TenantId")]
+    [InlineData("tenantId")]
+    [InlineData("tenant_id")]
+    public async Task CallTool_WithAKeyRenamedByTheDictionaryKeyPolicy_IsRefused(string key)
+    {
+        var snakeCase = new JsonSerializerOptions(JsonSerializerOptions.Web)
+        {
+            PropertyNamingPolicy = JsonNamingPolicy.SnakeCaseLower,
+            DictionaryKeyPolicy = JsonNamingPolicy.SnakeCaseLower,
+        };
+        await using var mcp = await StartAsync(configureMcp: o => o.SerializerOptions = snakeCase);
+
+        var result = await mcp.Client.CallToolAsync(
+            "reports_totals",
+            new Dictionary<string, object?> { ["customer"] = "Ana", [key] = Guid.NewGuid() },
+            cancellationToken: Ct);
+
+        Assert.True(result.IsError);
+        Assert.Equal("'tenant_id' is set by the server and cannot be given.", Text(result));
+        Assert.Empty(mcp.Recorder.Log);
+    }
+
     [Fact]
     public async Task DispatcherDecorator_SetsTheValue()
     {
@@ -133,8 +157,9 @@ public sealed class HostProvidedTests
         Assert.True(schema.GetProperty("properties").TryGetProperty("amount", out _));
     }
 
-    private static Task<McpHarness> StartAsync(bool withDecorator = false) =>
+    private static Task<McpHarness> StartAsync(bool withDecorator = false, Action<MediatorMcpOptions>? configureMcp = null) =>
         McpHarness.StartAsync(
+            configureMcp: configureMcp,
             configureMediator: o => o
                 .AddHandler<TenantTotalsHandler>()
                 .AddHandler<TenantBalanceHandler>()
