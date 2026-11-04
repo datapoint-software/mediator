@@ -43,16 +43,9 @@ internal sealed class MessageDispatcher<TMessage> : MessageDispatcher
         TMessage typedMessage,
         CancellationToken cancellationToken)
     {
-        // Built from the innermost behaviour outwards, so the first registered behaviour runs first.
         Func<CancellationToken, ValueTask> next = c => PublishAsync(handlers, typedMessage, c);
 
-        for (var i = behaviors.Length - 1; i >= 0; i--)
-        {
-            var behavior = behaviors[i];
-            var inner = next;
-            next = c => behavior.HandleAsync(message, inner, c);
-        }
-
+        next = Pipeline.Wrap(behaviors, message, next, static (behavior, request, inner) => c => behavior.HandleAsync(request, inner, c));
         return next(cancellationToken);
     }
 

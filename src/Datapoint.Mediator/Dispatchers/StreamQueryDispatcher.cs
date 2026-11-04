@@ -50,16 +50,9 @@ internal sealed class StreamQueryDispatcher<TQuery, TResult> : StreamQueryDispat
         TQuery typedQuery,
         CancellationToken cancellationToken)
     {
-        // Built from the innermost behaviour outwards, so the first registered behaviour runs first.
         Func<CancellationToken, IAsyncEnumerable<TResult>> next = c => handler.HandleAsync(typedQuery, c);
 
-        for (var i = behaviors.Length - 1; i >= 0; i--)
-        {
-            var behavior = behaviors[i];
-            var inner = next;
-            next = c => behavior.HandleAsync(query, inner, c);
-        }
-
+        next = Pipeline.Wrap(behaviors, query, next, static (behavior, request, inner) => c => behavior.HandleAsync(request, inner, c));
         return next(cancellationToken);
     }
 }

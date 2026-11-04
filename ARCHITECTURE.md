@@ -68,7 +68,7 @@ Outside `src/`:
 2. **Resolve.** The dispatcher resolves `ICommandHandler<TCommand>` and every `IBehavior` from the caller's `IServiceProvider`, which is the current DI scope.
 3. **Run.**
    - With **no behaviours**, it calls the handler directly.
-   - Otherwise, `InvokePipelineAsync` builds the pipeline from the innermost behaviour outwards, so the first registered behaviour runs first, and runs it. Each behaviour gets a `next` delegate.
+   - Otherwise, `InvokePipelineAsync` builds the pipeline with `Pipeline.Wrap`, from the innermost behaviour outwards, so the first registered behaviour runs first, and runs it. Each behaviour gets a `next` delegate. `Wrap` takes a `static` lambda, so the only allocations are each step's closure and delegate.
    - The pipeline lives in a separate method, so its closures are only allocated when there are behaviours. Dispatch without behaviours allocates 0 bytes ([ADR 0006](docs/adr/0006-cached-generic-dispatchers.md)).
 4. **Observe.** When telemetry is being listened to, `ServiceProviderMediator` wraps the dispatch in a span and records its duration (see [Telemetry](#telemetry)).
 

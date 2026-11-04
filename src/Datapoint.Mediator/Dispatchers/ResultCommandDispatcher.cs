@@ -50,16 +50,9 @@ internal sealed class ResultCommandDispatcher<TCommand, TResult> : ResultCommand
         TCommand typedCommand,
         CancellationToken cancellationToken)
     {
-        // Built from the innermost behaviour outwards, so the first registered behaviour runs first.
         Func<CancellationToken, ValueTask<TResult>> next = c => handler.HandleAsync(typedCommand, c);
 
-        for (var i = behaviors.Length - 1; i >= 0; i--)
-        {
-            var behavior = behaviors[i];
-            var inner = next;
-            next = c => behavior.HandleAsync(command, inner, c);
-        }
-
+        next = Pipeline.Wrap(behaviors, command, next, static (behavior, request, inner) => c => behavior.HandleAsync(request, inner, c));
         return next(cancellationToken);
     }
 }
