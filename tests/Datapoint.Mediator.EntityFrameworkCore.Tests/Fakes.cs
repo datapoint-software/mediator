@@ -226,6 +226,8 @@ public sealed record ReadContext : IQuery<string>;
 
 public sealed record WriteFromQuery : IQuery<int>;
 
+public sealed record WriteFromQueryThenFail : IQuery<int>;
+
 [NonTransactional]
 public sealed record CountWithoutTransaction : IQuery<int>;
 
@@ -264,6 +266,16 @@ public sealed class WriteFromQueryHandler(AppDbContext db) : IQueryHandler<Write
         // A query must not change anything: this is never saved.
         db.Invoices.Add(new Invoice { Id = Guid.NewGuid(), Amount = 999 });
         return new(1);
+    }
+}
+
+public sealed class WriteFromQueryThenFailHandler(AppDbContext db) : IQueryHandler<WriteFromQueryThenFail, int>
+{
+    public ValueTask<int> HandleAsync(WriteFromQueryThenFail query, CancellationToken ct = default)
+    {
+        // A failed query must not change anything either: this is never saved.
+        db.Invoices.Add(new Invoice { Id = Guid.NewGuid(), Amount = 999 });
+        throw new InvalidOperationException("query failed");
     }
 }
 

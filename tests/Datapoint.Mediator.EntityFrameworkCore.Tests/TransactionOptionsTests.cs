@@ -73,6 +73,19 @@ public sealed class TransactionOptionsTests : IAsyncLifetime
     }
 
     [Fact]
+    public async Task QueryTransactions_DiscardWhatAFailedQueryChanged()
+    {
+        await using var provider = Build(t => t.Queries = QueryTransactions.ReadOnly);
+        await using var scope = provider.CreateAsyncScope();
+        var mediator = scope.ServiceProvider.GetRequiredService<IMediator>();
+
+        await Assert.ThrowsAsync<InvalidOperationException>(async () => await mediator.QueryAsync(new WriteFromQueryThenFail(), Ct));
+        await mediator.SendAsync(new CreateInvoice(1), Ct);
+
+        Assert.Equal(new[] { 1 }, await AmountsAsync(provider));
+    }
+
+    [Fact]
     public async Task NoQueryTransactions_QueriesRunWithoutTransaction()
     {
         await using var provider = Build(_ => { });
