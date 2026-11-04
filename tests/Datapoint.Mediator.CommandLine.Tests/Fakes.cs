@@ -213,3 +213,26 @@ public sealed class FailingToDisposeDispatcher(ActionDispatcher inner) : IAction
 
     public ValueTask DisposeAsync() => throw new InvalidOperationException("secret internal detail");
 }
+
+// Fails as a handler's own timeout does: with an OperationCanceledException, while the caller's token isn't cancelled.
+public sealed class TimingOutDispatcher : IActionDispatcher
+{
+    public ValueTask<object?> DispatchAsync(string name, JsonElement arguments, JsonSerializerOptions? options, CancellationToken cancellationToken = default) =>
+        throw new TaskCanceledException("secret timeout detail");
+
+    public IAsyncEnumerable<object?> StreamAsync(string name, JsonElement arguments, JsonSerializerOptions? options, CancellationToken cancellationToken = default) =>
+        throw new TaskCanceledException("secret timeout detail");
+}
+
+// Throws the caller's cancellation, as a handler that honours its token does after Ctrl+C.
+public sealed class CancellingDispatcher : IActionDispatcher
+{
+    public ValueTask<object?> DispatchAsync(string name, JsonElement arguments, JsonSerializerOptions? options, CancellationToken cancellationToken = default)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        throw new InvalidOperationException("The caller's token wasn't cancelled.");
+    }
+
+    public IAsyncEnumerable<object?> StreamAsync(string name, JsonElement arguments, JsonSerializerOptions? options, CancellationToken cancellationToken = default) =>
+        throw new NotSupportedException();
+}

@@ -203,6 +203,19 @@ public sealed class EndpointTests
         Assert.Equal(HttpStatusCode.UnprocessableEntity, response.StatusCode);
     }
 
+    // A handler's own timeout isn't the caller cancelling, so it goes through MapException like any other error.
+    [Fact]
+    public async Task HandlerTimeout_GoesThroughMapException()
+    {
+        await using var app = await TestApp.StartAsync(
+            o => o.MapException = e => e is OperationCanceledException ? Results.StatusCode(504) : null,
+            configureServices: s => s.AddScoped<IActionDispatcher, TimingOutDispatcher>());
+
+        var response = await app.Client.PostAsync("/api/reports/fail", null, Ct);
+
+        Assert.Equal(HttpStatusCode.GatewayTimeout, response.StatusCode);
+    }
+
     [Fact]
     public async Task UnhandledException_IsLeftToTheAppsExceptionHandling()
     {

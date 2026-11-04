@@ -101,11 +101,16 @@ internal sealed partial class ActionTool : McpServerTool
                 StructuredContent = structured,
             };
         }
-        catch (Exception exception) when (exception is not OperationCanceledException)
+        catch (Exception exception) when (!IsCallerCancellation(exception, cancellationToken))
         {
             return ErrorResult(exception);
         }
     }
+
+    // Only the agent's own cancellation is left to the MCP SDK as one. A handler's timeout also throws an
+    // OperationCanceledException, and is an error like any other.
+    private static bool IsCallerCancellation(Exception exception, CancellationToken cancellationToken) =>
+        exception is OperationCanceledException && cancellationToken.IsCancellationRequested;
 
     private async Task<JsonObject> StreamAsync(IActionDispatcher dispatcher, JsonElement arguments, CancellationToken cancellationToken)
     {

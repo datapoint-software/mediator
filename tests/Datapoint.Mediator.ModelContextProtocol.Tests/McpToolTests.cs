@@ -193,6 +193,18 @@ public sealed class McpToolTests
         Assert.DoesNotContain("secret internal detail", Text(result));
     }
 
+    // A handler's own timeout isn't the agent cancelling, so it's reported like any other error.
+    [Fact]
+    public async Task CallTool_HandlerTimeout_ReportsGenericError()
+    {
+        await using var mcp = await McpHarness.StartAsync(configureServices: s => s.AddScoped<IActionDispatcher, TimingOutDispatcher>());
+
+        var result = await mcp.Client.CallToolAsync("reports_fail", cancellationToken: Ct);
+
+        Assert.True(result.IsError);
+        Assert.Equal("An unexpected error occurred.", Text(result));
+    }
+
     // The MCP SDK sends an McpException's message to the client, so the adapter must not hand one to it.
     [Fact]
     public async Task CallTool_McpExceptionFromTheHandler_ReportsGenericErrorWithoutLeakingDetails()

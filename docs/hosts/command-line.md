@@ -132,7 +132,7 @@ root.AddMediatorActions(services, o =>
 
 ## Scopes and cancellation
 
-Each invocation runs in its own DI scope, created from the `IServiceProvider` you pass, and Ctrl+C cancels the running action through its `cancellationToken`.
+Each invocation runs in its own DI scope, created from the `IServiceProvider` you pass, and Ctrl+C cancels the running action through its `cancellationToken`. An `OperationCanceledException` counts as Ctrl+C only when that token is cancelled: a handler's own timeout is reported as an unexpected error, with exit code 70.
 
 ## The current user
 

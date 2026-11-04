@@ -1,6 +1,7 @@
 using System;
 using System.CommandLine;
 using System.IO;
+using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.DependencyInjection;
 using Xunit;
@@ -32,13 +33,16 @@ public sealed class Cli : IAsyncDisposable
 
     public Recorder Recorder => _provider.GetRequiredService<Recorder>();
 
-    public async Task<(int ExitCode, string Output, string Error)> RunAsync(params string[] args)
+    public Task<(int ExitCode, string Output, string Error)> RunAsync(params string[] args) =>
+        RunAsync(TestContext.Current.CancellationToken, args);
+
+    public async Task<(int ExitCode, string Output, string Error)> RunAsync(CancellationToken cancellationToken, params string[] args)
     {
         using var output = new StringWriter();
         using var error = new StringWriter();
         var exitCode = await Root.Parse(args).InvokeAsync(
             new InvocationConfiguration { Output = output, Error = error },
-            TestContext.Current.CancellationToken);
+            cancellationToken);
         return (exitCode, output.ToString(), error.ToString());
     }
 

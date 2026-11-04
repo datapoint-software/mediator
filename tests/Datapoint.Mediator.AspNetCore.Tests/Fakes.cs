@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using System.Security.Claims;
+using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using Datapoint.Mediator.Authorization;
@@ -121,4 +122,14 @@ public sealed class DenyWithStepUp<TAction> : IAuthorizer<TAction>
 {
     public ValueTask<AuthorizationDecision> AuthorizeAsync(TAction action, ClaimsPrincipal principal, CancellationToken cancellationToken = default) =>
         new(AuthorizationDecision.Deny("TOP-SECRET", new StepUpRequiredException()));
+}
+
+// Fails as a handler's own timeout does: with an OperationCanceledException, while the caller's token isn't cancelled.
+public sealed class TimingOutDispatcher : IActionDispatcher
+{
+    public ValueTask<object?> DispatchAsync(string name, JsonElement arguments, JsonSerializerOptions? options, CancellationToken cancellationToken = default) =>
+        throw new TaskCanceledException("secret timeout detail");
+
+    public IAsyncEnumerable<object?> StreamAsync(string name, JsonElement arguments, JsonSerializerOptions? options, CancellationToken cancellationToken = default) =>
+        throw new TaskCanceledException("secret timeout detail");
 }

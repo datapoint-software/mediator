@@ -80,7 +80,7 @@ The argument 'amount' of action 'invoices.create' is not valid.
 
 A missing argument, or `null` where it isn't accepted, reads "... is required." instead.
 
-See [Invalid arguments](../actions.md#invalid-arguments) for how the argument is spelled. Any other exception is reported as "An unexpected error occurred.", which reveals nothing, unless `ErrorMessage` returns a safe message for it. Nothing is rethrown to the MCP SDK, which would send an `McpException`'s message to the agent ([ADR 0037](../adr/0037-mcp-never-rethrows.md)). `ErrorMessage` also receives `InvalidActionArgumentsException`, `AuthenticationRequiredException` and `AccessDeniedException` first, so you can report them with your own codes, and `null` keeps Mediator's text. The result is an error whatever it returns:
+See [Invalid arguments](../actions.md#invalid-arguments) for how the argument is spelled. Any other exception is reported as "An unexpected error occurred.", which reveals nothing, unless `ErrorMessage` returns a safe message for it. Nothing is rethrown to the MCP SDK, which would send an `McpException`'s message to the agent ([ADR 0037](../adr/0037-mcp-never-rethrows.md)). The only exception is the agent cancelling its call: an `OperationCanceledException` counts as that only when the request's token is cancelled, so a handler's own timeout is reported as an unexpected error. `ErrorMessage` also receives `InvalidActionArgumentsException`, `AuthenticationRequiredException` and `AccessDeniedException` first, so you can report them with your own codes, and `null` keeps Mediator's text. The result is an error whatever it returns:
 
 ```csharp
 .WithMediatorActions(o => o.ErrorMessage = e => e switch

@@ -30,7 +30,7 @@ Each action marked `[Api]` becomes a `POST` endpoint at its name, with dots turn
 | Request | |
 |---|---|
 | Body | the action's JSON, such as `{"customer":"Ana","amount":100}`. An empty body means no arguments. |
-| Cancellation | the request's `RequestAborted` token |
+| Cancellation | the request's `RequestAborted` token. An `OperationCanceledException` counts as the client cancelling only when that token is cancelled; a handler's own timeout goes to `MapException` like any other error. |
 | DI scope | the request's scope |
 
 | Action kind | Response |

@@ -59,7 +59,7 @@ internal sealed partial class ActionEndpoints(ActionDescriptor action, MediatorE
 
             return action.Kind == ActionKind.Command ? Results.NoContent() : Results.Json(result, serializerOptions);
         }
-        catch (Exception exception) when (exception is not OperationCanceledException && Map(exception) is { } response)
+        catch (Exception exception) when (!IsCallerCancellation(exception, cancellationToken) && Map(exception) is { } response)
         {
             return response;
         }
@@ -106,6 +106,11 @@ internal sealed partial class ActionEndpoints(ActionDescriptor action, MediatorE
             }
         }
     }
+
+    // Only the caller's own cancellation is left to ASP.NET Core as one. A handler's timeout also throws an
+    // OperationCanceledException, and is an error like any other.
+    private static bool IsCallerCancellation(Exception exception, CancellationToken cancellationToken) =>
+        exception is OperationCanceledException && cancellationToken.IsCancellationRequested;
 
     // Our own exceptions get fixed, safe responses. Invalid arguments go to the app's hook first, so it can report them
     // with its own codes. Anything else goes to the hook, and is otherwise rethrown for the app's exception handling.

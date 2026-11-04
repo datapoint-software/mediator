@@ -1,8 +1,9 @@
 using System;
-using System.Text.Json;
 using System.CommandLine;
 using System.Linq;
 using System.Security.Claims;
+using System.Text.Json;
+using System.Threading;
 using System.Threading.Tasks;
 using Datapoint.Mediator.Authorization;
 using Microsoft.Extensions.DependencyInjection;
@@ -296,6 +297,32 @@ public sealed class CommandTests
         Assert.Equal(ActionExitCodes.UnexpectedError, exitCode);
         Assert.Equal("An unexpected error occurred.", error.Trim());
         Assert.DoesNotContain("secret internal detail", output + error);
+    }
+
+    // A handler's own timeout isn't Ctrl+C, so it's reported like any other error.
+    [Fact]
+    public async Task HandlerTimeout_IsAnUnexpectedError()
+    {
+        await using var cli = new Cli(configureServices: s => s.AddScoped<IActionDispatcher, TimingOutDispatcher>());
+
+        var (exitCode, output, error) = await cli.RunAsync("reports", "fail");
+
+        Assert.Equal(ActionExitCodes.UnexpectedError, exitCode);
+        Assert.Equal("An unexpected error occurred.", error.Trim());
+        Assert.DoesNotContain("secret timeout detail", output + error);
+    }
+
+    [Fact]
+    public async Task CallerCancellation_IsLeftToSystemCommandLine()
+    {
+        await using var cli = new Cli(configureServices: s => s.AddScoped<IActionDispatcher, CancellingDispatcher>());
+        using var cancellation = new CancellationTokenSource();
+        await cancellation.CancelAsync();
+
+        var (exitCode, _, error) = await cli.RunAsync(cancellation.Token, "reports", "fail");
+
+        Assert.NotEqual(ActionExitCodes.UnexpectedError, exitCode);
+        Assert.DoesNotContain("unexpected", error, StringComparison.OrdinalIgnoreCase);
     }
 
     [Fact]

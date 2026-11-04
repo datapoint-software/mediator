@@ -232,13 +232,18 @@ internal sealed partial class ActionCommand
         {
             return await DispatchAsync(parseResult, cancellationToken).ConfigureAwait(false);
         }
-        catch (Exception exception) when (exception is not OperationCanceledException)
+        catch (Exception exception) when (!IsCallerCancellation(exception, cancellationToken))
         {
             var (message, code) = Describe(exception);
             await parseResult.InvocationConfiguration.Error.WriteLineAsync(message).ConfigureAwait(false);
             return code;
         }
     }
+
+    // Only Ctrl+C is left to System.CommandLine as a cancellation. A handler's timeout also throws an
+    // OperationCanceledException, and is an error like any other.
+    private static bool IsCallerCancellation(Exception exception, CancellationToken cancellationToken) =>
+        exception is OperationCanceledException && cancellationToken.IsCancellationRequested;
 
     private async Task<int> DispatchAsync(ParseResult parseResult, CancellationToken cancellationToken)
     {
