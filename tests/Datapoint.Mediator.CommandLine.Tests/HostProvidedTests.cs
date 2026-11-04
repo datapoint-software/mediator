@@ -197,13 +197,13 @@ public sealed class TenantDispatcher(ActionDispatcher inner) : IActionDispatcher
 {
     public static readonly Guid TenantId = Guid.Parse("5d41402a-bc4b-4a76-b971-9d911017c592");
 
-    public ValueTask<object?> DispatchAsync(string name, JsonElement arguments, JsonSerializerOptions? options = null, CancellationToken cancellationToken = default)
+    public ValueTask<object?> DispatchAsync(string name, JsonElement arguments, JsonSerializerOptions? options, CancellationToken cancellationToken = default)
     {
         var json = JsonObject.Create(arguments)!;
         json["tenantId"] = TenantId;
         return inner.DispatchAsync(name, JsonSerializer.SerializeToElement(json), options, cancellationToken);
     }
 
-    public IAsyncEnumerable<object?> StreamAsync(string name, JsonElement arguments, JsonSerializerOptions? options = null, CancellationToken cancellationToken = default) =>
+    public IAsyncEnumerable<object?> StreamAsync(string name, JsonElement arguments, JsonSerializerOptions? options, CancellationToken cancellationToken = default) =>
         inner.StreamAsync(name, arguments, options, cancellationToken);
 }

@@ -47,6 +47,14 @@ public sealed class ActionArgumentsTests
     }
 
     [Fact]
+    public void Deserialize_NullOptions_UseWebDefaults()
+    {
+        var order = Assert.IsType<CreateOrder>(ActionArguments.Deserialize(Action, Json("""{ "Count": "2" }"""), null));
+
+        Assert.Equal(2, order.Count);
+    }
+
+    [Fact]
     public void Deserialize_NullAction_Throws()
     {
         Assert.Equal("action", Assert.Throws<ArgumentNullException>(() => ActionArguments.Deserialize(null!, default)).ParamName);

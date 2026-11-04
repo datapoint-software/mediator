@@ -128,6 +128,16 @@ public sealed class ActionDispatcherTests
     }
 
     [Fact]
+    public async Task DispatchAsync_WithoutOptions_DefaultsToNullOptionsForADecorator()
+    {
+        IActionDispatcher decorator = new OptionsRecordingDispatcher(_dispatcher);
+
+        Assert.Equal("invoice 7", await decorator.DispatchAsync("invoice.get", Json("""{ "id": 7 }"""), Ct));
+        Assert.Equal([1, 2], await decorator.StreamAsync("invoice.list", Json("""{ "count": 2 }"""), Ct).ToListAsync(Ct));
+        Assert.Equal(["dispatch null", "stream null"], ((OptionsRecordingDispatcher)decorator).Calls);
+    }
+
+    [Fact]
     public void Exceptions_HaveStandardConstructors()
     {
         var inner = new InvalidOperationException();
@@ -189,4 +199,22 @@ public sealed class ActionDispatcherTests
     [Api]
     [Action("invoice.list", "A test action.")]
     private sealed record ListInvoices(int Count) : IStreamQuery<int>;
+
+    // Implements only the overloads with options, as an app's decorator written before the short overloads existed.
+    private sealed class OptionsRecordingDispatcher(IActionDispatcher inner) : IActionDispatcher
+    {
+        public List<string> Calls { get; } = [];
+
+        public ValueTask<object?> DispatchAsync(string name, JsonElement arguments, JsonSerializerOptions? options, CancellationToken cancellationToken = default)
+        {
+            Calls.Add($"dispatch {options?.ToString() ?? "null"}");
+            return inner.DispatchAsync(name, arguments, options, cancellationToken);
+        }
+
+        public IAsyncEnumerable<object?> StreamAsync(string name, JsonElement arguments, JsonSerializerOptions? options, CancellationToken cancellationToken = default)
+        {
+            Calls.Add($"stream {options?.ToString() ?? "null"}");
+            return inner.StreamAsync(name, arguments, options, cancellationToken);
+        }
+    }
 }

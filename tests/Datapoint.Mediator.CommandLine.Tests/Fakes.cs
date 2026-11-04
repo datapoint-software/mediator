@@ -179,10 +179,10 @@ public sealed class DenyWithStepUp<TAction> : IAuthorizer<TAction>
 // Fails when its scope is disposed, after the action has run.
 public sealed class FailingToDisposeDispatcher(ActionDispatcher inner) : IActionDispatcher, IAsyncDisposable
 {
-    public ValueTask<object?> DispatchAsync(string name, JsonElement arguments, JsonSerializerOptions? options = null, CancellationToken cancellationToken = default) =>
+    public ValueTask<object?> DispatchAsync(string name, JsonElement arguments, JsonSerializerOptions? options, CancellationToken cancellationToken = default) =>
         inner.DispatchAsync(name, arguments, options, cancellationToken);
 
-    public IAsyncEnumerable<object?> StreamAsync(string name, JsonElement arguments, JsonSerializerOptions? options = null, CancellationToken cancellationToken = default) =>
+    public IAsyncEnumerable<object?> StreamAsync(string name, JsonElement arguments, JsonSerializerOptions? options, CancellationToken cancellationToken = default) =>
         inner.StreamAsync(name, arguments, options, cancellationToken);
 
     public ValueTask DisposeAsync() => throw new InvalidOperationException("secret internal detail");

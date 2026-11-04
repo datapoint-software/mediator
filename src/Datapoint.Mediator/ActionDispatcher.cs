@@ -36,10 +36,14 @@ public sealed class ActionDispatcher : IActionDispatcher
     }
 
     /// <inheritdoc/>
+    public ValueTask<object?> DispatchAsync(string name, JsonElement arguments, CancellationToken cancellationToken = default) =>
+        DispatchAsync(name, arguments, null, cancellationToken);
+
+    /// <inheritdoc/>
     public ValueTask<object?> DispatchAsync(
         string name,
         JsonElement arguments,
-        JsonSerializerOptions? options = null,
+        JsonSerializerOptions? options,
         CancellationToken cancellationToken = default)
     {
         var (descriptor, action) = Resolve(name, arguments, options);
@@ -47,10 +51,14 @@ public sealed class ActionDispatcher : IActionDispatcher
     }
 
     /// <inheritdoc/>
+    public IAsyncEnumerable<object?> StreamAsync(string name, JsonElement arguments, CancellationToken cancellationToken = default) =>
+        StreamAsync(name, arguments, null, cancellationToken);
+
+    /// <inheritdoc/>
     public IAsyncEnumerable<object?> StreamAsync(
         string name,
         JsonElement arguments,
-        JsonSerializerOptions? options = null,
+        JsonSerializerOptions? options,
         CancellationToken cancellationToken = default)
     {
         var (descriptor, action) = Resolve(name, arguments, options);

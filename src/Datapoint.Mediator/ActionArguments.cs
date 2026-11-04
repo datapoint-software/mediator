@@ -15,6 +15,24 @@ public static class ActionArguments
     private static readonly JsonElement EmptyObject = JsonDocument.Parse("{}").RootElement.Clone();
 
     /// <summary>
+    /// Deserializes the arguments into an instance of the action's type, with <see cref="JsonSerializerOptions.Web"/>.
+    /// </summary>
+    /// <param name="action">The action whose arguments these are.</param>
+    /// <param name="arguments">
+    /// The arguments, as a JSON object. An undefined element, such as <see langword="default"/>, is treated as
+    /// <c>{}</c>.
+    /// </param>
+    /// <returns>The action, never <see langword="null"/>.</returns>
+    /// <exception cref="ArgumentNullException"><paramref name="action"/> is <see langword="null"/>.</exception>
+    /// <exception cref="InvalidActionArgumentsException">
+    /// The arguments don't match the action's type, or are JSON <c>null</c>. The exception's
+    /// <see cref="InvalidActionArgumentsException.Field"/> names the argument that failed, when it can be determined,
+    /// and its <see cref="InvalidActionArgumentsException.Reason"/> says why.
+    /// </exception>
+    public static object Deserialize(ActionDescriptor action, JsonElement arguments) =>
+        Deserialize(action, arguments, null);
+
+    /// <summary>
     /// Deserializes the arguments into an instance of the action's type.
     /// </summary>
     /// <param name="action">The action whose arguments these are.</param>
@@ -32,7 +50,7 @@ public static class ActionArguments
     /// <see cref="InvalidActionArgumentsException.Field"/> names the argument that failed, when it can be determined,
     /// and its <see cref="InvalidActionArgumentsException.Reason"/> says why.
     /// </exception>
-    public static object Deserialize(ActionDescriptor action, JsonElement arguments, JsonSerializerOptions? options = null)
+    public static object Deserialize(ActionDescriptor action, JsonElement arguments, JsonSerializerOptions? options)
     {
         ArgumentNullException.ThrowIfNull(action);
         options ??= JsonSerializerOptions.Web;

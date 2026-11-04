@@ -1,7 +1,9 @@
 #nullable enable
-Datapoint.Mediator.ActionDispatcher.DispatchAsync(string! name, System.Text.Json.JsonElement arguments, System.Text.Json.JsonSerializerOptions? options = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<object?>
+Datapoint.Mediator.ActionDispatcher.DispatchAsync(string! name, System.Text.Json.JsonElement arguments, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<object?>
+Datapoint.Mediator.ActionDispatcher.DispatchAsync(string! name, System.Text.Json.JsonElement arguments, System.Text.Json.JsonSerializerOptions? options, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<object?>
 *REMOVED*Datapoint.Mediator.ActionDispatcher.DispatchAsync(string! name, System.Text.Json.JsonElement arguments, System.Text.Json.JsonSerializerOptions? options = null, System.Threading.CancellationToken ct = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<object?>
-Datapoint.Mediator.ActionDispatcher.StreamAsync(string! name, System.Text.Json.JsonElement arguments, System.Text.Json.JsonSerializerOptions? options = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Collections.Generic.IAsyncEnumerable<object?>!
+Datapoint.Mediator.ActionDispatcher.StreamAsync(string! name, System.Text.Json.JsonElement arguments, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Collections.Generic.IAsyncEnumerable<object?>!
+Datapoint.Mediator.ActionDispatcher.StreamAsync(string! name, System.Text.Json.JsonElement arguments, System.Text.Json.JsonSerializerOptions? options, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Collections.Generic.IAsyncEnumerable<object?>!
 *REMOVED*Datapoint.Mediator.ActionDispatcher.StreamAsync(string! name, System.Text.Json.JsonElement arguments, System.Text.Json.JsonSerializerOptions? options = null, System.Threading.CancellationToken ct = default(System.Threading.CancellationToken)) -> System.Collections.Generic.IAsyncEnumerable<object?>!
 Datapoint.Mediator.ServiceProviderMediator.PublishAsync(Datapoint.Mediator.IMessage! message, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask
 *REMOVED*Datapoint.Mediator.Mediator.PublishAsync(Datapoint.Mediator.IMessage! message, System.Threading.CancellationToken ct = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask
@@ -17,3 +19,6 @@ Datapoint.Mediator.ServiceProviderMediator
 *REMOVED*Datapoint.Mediator.Mediator
 Datapoint.Mediator.ServiceProviderMediator.ServiceProviderMediator(System.IServiceProvider! serviceProvider) -> void
 *REMOVED*Datapoint.Mediator.Mediator.Mediator(System.IServiceProvider! serviceProvider) -> void
+static Datapoint.Mediator.ActionArguments.Deserialize(Datapoint.Mediator.ActionDescriptor! action, System.Text.Json.JsonElement arguments) -> object!
+static Datapoint.Mediator.ActionArguments.Deserialize(Datapoint.Mediator.ActionDescriptor! action, System.Text.Json.JsonElement arguments, System.Text.Json.JsonSerializerOptions? options) -> object!
+*REMOVED*static Datapoint.Mediator.ActionArguments.Deserialize(Datapoint.Mediator.ActionDescriptor! action, System.Text.Json.JsonElement arguments, System.Text.Json.JsonSerializerOptions? options = null) -> object!

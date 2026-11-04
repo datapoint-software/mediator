@@ -120,11 +120,11 @@ public sealed class TenantDispatcher(ActionDispatcher inner, IActionCatalog cata
     : IActionDispatcher
 {
     public ValueTask<object?> DispatchAsync(
-        string name, JsonElement arguments, JsonSerializerOptions? options = null, CancellationToken cancellationToken = default) =>
+        string name, JsonElement arguments, JsonSerializerOptions? options, CancellationToken cancellationToken = default) =>
         inner.DispatchAsync(name, WithTenant(name, arguments, options), options, cancellationToken);
 
     public IAsyncEnumerable<object?> StreamAsync(
-        string name, JsonElement arguments, JsonSerializerOptions? options = null, CancellationToken cancellationToken = default) =>
+        string name, JsonElement arguments, JsonSerializerOptions? options, CancellationToken cancellationToken = default) =>
         inner.StreamAsync(name, WithTenant(name, arguments, options), options, cancellationToken);
 
     private JsonElement WithTenant(string name, JsonElement arguments, JsonSerializerOptions? options)

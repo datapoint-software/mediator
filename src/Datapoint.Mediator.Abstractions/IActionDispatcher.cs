@@ -23,13 +23,39 @@ namespace Datapoint.Mediator;
 public interface IActionDispatcher
 {
     /// <summary>
+    /// Dispatches a command or query by name, deserializing its arguments with <see cref="JsonSerializerOptions.Web"/>.
+    /// </summary>
+    /// <param name="name">The action's name.</param>
+    /// <param name="arguments">
+    /// The action's arguments, as a JSON object. An undefined element is treated as an empty object.
+    /// </param>
+    /// <param name="cancellationToken">A token to cancel the operation.</param>
+    /// <returns>
+    /// A task that completes with the action's result, or <see langword="null"/> for a command without a result. Await
+    /// it only once.
+    /// </returns>
+    /// <exception cref="ActionNotFoundException">No action that isn't hidden has that name.</exception>
+    /// <exception cref="InvalidActionArgumentsException">The arguments don't match the action's type.</exception>
+    /// <exception cref="System.InvalidOperationException">The action is a stream query.</exception>
+    /// <remarks>
+    /// The default implementation calls
+    /// <see cref="DispatchAsync(string, JsonElement, JsonSerializerOptions?, CancellationToken)"/> with
+    /// <see langword="null"/> options, so a decorator only has to implement that overload.
+    /// </remarks>
+    ValueTask<object?> DispatchAsync(string name, JsonElement arguments, CancellationToken cancellationToken = default) =>
+        DispatchAsync(name, arguments, null, cancellationToken);
+
+    /// <summary>
     /// Dispatches a command or query by name.
     /// </summary>
     /// <param name="name">The action's name.</param>
     /// <param name="arguments">
     /// The action's arguments, as a JSON object. An undefined element is treated as an empty object.
     /// </param>
-    /// <param name="options">The options to deserialize the arguments with, or <see langword="null"/>.</param>
+    /// <param name="options">
+    /// The options to deserialize the arguments with, or <see langword="null"/> for
+    /// <see cref="JsonSerializerOptions.Web"/>.
+    /// </param>
     /// <param name="cancellationToken">A token to cancel the operation.</param>
     /// <returns>
     /// A task that completes with the action's result, or <see langword="null"/> for a command without a result. Await
@@ -41,8 +67,28 @@ public interface IActionDispatcher
     ValueTask<object?> DispatchAsync(
         string name,
         JsonElement arguments,
-        JsonSerializerOptions? options = null,
+        JsonSerializerOptions? options,
         CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Dispatches a stream query by name, deserializing its arguments with <see cref="JsonSerializerOptions.Web"/>.
+    /// </summary>
+    /// <param name="name">The action's name.</param>
+    /// <param name="arguments">
+    /// The action's arguments, as a JSON object. An undefined element is treated as an empty object.
+    /// </param>
+    /// <param name="cancellationToken">A token to cancel the enumeration.</param>
+    /// <returns>The query's results, produced as they are enumerated.</returns>
+    /// <exception cref="ActionNotFoundException">No action that isn't hidden has that name.</exception>
+    /// <exception cref="InvalidActionArgumentsException">The arguments don't match the action's type.</exception>
+    /// <exception cref="System.InvalidOperationException">The action is not a stream query.</exception>
+    /// <remarks>
+    /// The default implementation calls
+    /// <see cref="StreamAsync(string, JsonElement, JsonSerializerOptions?, CancellationToken)"/> with
+    /// <see langword="null"/> options, so a decorator only has to implement that overload.
+    /// </remarks>
+    IAsyncEnumerable<object?> StreamAsync(string name, JsonElement arguments, CancellationToken cancellationToken = default) =>
+        StreamAsync(name, arguments, null, cancellationToken);
 
     /// <summary>
     /// Dispatches a stream query by name.
@@ -51,7 +97,10 @@ public interface IActionDispatcher
     /// <param name="arguments">
     /// The action's arguments, as a JSON object. An undefined element is treated as an empty object.
     /// </param>
-    /// <param name="options">The options to deserialize the arguments with, or <see langword="null"/>.</param>
+    /// <param name="options">
+    /// The options to deserialize the arguments with, or <see langword="null"/> for
+    /// <see cref="JsonSerializerOptions.Web"/>.
+    /// </param>
     /// <param name="cancellationToken">A token to cancel the enumeration.</param>
     /// <returns>The query's results, produced as they are enumerated.</returns>
     /// <exception cref="ActionNotFoundException">No action that isn't hidden has that name.</exception>
@@ -60,6 +109,6 @@ public interface IActionDispatcher
     IAsyncEnumerable<object?> StreamAsync(
         string name,
         JsonElement arguments,
-        JsonSerializerOptions? options = null,
+        JsonSerializerOptions? options,
         CancellationToken cancellationToken = default);
 }
