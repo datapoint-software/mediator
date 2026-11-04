@@ -18,7 +18,7 @@ public sealed class ResolutionTests
             .Set(typeof(IEnumerable<IBehavior>), null)
             .Set(typeof(IEnumerable<IMessageHandler<Notified>>), null);
 
-        await new Mediator(provider).PublishAsync(new Notified(), TestContext.Current.CancellationToken);
+        await new ServiceProviderMediator(provider).PublishAsync(new Notified(), TestContext.Current.CancellationToken);
     }
 
     [Fact]
@@ -29,7 +29,7 @@ public sealed class ResolutionTests
             .Set(typeof(IEnumerable<IBehavior>), behaviors)
             .Add<ICommandHandler<Ping>>(new CommandHandler<Ping>((_, _) => default));
 
-        await new Mediator(provider).SendAsync(new Ping(), TestContext.Current.CancellationToken);
+        await new ServiceProviderMediator(provider).SendAsync(new Ping(), TestContext.Current.CancellationToken);
 
         Assert.Equal(["outer>", "inner>", "<inner", "<outer"], _log);
     }
@@ -44,7 +44,7 @@ public sealed class ResolutionTests
         };
         var provider = new FakeServiceProvider().Set(typeof(IEnumerable<IMessageHandler<Notified>>), handlers);
 
-        await new Mediator(provider).PublishAsync(new Notified(), TestContext.Current.CancellationToken);
+        await new ServiceProviderMediator(provider).PublishAsync(new Notified(), TestContext.Current.CancellationToken);
 
         Assert.Equal(["h1", "h2"], _log);
     }
@@ -55,7 +55,7 @@ public sealed class ResolutionTests
         var provider = new FakeServiceProvider().Set(typeof(ICommandHandler<Ping>), new object());
 
         await Assert.ThrowsAsync<InvalidOperationException>(
-            async () => await new Mediator(provider).SendAsync(new Ping(), TestContext.Current.CancellationToken));
+            async () => await new ServiceProviderMediator(provider).SendAsync(new Ping(), TestContext.Current.CancellationToken));
     }
 
     private ValueTask Log(string entry)

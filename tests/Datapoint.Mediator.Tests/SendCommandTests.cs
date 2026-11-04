@@ -22,7 +22,7 @@ public sealed class SendCommandTests
             return default;
         }));
 
-        await new Mediator(provider).SendAsync(command, cts.Token);
+        await new ServiceProviderMediator(provider).SendAsync(command, cts.Token);
 
         Assert.Same(command, receivedCommand);
         Assert.Equal(cts.Token, receivedToken);
@@ -31,7 +31,7 @@ public sealed class SendCommandTests
     [Fact]
     public async Task SendAsync_MissingHandler_ThrowsNamingHandlerInterface()
     {
-        var mediator = new Mediator(new FakeServiceProvider());
+        var mediator = new ServiceProviderMediator(new FakeServiceProvider());
 
         var exception = await Assert.ThrowsAsync<InvalidOperationException>(
             async () => await mediator.SendAsync(new Ping(), TestContext.Current.CancellationToken));
@@ -47,7 +47,7 @@ public sealed class SendCommandTests
             .Add<ICommandHandler<Ping>>(new CommandHandler<Ping>((_, _) => throw expected));
 
         var actual = await Assert.ThrowsAsync<InvalidOperationException>(
-            async () => await new Mediator(provider).SendAsync(new Ping(), TestContext.Current.CancellationToken));
+            async () => await new ServiceProviderMediator(provider).SendAsync(new Ping(), TestContext.Current.CancellationToken));
 
         Assert.Same(expected, actual);
     }

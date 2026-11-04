@@ -21,16 +21,16 @@ namespace Datapoint.Mediator;
 /// A message's handlers run one after another, in registration order, and publishing stops at the first exception.
 /// </para>
 /// </remarks>
-public sealed class Mediator : IMediator
+public sealed class ServiceProviderMediator : IMediator
 {
     private readonly IServiceProvider _serviceProvider;
 
     /// <summary>
-    /// Initializes a new instance of the <see cref="Mediator"/> class.
+    /// Initializes a new instance of the <see cref="ServiceProviderMediator"/> class.
     /// </summary>
     /// <param name="serviceProvider">The service provider to resolve handlers and behaviours from.</param>
     /// <exception cref="ArgumentNullException"><paramref name="serviceProvider"/> is <see langword="null"/>.</exception>
-    public Mediator(IServiceProvider serviceProvider)
+    public ServiceProviderMediator(IServiceProvider serviceProvider)
     {
         ArgumentNullException.ThrowIfNull(serviceProvider);
         _serviceProvider = serviceProvider;

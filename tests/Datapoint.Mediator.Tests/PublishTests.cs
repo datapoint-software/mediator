@@ -14,7 +14,7 @@ public sealed class PublishTests
     [Fact]
     public async Task PublishAsync_NoHandlers_Completes()
     {
-        var mediator = new Mediator(new FakeServiceProvider());
+        var mediator = new ServiceProviderMediator(new FakeServiceProvider());
 
         await mediator.PublishAsync(new Notified(), TestContext.Current.CancellationToken);
     }
@@ -24,7 +24,7 @@ public sealed class PublishTests
     {
         var provider = new FakeServiceProvider().AddAll<IMessageHandler<Notified>>(Logging("h1"), Logging("h2"), Logging("h3"));
 
-        await new Mediator(provider).PublishAsync(new Notified(), TestContext.Current.CancellationToken);
+        await new ServiceProviderMediator(provider).PublishAsync(new Notified(), TestContext.Current.CancellationToken);
 
         Assert.Equal(["h1", "h2", "h3"], _log);
     }
@@ -42,7 +42,7 @@ public sealed class PublishTests
         });
         var provider = new FakeServiceProvider().AddAll<IMessageHandler<Notified>>(handler, handler);
 
-        await new Mediator(provider).PublishAsync(message, cts.Token);
+        await new ServiceProviderMediator(provider).PublishAsync(message, cts.Token);
 
         Assert.Equal(2, received.Count);
         Assert.All(received, r =>
@@ -65,7 +65,7 @@ public sealed class PublishTests
         var provider = new FakeServiceProvider().AddAll(Logging("h1"), failing, Logging("h3"));
 
         var actual = await Assert.ThrowsAsync<InvalidOperationException>(
-            async () => await new Mediator(provider).PublishAsync(new Notified(), TestContext.Current.CancellationToken));
+            async () => await new ServiceProviderMediator(provider).PublishAsync(new Notified(), TestContext.Current.CancellationToken));
 
         Assert.Same(expected, actual);
         Assert.Equal(["h1", "h2"], _log);
@@ -79,7 +79,7 @@ public sealed class PublishTests
         var provider = new FakeServiceProvider().AddAll(Logging("h1"), failing, Logging("h3"));
 
         var actual = await Assert.ThrowsAsync<InvalidOperationException>(
-            async () => await new Mediator(provider).PublishAsync(new Notified(), TestContext.Current.CancellationToken));
+            async () => await new ServiceProviderMediator(provider).PublishAsync(new Notified(), TestContext.Current.CancellationToken));
 
         Assert.Same(expected, actual);
         Assert.Equal(["h1"], _log);

@@ -43,7 +43,7 @@ public sealed class MetricsOnlyTelemetryTests : IDisposable
             return default;
         }));
 
-        await new Mediator(provider).SendAsync(new MeteredCommand(), TestContext.Current.CancellationToken);
+        await new ServiceProviderMediator(provider).SendAsync(new MeteredCommand(), TestContext.Current.CancellationToken);
 
         Assert.Null(currentInHandler);
         var measurement = Assert.Single(MeasurementsFor<MeteredCommand>());
@@ -57,7 +57,7 @@ public sealed class MetricsOnlyTelemetryTests : IDisposable
             new CommandHandler<FailingMeteredCommand>((_, _) => throw new InvalidOperationException()));
 
         await Assert.ThrowsAsync<InvalidOperationException>(
-            async () => await new Mediator(provider).SendAsync(new FailingMeteredCommand(), TestContext.Current.CancellationToken));
+            async () => await new ServiceProviderMediator(provider).SendAsync(new FailingMeteredCommand(), TestContext.Current.CancellationToken));
 
         Assert.Equal(typeof(InvalidOperationException).FullName, Assert.Single(MeasurementsFor<FailingMeteredCommand>()).Tags["error.type"]);
     }
@@ -95,7 +95,7 @@ public sealed class TracingOnlyTelemetryTests : IDisposable
         var provider = new FakeServiceProvider().Add<ICommandHandler<TracedOnlyCommand>>(
             new CommandHandler<TracedOnlyCommand>((_, _) => default));
 
-        await new Mediator(provider).SendAsync(new TracedOnlyCommand(), TestContext.Current.CancellationToken);
+        await new ServiceProviderMediator(provider).SendAsync(new TracedOnlyCommand(), TestContext.Current.CancellationToken);
 
         Assert.Equal(ActivityStatusCode.Unset, Assert.Single(ActivitiesFor<TracedOnlyCommand>()).Status);
     }
@@ -107,7 +107,7 @@ public sealed class TracingOnlyTelemetryTests : IDisposable
             new CommandHandler<FailingTracedOnlyCommand>((_, _) => throw new InvalidOperationException()));
 
         await Assert.ThrowsAsync<InvalidOperationException>(
-            async () => await new Mediator(provider).SendAsync(new FailingTracedOnlyCommand(), TestContext.Current.CancellationToken));
+            async () => await new ServiceProviderMediator(provider).SendAsync(new FailingTracedOnlyCommand(), TestContext.Current.CancellationToken));
 
         var activity = Assert.Single(ActivitiesFor<FailingTracedOnlyCommand>());
         Assert.Equal(ActivityStatusCode.Error, activity.Status);

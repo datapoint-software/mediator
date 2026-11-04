@@ -14,7 +14,7 @@ public sealed class SendCommandWithResultTests
         var provider = new FakeServiceProvider()
             .Add<ICommandHandler<Add, int>>(new CommandHandler<Add, int>((c, _) => new(c.A + c.B)));
 
-        var result = await new Mediator(provider).SendAsync(new Add(2, 3), TestContext.Current.CancellationToken);
+        var result = await new ServiceProviderMediator(provider).SendAsync(new Add(2, 3), TestContext.Current.CancellationToken);
 
         Assert.Equal(5, result);
     }
@@ -33,7 +33,7 @@ public sealed class SendCommandWithResultTests
             return new(0);
         }));
 
-        await new Mediator(provider).SendAsync(command, cts.Token);
+        await new ServiceProviderMediator(provider).SendAsync(command, cts.Token);
 
         Assert.Same(command, receivedCommand);
         Assert.Equal(cts.Token, receivedToken);
@@ -42,7 +42,7 @@ public sealed class SendCommandWithResultTests
     [Fact]
     public async Task SendAsync_MissingHandler_ThrowsNamingHandlerInterface()
     {
-        var mediator = new Mediator(new FakeServiceProvider());
+        var mediator = new ServiceProviderMediator(new FakeServiceProvider());
 
         var exception = await Assert.ThrowsAsync<InvalidOperationException>(
             async () => await mediator.SendAsync(new Add(1, 1), TestContext.Current.CancellationToken));
@@ -56,7 +56,7 @@ public sealed class SendCommandWithResultTests
         var provider = new FakeServiceProvider()
             .Add<ICommandHandler<DualCommand, int>>(new CommandHandler<DualCommand, int>((_, _) => new(1)))
             .Add<ICommandHandler<DualCommand, string>>(new CommandHandler<DualCommand, string>((_, _) => new("one")));
-        var mediator = new Mediator(provider);
+        var mediator = new ServiceProviderMediator(provider);
         var command = new DualCommand();
 
         var number = await mediator.SendAsync<int>(command, TestContext.Current.CancellationToken);

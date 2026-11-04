@@ -16,7 +16,7 @@ public sealed class ConcurrencyTests
             .Add<ICommandHandler<Numbered<B>, int>>(new CommandHandler<Numbered<B>, int>((c, _) => new(c.Value + 2)))
             .Add<ICommandHandler<Numbered<C>, int>>(new CommandHandler<Numbered<C>, int>((c, _) => new(c.Value + 3)))
             .Add<ICommandHandler<Numbered<D>, int>>(new CommandHandler<Numbered<D>, int>((c, _) => new(c.Value + 4)));
-        var mediator = new Mediator(provider);
+        var mediator = new ServiceProviderMediator(provider);
 
         var results = await Task.WhenAll(Enumerable.Range(0, 1000).Select(i => Task.Run(async () =>
         {

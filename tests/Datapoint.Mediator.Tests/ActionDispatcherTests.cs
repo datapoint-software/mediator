@@ -23,7 +23,7 @@ public sealed class ActionDispatcherTests
             .Add<IQueryHandler<GetInvoice, string>>(new QueryHandler<GetInvoice, string>((q, _) => new($"invoice {q.Id}")))
             .Add<IStreamQueryHandler<ListInvoices, int>>(new StreamQueryHandler<ListInvoices, int>((q, cancellationToken) => Streams.CountTo(q.Count, cancellationToken: cancellationToken)));
         var catalog = new ActionCatalog([typeof(CreateInvoice), typeof(ApproveInvoice), typeof(GetInvoice), typeof(ListInvoices)]);
-        _dispatcher = new ActionDispatcher(new Mediator(provider), catalog);
+        _dispatcher = new ActionDispatcher(new ServiceProviderMediator(provider), catalog);
     }
 
     [Fact]
@@ -32,7 +32,7 @@ public sealed class ActionDispatcherTests
         var catalog = new ActionCatalog([]);
 
         Assert.Equal("mediator", Assert.Throws<ArgumentNullException>(() => new ActionDispatcher(null!, catalog)).ParamName);
-        Assert.Equal("catalog", Assert.Throws<ArgumentNullException>(() => new ActionDispatcher(new Mediator(new FakeServiceProvider()), null!)).ParamName);
+        Assert.Equal("catalog", Assert.Throws<ArgumentNullException>(() => new ActionDispatcher(new ServiceProviderMediator(new FakeServiceProvider()), null!)).ParamName);
     }
 
     [Fact]

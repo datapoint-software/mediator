@@ -16,7 +16,7 @@ public sealed class BehaviorTests
     {
         var provider = WithOuterAndInner().Add<ICommandHandler<Ping>>(new CommandHandler<Ping>((_, _) => Log("handler")));
 
-        await new Mediator(provider).SendAsync(new Ping(), TestContext.Current.CancellationToken);
+        await new ServiceProviderMediator(provider).SendAsync(new Ping(), TestContext.Current.CancellationToken);
 
         Assert.Equal(["outer>", "inner>", "handler", "<inner", "<outer"], _log);
     }
@@ -30,7 +30,7 @@ public sealed class BehaviorTests
             return new(c.A + c.B);
         }));
 
-        var result = await new Mediator(provider).SendAsync(new Add(1, 2), TestContext.Current.CancellationToken);
+        var result = await new ServiceProviderMediator(provider).SendAsync(new Add(1, 2), TestContext.Current.CancellationToken);
 
         Assert.Equal(3, result);
         Assert.Equal(["outer>", "inner>", "handler", "<inner", "<outer"], _log);
@@ -45,7 +45,7 @@ public sealed class BehaviorTests
             return new(q.Value);
         }));
 
-        var result = await new Mediator(provider).QueryAsync(new Echo("value"), TestContext.Current.CancellationToken);
+        var result = await new ServiceProviderMediator(provider).QueryAsync(new Echo("value"), TestContext.Current.CancellationToken);
 
         Assert.Equal("value", result);
         Assert.Equal(["outer>", "inner>", "handler", "<inner", "<outer"], _log);
@@ -58,7 +58,7 @@ public sealed class BehaviorTests
             new MessageHandler<Notified>((_, _) => Log("h1")),
             new MessageHandler<Notified>((_, _) => Log("h2")));
 
-        await new Mediator(provider).PublishAsync(new Notified(), TestContext.Current.CancellationToken);
+        await new ServiceProviderMediator(provider).PublishAsync(new Notified(), TestContext.Current.CancellationToken);
 
         Assert.Equal(["outer>", "inner>", "h1", "h2", "<inner", "<outer"], _log);
     }
@@ -68,7 +68,7 @@ public sealed class BehaviorTests
     {
         var provider = WithOuterAndInner();
 
-        await new Mediator(provider).PublishAsync(new Notified(), TestContext.Current.CancellationToken);
+        await new ServiceProviderMediator(provider).PublishAsync(new Notified(), TestContext.Current.CancellationToken);
 
         Assert.Equal(["outer>", "inner>", "<inner", "<outer"], _log);
     }
@@ -84,7 +84,7 @@ public sealed class BehaviorTests
                 return new(q.Value);
             }));
 
-        var result = await new Mediator(provider).QueryAsync(new Echo("value"), TestContext.Current.CancellationToken);
+        var result = await new ServiceProviderMediator(provider).QueryAsync(new Echo("value"), TestContext.Current.CancellationToken);
 
         Assert.Equal("cached", result);
         Assert.Empty(_log);
@@ -99,7 +99,7 @@ public sealed class BehaviorTests
             .Add<ICommandHandler<Ping>>(new CommandHandler<Ping>((_, _) =>
                 ++calls == 1 ? throw new InvalidOperationException("first attempt") : default));
 
-        await new Mediator(provider).SendAsync(new Ping(), TestContext.Current.CancellationToken);
+        await new ServiceProviderMediator(provider).SendAsync(new Ping(), TestContext.Current.CancellationToken);
 
         Assert.Equal(2, calls);
     }
@@ -117,7 +117,7 @@ public sealed class BehaviorTests
                 return default;
             }));
 
-        await new Mediator(provider).SendAsync(new Ping(), TestContext.Current.CancellationToken);
+        await new ServiceProviderMediator(provider).SendAsync(new Ping(), TestContext.Current.CancellationToken);
 
         Assert.Equal(replacement.Token, receivedToken);
     }
@@ -130,7 +130,7 @@ public sealed class BehaviorTests
             .Add<ICommandHandler<Ping>>(new CommandHandler<Ping>((_, _) => default))
             .Add<IQueryHandler<Echo, string>>(new QueryHandler<Echo, string>((q, _) => new(q.Value)))
             .AddAll<IMessageHandler<Notified>>(new MessageHandler<Notified>((_, _) => default));
-        var mediator = new Mediator(provider);
+        var mediator = new ServiceProviderMediator(provider);
 
         await mediator.QueryAsync(new Echo("value"), TestContext.Current.CancellationToken);
         await mediator.PublishAsync(new Notified(), TestContext.Current.CancellationToken);

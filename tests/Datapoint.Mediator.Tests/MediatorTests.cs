@@ -7,12 +7,12 @@ namespace Datapoint.Mediator.Tests;
 
 public sealed class MediatorTests
 {
-    private readonly Mediator _mediator = new(new FakeServiceProvider());
+    private readonly ServiceProviderMediator _mediator = new(new FakeServiceProvider());
 
     [Fact]
     public void Constructor_NullServiceProvider_Throws()
     {
-        var exception = Assert.Throws<ArgumentNullException>(() => new Mediator(null!));
+        var exception = Assert.Throws<ArgumentNullException>(() => new ServiceProviderMediator(null!));
 
         Assert.Equal("serviceProvider", exception.ParamName);
     }

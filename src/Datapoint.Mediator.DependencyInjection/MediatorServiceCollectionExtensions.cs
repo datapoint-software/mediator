@@ -53,7 +53,7 @@ public static class MediatorServiceCollectionExtensions
         configure(options);
 
         // Scoped, so that handlers are resolved from the caller's scope rather than the root provider.
-        services.TryAddScoped<IMediator, Mediator>();
+        services.TryAddScoped<IMediator, ServiceProviderMediator>();
 
         AddHandlers(services, options);
         AddActions(services, options);

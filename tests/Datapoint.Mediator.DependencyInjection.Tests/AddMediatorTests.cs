@@ -38,7 +38,7 @@ public sealed class AddMediatorTests
 
         var descriptor = Assert.Single(services, d => d.ServiceType == typeof(IMediator));
         Assert.Equal(ServiceLifetime.Scoped, descriptor.Lifetime);
-        Assert.Equal(typeof(Mediator), descriptor.ImplementationType);
+        Assert.Equal(typeof(ServiceProviderMediator), descriptor.ImplementationType);
     }
 
     [Fact]

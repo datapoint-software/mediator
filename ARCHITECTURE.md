@@ -42,7 +42,7 @@ All package names start with `Datapoint.Mediator.`, except the implementation, w
 | Project | Role | External dependencies |
 |---|---|---|
 | `Abstractions` | Commands, queries, messages, handlers, `IBehavior`, `IMediator`, `ITransactionContext`, and the action contracts (`[Action]`, `IActionCatalog`, `IActionDispatcher`, their exceptions). Domain layers reference only this. | none |
-| `Mediator` | `Mediator`, the dispatchers, `ActionCatalog`, `ActionDispatcher`, `ActionArguments` and `MediatorTelemetry`. | none |
+| `Mediator` | `ServiceProviderMediator`, the dispatchers, `ActionCatalog`, `ActionDispatcher`, `ActionArguments` and `MediatorTelemetry`. | none |
 | `DependencyInjection` | `AddMediator`, `MediatorOptions`, handler scanning, and building the action catalog. | `Microsoft.Extensions.DependencyInjection.Abstractions` |
 | `FluentValidation` | `ValidationBehavior`. | FluentValidation |
 | `Authorization` | `AuthenticationBehavior`, `AuthorizationBehavior` and its options, `IAuthorizer<T>` and its decisions, `IAuthorizationContext`, `IAuthorizationObserver`, `IPrincipalAccessor`, `FixedPrincipalAccessor`, `[AllowAnonymousAccess]` and the two exceptions. | none |
@@ -60,7 +60,7 @@ Outside `src/`:
 
 ## Dispatch
 
-`Mediator.SendAsync(command)` receives a command typed as an interface, so it has to find the handler for the command's concrete type:
+`ServiceProviderMediator.SendAsync(command)` receives a command typed as an interface, so it has to find the handler for the command's concrete type:
 
 1. **Find the dispatcher.** `CommandDispatcher.Get(command.GetType())` returns a cached `CommandDispatcher<TCommand>`. It's created once per type with `MakeGenericType` and stored in a static `ConcurrentDictionary`. Each kind has its own dispatcher type under `src/Datapoint.Mediator/Dispatchers/`.
 2. **Resolve.** The dispatcher resolves `ICommandHandler<TCommand>` and every `IBehavior` from the caller's `IServiceProvider`, which is the current DI scope.
@@ -68,7 +68,7 @@ Outside `src/`:
    - With **no behaviours**, it calls the handler directly.
    - Otherwise, `InvokePipelineAsync` builds the pipeline from the innermost behaviour outwards, so the first registered behaviour runs first, and runs it. Each behaviour gets a `next` delegate.
    - The pipeline lives in a separate method, so its closures are only allocated when there are behaviours. Dispatch without behaviours allocates 0 bytes ([ADR 0006](docs/adr/0006-cached-generic-dispatchers.md)).
-4. **Observe.** When telemetry is being listened to, `Mediator` wraps the dispatch in a span and records its duration (see [Telemetry](#telemetry)).
+4. **Observe.** When telemetry is being listened to, `ServiceProviderMediator` wraps the dispatch in a span and records its duration (see [Telemetry](#telemetry)).
 
 Messages are the exception: `MessageDispatcher` resolves every `IMessageHandler<TMessage>` and runs them one after another, in registration order. The first exception stops the rest ([ADR 0009](docs/adr/0009-messages-run-in-the-callers-transaction.md)).
 

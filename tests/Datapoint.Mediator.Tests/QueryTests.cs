@@ -14,7 +14,7 @@ public sealed class QueryTests
         var provider = new FakeServiceProvider()
             .Add<IQueryHandler<Echo, string>>(new QueryHandler<Echo, string>((q, _) => new(q.Value)));
 
-        var result = await new Mediator(provider).QueryAsync(new Echo("hello"), TestContext.Current.CancellationToken);
+        var result = await new ServiceProviderMediator(provider).QueryAsync(new Echo("hello"), TestContext.Current.CancellationToken);
 
         Assert.Equal("hello", result);
     }
@@ -33,7 +33,7 @@ public sealed class QueryTests
             return new(q.Value);
         }));
 
-        await new Mediator(provider).QueryAsync(query, cts.Token);
+        await new ServiceProviderMediator(provider).QueryAsync(query, cts.Token);
 
         Assert.Same(query, receivedQuery);
         Assert.Equal(cts.Token, receivedToken);
@@ -42,7 +42,7 @@ public sealed class QueryTests
     [Fact]
     public async Task QueryAsync_MissingHandler_ThrowsNamingHandlerInterface()
     {
-        var mediator = new Mediator(new FakeServiceProvider());
+        var mediator = new ServiceProviderMediator(new FakeServiceProvider());
 
         var exception = await Assert.ThrowsAsync<InvalidOperationException>(
             async () => await mediator.QueryAsync(new Echo("value"), TestContext.Current.CancellationToken));
@@ -56,7 +56,7 @@ public sealed class QueryTests
         var provider = new FakeServiceProvider()
             .Add<IQueryHandler<DualQuery, int>>(new QueryHandler<DualQuery, int>((_, _) => new(1)))
             .Add<IQueryHandler<DualQuery, string>>(new QueryHandler<DualQuery, string>((_, _) => new("one")));
-        var mediator = new Mediator(provider);
+        var mediator = new ServiceProviderMediator(provider);
         var query = new DualQuery();
 
         var number = await mediator.QueryAsync<int>(query, TestContext.Current.CancellationToken);
