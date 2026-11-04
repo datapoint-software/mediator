@@ -9,6 +9,7 @@ The packages are used in Datapoint's existing and future projects, so they need 
 Where to find things:
 - [CONTRIBUTING.md](CONTRIBUTING.md): build, test, coverage, benchmarks, code conventions, commits, public API, versioning and releasing. Follow it; this file doesn't repeat it.
 - [ARCHITECTURE.md](ARCHITECTURE.md): how the code is organised, and the invariants every change must keep.
+- [CODING-GUIDELINES.md](CODING-GUIDELINES.md): how code is written, and where the repository departs from Microsoft's defaults.
 - [docs/adr/](docs/adr/README.md): why things are the way they are.
 - [docs/](docs/README.md): the user manual. [samples/](samples/README.md): runnable apps that use the packages.
 

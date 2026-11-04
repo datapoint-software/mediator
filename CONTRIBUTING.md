@@ -48,6 +48,8 @@ Compare the `Allocated` column before and after your change.
 
 ## Code conventions
 
+[CODING-GUIDELINES.md](CODING-GUIDELINES.md) covers naming, API design, async, errors, comments and tests, with the Microsoft sources behind each rule. In short:
+
 - Follow Microsoft's [.NET design guidelines](https://learn.microsoft.com/dotnet/standard/design-guidelines/) and naming conventions.
 - Name `CancellationToken` parameters `ct`, as the last parameter, optional.
 - Put generic variants of the same name in one file, such as `ICommand` and `ICommand<TResult>` in `ICommand.cs`.
