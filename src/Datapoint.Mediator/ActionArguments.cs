@@ -69,16 +69,25 @@ public static class ActionArguments
         catch (JsonException exception)
         {
             var field = ArgumentField.Find(exception, arguments, options.GetTypeInfo(action.ActionType), out var reason);
-            var message = field is null
-                ? $"The arguments for action '{action.Name}' are not valid."
-                : reason is InvalidActionArgumentReason.Missing or InvalidActionArgumentReason.Null
-                    ? $"The argument '{field}' of action '{action.Name}' is required."
-                    : $"The argument '{field}' of action '{action.Name}' is not valid.";
-
-            throw new InvalidActionArgumentsException(message, action.Name, field, reason, exception);
+            throw new InvalidActionArgumentsException(Message(action.Name, field, reason), action.Name, field, reason, exception);
         }
 
         return result
             ?? throw new InvalidActionArgumentsException($"The arguments for action '{action.Name}' are missing.", action.Name, null, null, null);
+    }
+
+    private static string Message(string actionName, string? field, InvalidActionArgumentReason? reason)
+    {
+        if (field is null)
+        {
+            return $"The arguments for action '{actionName}' are not valid.";
+        }
+
+        if (reason is InvalidActionArgumentReason.Missing or InvalidActionArgumentReason.Null)
+        {
+            return $"The argument '{field}' of action '{actionName}' is required.";
+        }
+
+        return $"The argument '{field}' of action '{actionName}' is not valid.";
     }
 }

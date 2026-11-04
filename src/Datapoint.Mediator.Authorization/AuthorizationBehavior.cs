@@ -172,9 +172,18 @@ public sealed class AuthorizationBehavior : IBehavior
         ArgumentNullException.ThrowIfNull(query);
         ArgumentNullException.ThrowIfNull(next);
 
-        return IsAnonymous(query)
-            ? AuthorizationContext.Result is null ? next(cancellationToken) : AuthorizeThenStreamAsync(null, next, cancellationToken)
-            : AuthorizeThenStreamAsync(query, next, cancellationToken);
+        if (!IsAnonymous(query))
+        {
+            return AuthorizeThenStreamAsync(query, next, cancellationToken);
+        }
+
+        // An anonymous stream query, sent from an authorized action, must not see its decision.
+        if (AuthorizationContext.Result is null)
+        {
+            return next(cancellationToken);
+        }
+
+        return AuthorizeThenStreamAsync(null, next, cancellationToken);
     }
 
     /// <summary>

@@ -81,14 +81,17 @@ internal sealed partial class ActionTool : McpServerTool
 
         try
         {
-            var content = _action.Kind == ActionKind.StreamQuery
-                ? await StreamAsync(dispatcher, arguments, cancellationToken).ConfigureAwait(false)
-                : new JsonObject
-                {
-                    ["result"] = JsonSerializer.SerializeToNode(
-                        await dispatcher.DispatchAsync(_action.Name, arguments, _serializerOptions, cancellationToken).ConfigureAwait(false),
-                        _serializerOptions),
-                };
+            JsonObject content;
+
+            if (_action.Kind == ActionKind.StreamQuery)
+            {
+                content = await StreamAsync(dispatcher, arguments, cancellationToken).ConfigureAwait(false);
+            }
+            else
+            {
+                var result = await dispatcher.DispatchAsync(_action.Name, arguments, _serializerOptions, cancellationToken).ConfigureAwait(false);
+                content = new JsonObject { ["result"] = JsonSerializer.SerializeToNode(result, _serializerOptions) };
+            }
 
             var structured = JsonSerializer.SerializeToElement(content, _serializerOptions);
 

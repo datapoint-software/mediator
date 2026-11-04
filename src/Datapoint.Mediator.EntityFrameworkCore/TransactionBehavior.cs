@@ -277,8 +277,10 @@ public sealed class TransactionBehavior<TDbContext> : IBehavior
         return await strategy.ExecuteAsync(
             async c =>
             {
+                attempt++;
+
                 // A retry starts from a clean change tracker, so changes from the failed attempt are not saved twice.
-                if (attempt++ > 0)
+                if (attempt > 1)
                 {
                     _dbContext.ChangeTracker.Clear();
                 }

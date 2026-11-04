@@ -121,7 +121,12 @@ public static class MediatorEndpointRouteBuilderExtensions
 
         foreach (var action in endpoints.ServiceProvider.GetRequiredService<IActionCatalog>().Actions)
         {
-            if (action.IsOfferedBy<ApiAttribute>() && (options.Filter?.Invoke(action) ?? true))
+            if (!action.IsOfferedBy<ApiAttribute>())
+            {
+                continue;
+            }
+
+            if (options.Filter is null || options.Filter(action))
             {
                 Map(group, action, options);
             }
@@ -144,11 +149,18 @@ public static class MediatorEndpointRouteBuilderExtensions
             .ProducesProblem(StatusCodes.Status403Forbidden)
             .WithSummary(action.Description);
 
-        _ = action.Kind switch
+        switch (action.Kind)
         {
-            ActionKind.Command => endpoint.Produces(StatusCodes.Status204NoContent),
-            ActionKind.StreamQuery => endpoint.Produces(StatusCodes.Status200OK, typeof(IEnumerable<>).MakeGenericType(action.ResultType!)),
-            _ => endpoint.Produces(StatusCodes.Status200OK, action.ResultType),
-        };
+            case ActionKind.Command:
+                endpoint.Produces(StatusCodes.Status204NoContent);
+                break;
+            case ActionKind.StreamQuery:
+                // A stream query's descriptor always has a result type: ActionDescriptor checks it.
+                endpoint.Produces(StatusCodes.Status200OK, typeof(IEnumerable<>).MakeGenericType(action.ResultType!));
+                break;
+            default:
+                endpoint.Produces(StatusCodes.Status200OK, action.ResultType);
+                break;
+        }
     }
 }

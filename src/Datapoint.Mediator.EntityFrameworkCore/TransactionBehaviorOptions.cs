@@ -65,9 +65,15 @@ public sealed class TransactionBehaviorOptions
     public string? ReadOnlyStatement
     {
         get => _readOnlyStatement;
-        set => _readOnlyStatement = value is null || !string.IsNullOrWhiteSpace(value)
-            ? value
-            : throw new ArgumentException("The read-only statement must not be empty.", nameof(value));
+        set
+        {
+            if (value is not null && string.IsNullOrWhiteSpace(value))
+            {
+                throw new ArgumentException("The read-only statement must not be empty.", nameof(value));
+            }
+
+            _readOnlyStatement = value;
+        }
     }
 
     /// <summary>

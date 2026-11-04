@@ -102,18 +102,30 @@ public static class MediatorServiceCollectionExtensions
                 continue;
             }
 
-            // A factory's delegate type names the type it creates, as TryAddEnumerable relies on.
-            var type = descriptor.ImplementationType
-                ?? descriptor.ImplementationInstance?.GetType()
-                ?? descriptor.ImplementationFactory!.GetType().GenericTypeArguments[1];
-
-            if (type == implementationType)
+            if (ImplementationType(descriptor) == implementationType)
             {
                 return descriptor;
             }
         }
 
         return null;
+    }
+
+    private static Type ImplementationType(ServiceDescriptor descriptor)
+    {
+        if (descriptor.ImplementationType is { } type)
+        {
+            return type;
+        }
+
+        if (descriptor.ImplementationInstance is { } instance)
+        {
+            return instance.GetType();
+        }
+
+        // A descriptor that isn't keyed has a type, an instance or a factory. The factory's delegate type,
+        // Func<IServiceProvider, TImplementation>, names the type it creates, as TryAddEnumerable relies on.
+        return descriptor.ImplementationFactory!.GetType().GenericTypeArguments[1];
     }
 
     private static void AddActions(IServiceCollection services, MediatorOptions options)
