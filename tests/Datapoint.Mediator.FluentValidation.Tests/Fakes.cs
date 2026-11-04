@@ -46,13 +46,18 @@ public sealed class ListUsersValidator : AbstractValidator<ListUsers>
     public ListUsersValidator() => RuleFor(q => q.Filter).NotEmpty();
 }
 
-// Logs its name and the token it received, after an optional delay, and always passes.
+// Logs its name and the token it received, and always passes. When it yields first, it completes asynchronously, so a
+// validator started after it without waiting would log first.
 public sealed class LoggingValidator : AbstractValidator<CreateUser>
 {
-    public LoggingValidator(string name, TimeSpan delay, List<string> log, List<CancellationToken> tokens) =>
+    public LoggingValidator(string name, bool yieldFirst, List<string> log, List<CancellationToken> tokens) =>
         RuleFor(c => c).MustAsync(async (_, cancellationToken) =>
         {
-            await Task.Delay(delay, cancellationToken);
+            if (yieldFirst)
+            {
+                await Task.Yield();
+            }
+
             log.Add(name);
             tokens.Add(cancellationToken);
             return true;

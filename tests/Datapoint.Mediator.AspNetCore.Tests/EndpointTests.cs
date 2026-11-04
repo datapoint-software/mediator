@@ -137,16 +137,24 @@ public sealed class EndpointTests
     }
 
     [Fact]
-    public async Task ActionWithoutAuthorizer_Returns403_AndAllowedActionSucceeds()
+    public async Task ActionWithoutAuthorizer_Returns403()
     {
         await using var app = await StartWithAuthorizationAsync(SignedIn());
 
-        var denied = await app.Client.PostAsJsonAsync("/api/invoices/archive", new { id = 1 }, Ct);
-        var allowed = await app.Client.PostAsync("/api/invoices/get", null, Ct);
+        var response = await app.Client.PostAsJsonAsync("/api/invoices/archive", new { id = 1 }, Ct);
 
-        Assert.Equal(HttpStatusCode.Forbidden, denied.StatusCode);
+        Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
         Assert.Empty(app.App.Services.GetRequiredService<Recorder>().Log);
-        Assert.Equal(HttpStatusCode.OK, allowed.StatusCode);
+    }
+
+    [Fact]
+    public async Task AllowedAction_Returns200()
+    {
+        await using var app = await StartWithAuthorizationAsync(SignedIn());
+
+        var response = await app.Client.PostAsync("/api/invoices/get", null, Ct);
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
     }
 
     [Fact]

@@ -19,28 +19,53 @@ public sealed class McpToolTests
     private static CancellationToken Ct => TestContext.Current.CancellationToken;
 
     [Fact]
-    public async Task ListTools_OffersEveryActionWithNamesDescriptionsSchemasAndHints()
+    public async Task ListTools_OffersEveryActionNamedWithUnderscores()
     {
         await using var mcp = await McpHarness.StartAsync();
 
-        var tools = (await mcp.Client.ListToolsAsync(cancellationToken: Ct)).ToDictionary(t => t.ProtocolTool.Name, t => t.ProtocolTool);
+        var tools = await ListToolsAsync(mcp);
 
         Assert.Equal(
             ["invoices_archive", "invoices_create", "invoices_get", "invoices_list", "reports_fail", "reports_reject"],
             tools.Keys.Order(StringComparer.Ordinal));
+    }
 
-        var create = tools["invoices_create"];
+    [Fact]
+    public async Task ListTools_DescribesTheActionAndItsArguments()
+    {
+        await using var mcp = await McpHarness.StartAsync();
+
+        var create = (await ListToolsAsync(mcp))["invoices_create"];
+
         Assert.Equal("Creates an invoice for a customer.", create.Description);
         Assert.Equal("object", create.InputSchema.GetProperty("type").GetString());
         var properties = create.InputSchema.GetProperty("properties");
         Assert.True(properties.TryGetProperty("customer", out _));
         Assert.True(properties.TryGetProperty("amount", out _));
+    }
+
+    [Fact]
+    public async Task ListTools_MarksCommandsAsDestructive()
+    {
+        await using var mcp = await McpHarness.StartAsync();
+
+        var create = (await ListToolsAsync(mcp))["invoices_create"];
+
         Assert.False(create.Annotations?.ReadOnlyHint);
         Assert.True(create.Annotations?.DestructiveHint);
+    }
 
-        Assert.True(tools["invoices_get"].Annotations?.ReadOnlyHint);
-        Assert.Null(tools["invoices_get"].Annotations?.DestructiveHint);
-        Assert.True(tools["invoices_list"].Annotations?.ReadOnlyHint);
+    [Theory]
+    [InlineData("invoices_get")]
+    [InlineData("invoices_list")]
+    public async Task ListTools_MarksQueriesAsReadOnly(string name)
+    {
+        await using var mcp = await McpHarness.StartAsync();
+
+        var tool = (await ListToolsAsync(mcp))[name];
+
+        Assert.True(tool.Annotations?.ReadOnlyHint);
+        Assert.Null(tool.Annotations?.DestructiveHint);
     }
 
     [Fact]
@@ -463,6 +488,9 @@ public sealed class McpToolTests
     private static string Text(CallToolResult result) => string.Concat(result.Content.OfType<TextContentBlock>().Select(c => c.Text));
 
     private static ClaimsPrincipal SignedIn() => new(new ClaimsIdentity([new Claim(ClaimTypes.Name, "ana")], "test"));
+
+    private static async Task<Dictionary<string, Tool>> ListToolsAsync(McpHarness mcp) =>
+        (await mcp.Client.ListToolsAsync(cancellationToken: Ct)).ToDictionary(t => t.ProtocolTool.Name, t => t.ProtocolTool);
 
     private sealed class SingleActionCatalog(ActionDescriptor action) : IActionCatalog
     {

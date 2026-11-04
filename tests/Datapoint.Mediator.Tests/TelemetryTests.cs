@@ -109,41 +109,72 @@ public sealed class TelemetryTests : IDisposable
     }
 
     [Fact]
-    public async Task OtherOperations_RecordTheirOperationName()
+    public async Task SendWithResult_RecordsItsOperationName()
     {
         var provider = new FakeServiceProvider()
-            .Add<ICommandHandler<TracedResultCommand, int>>(new CommandHandler<TracedResultCommand, int>((_, _) => new(1)))
-            .Add<IQueryHandler<TracedQuery, int>>(new QueryHandler<TracedQuery, int>((_, _) => new(2)))
-            .AddAll<IMessageHandler<TracedMessage>>(new MessageHandler<TracedMessage>((_, _) => default));
-        var mediator = new ServiceProviderMediator(provider);
-        var cancellationToken = TestContext.Current.CancellationToken;
+            .Add<ICommandHandler<TracedResultCommand, int>>(new CommandHandler<TracedResultCommand, int>((_, _) => new(1)));
 
-        Assert.Equal(1, await mediator.SendAsync(new TracedResultCommand(), cancellationToken));
-        Assert.Equal(2, await mediator.QueryAsync(new TracedQuery(), cancellationToken));
-        await mediator.PublishAsync(new TracedMessage(), cancellationToken);
+        Assert.Equal(1, await new ServiceProviderMediator(provider).SendAsync(new TracedResultCommand(), TestContext.Current.CancellationToken));
 
         Assert.Equal("send TracedResultCommand", Assert.Single(ActivitiesFor<TracedResultCommand>()).OperationName);
+    }
+
+    [Fact]
+    public async Task Query_RecordsItsOperationName()
+    {
+        var provider = new FakeServiceProvider()
+            .Add<IQueryHandler<TracedQuery, int>>(new QueryHandler<TracedQuery, int>((_, _) => new(2)));
+
+        Assert.Equal(2, await new ServiceProviderMediator(provider).QueryAsync(new TracedQuery(), TestContext.Current.CancellationToken));
+
         Assert.Equal("query TracedQuery", Assert.Single(ActivitiesFor<TracedQuery>()).OperationName);
-        Assert.Equal("publish TracedMessage", Assert.Single(ActivitiesFor<TracedMessage>()).OperationName);
         Assert.Equal("query", Assert.Single(MeasurementsFor<TracedQuery>()).Tags["datapoint.mediator.operation"]);
     }
 
     [Fact]
-    public async Task OtherOperations_Failure_RecordErrorType()
+    public async Task Publish_RecordsItsOperationName()
     {
         var provider = new FakeServiceProvider()
-            .Add<ICommandHandler<FailingResultCommand, int>>(new CommandHandler<FailingResultCommand, int>((_, _) => throw new InvalidOperationException()))
-            .Add<IQueryHandler<FailingQuery, int>>(new QueryHandler<FailingQuery, int>((_, _) => throw new InvalidOperationException()))
-            .AddAll<IMessageHandler<FailingMessage>>(new MessageHandler<FailingMessage>((_, _) => throw new InvalidOperationException()));
-        var mediator = new ServiceProviderMediator(provider);
-        var cancellationToken = TestContext.Current.CancellationToken;
+            .AddAll<IMessageHandler<TracedMessage>>(new MessageHandler<TracedMessage>((_, _) => default));
 
-        await Assert.ThrowsAsync<InvalidOperationException>(async () => await mediator.SendAsync(new FailingResultCommand(), cancellationToken));
-        await Assert.ThrowsAsync<InvalidOperationException>(async () => await mediator.QueryAsync(new FailingQuery(), cancellationToken));
-        await Assert.ThrowsAsync<InvalidOperationException>(async () => await mediator.PublishAsync(new FailingMessage(), cancellationToken));
+        await new ServiceProviderMediator(provider).PublishAsync(new TracedMessage(), TestContext.Current.CancellationToken);
+
+        Assert.Equal("publish TracedMessage", Assert.Single(ActivitiesFor<TracedMessage>()).OperationName);
+    }
+
+    [Fact]
+    public async Task SendWithResult_Failure_RecordsAnError()
+    {
+        var provider = new FakeServiceProvider()
+            .Add<ICommandHandler<FailingResultCommand, int>>(new CommandHandler<FailingResultCommand, int>((_, _) => throw new InvalidOperationException()));
+
+        await Assert.ThrowsAsync<InvalidOperationException>(
+            async () => await new ServiceProviderMediator(provider).SendAsync(new FailingResultCommand(), TestContext.Current.CancellationToken));
 
         Assert.Equal(ActivityStatusCode.Error, Assert.Single(ActivitiesFor<FailingResultCommand>()).Status);
+    }
+
+    [Fact]
+    public async Task Query_Failure_RecordsAnError()
+    {
+        var provider = new FakeServiceProvider()
+            .Add<IQueryHandler<FailingQuery, int>>(new QueryHandler<FailingQuery, int>((_, _) => throw new InvalidOperationException()));
+
+        await Assert.ThrowsAsync<InvalidOperationException>(
+            async () => await new ServiceProviderMediator(provider).QueryAsync(new FailingQuery(), TestContext.Current.CancellationToken));
+
         Assert.Equal(ActivityStatusCode.Error, Assert.Single(ActivitiesFor<FailingQuery>()).Status);
+    }
+
+    [Fact]
+    public async Task Publish_Failure_RecordsAnError()
+    {
+        var provider = new FakeServiceProvider()
+            .AddAll<IMessageHandler<FailingMessage>>(new MessageHandler<FailingMessage>((_, _) => throw new InvalidOperationException()));
+
+        await Assert.ThrowsAsync<InvalidOperationException>(
+            async () => await new ServiceProviderMediator(provider).PublishAsync(new FailingMessage(), TestContext.Current.CancellationToken));
+
         Assert.Equal(ActivityStatusCode.Error, Assert.Single(ActivitiesFor<FailingMessage>()).Status);
     }
 

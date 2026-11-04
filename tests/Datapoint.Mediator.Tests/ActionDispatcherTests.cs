@@ -115,14 +115,19 @@ public sealed class ActionDispatcherTests
     }
 
     [Fact]
-    public void WrongMethodForKind_Throws()
+    public void DispatchAsync_StreamQuery_ThrowsInvalidOperationException()
     {
         Assert.Throws<InvalidOperationException>(() => _dispatcher.DispatchAsync("invoice.list", Json("{}"), cancellationToken: Ct));
+    }
+
+    [Fact]
+    public void StreamAsync_Query_ThrowsInvalidOperationException()
+    {
         Assert.Throws<InvalidOperationException>(() => _dispatcher.StreamAsync("invoice.get", Json("{}"), cancellationToken: Ct));
     }
 
     [Fact]
-    public void NullName_Throws()
+    public void DispatchAsync_NullName_ThrowsArgumentNullException()
     {
         Assert.Equal("name", Assert.Throws<ArgumentNullException>(() => _dispatcher.DispatchAsync(null!, default, cancellationToken: Ct)).ParamName);
     }

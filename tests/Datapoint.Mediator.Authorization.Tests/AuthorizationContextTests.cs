@@ -11,7 +11,7 @@ namespace Datapoint.Mediator.Authorization.Tests;
 
 public sealed class AuthorizationContextTests
 {
-    private static readonly CancellationToken Ct = TestContext.Current.CancellationToken;
+    private static CancellationToken Ct => TestContext.Current.CancellationToken;
 
     private readonly List<string> _log = [];
     private readonly List<string?> _streamSaw = [];

@@ -13,7 +13,7 @@ namespace Datapoint.Mediator.Authorization.Tests;
 
 public sealed class AuthenticationBehaviorTests
 {
-    private static readonly CancellationToken Ct = TestContext.Current.CancellationToken;
+    private static CancellationToken Ct => TestContext.Current.CancellationToken;
 
     private readonly List<string> _log = [];
     private bool _nextCalled;

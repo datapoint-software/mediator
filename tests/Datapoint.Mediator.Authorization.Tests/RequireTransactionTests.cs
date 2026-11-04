@@ -10,7 +10,7 @@ namespace Datapoint.Mediator.Authorization.Tests;
 
 public sealed class RequireTransactionTests
 {
-    private static readonly CancellationToken Ct = TestContext.Current.CancellationToken;
+    private static CancellationToken Ct => TestContext.Current.CancellationToken;
 
     private readonly List<string> _log = [];
 
@@ -31,37 +31,76 @@ public sealed class RequireTransactionTests
     }
 
     [Fact]
-    public async Task Commands_WithoutATransaction_Throw_ButQueriesRun()
+    public async Task Commands_WithoutATransaction_Throw()
     {
         var behavior = Create(TransactionRequirement.Commands, active: false);
 
         await Assert.ThrowsAsync<InvalidOperationException>(async () => await behavior.HandleAsync(new DeleteInvoice(1), _ => default, Ct));
+    }
+
+    [Fact]
+    public async Task Commands_WithoutATransaction_CommandsWithAResultThrow()
+    {
+        var behavior = Create(TransactionRequirement.Commands, active: false);
+
         await Assert.ThrowsAsync<InvalidOperationException>(
             async () => await behavior.HandleAsync(new CreateInvoice(), _ => new ValueTask<int>(1), Ct));
+    }
+
+    [Fact]
+    public async Task Commands_WithoutATransaction_QueriesRun()
+    {
+        var behavior = Create(TransactionRequirement.Commands, active: false);
+
         Assert.Equal("x", await behavior.HandleAsync(new GetInvoice(), _ => new ValueTask<string>("x"), Ct));
+    }
+
+    [Fact]
+    public async Task Commands_WithoutATransaction_StreamQueriesRun()
+    {
+        var behavior = Create(TransactionRequirement.Commands, active: false);
+
         Assert.Equal([1], await behavior.HandleAsync(new ListInvoices(), _ => new[] { 1 }.ToAsyncEnumerable(), Ct).ToListAsync(Ct));
     }
 
     [Fact]
-    public async Task CommandsAndQueries_WithoutATransaction_Throw_StreamsAtFirstEnumeration()
+    public async Task CommandsAndQueries_WithoutATransaction_QueriesThrow()
     {
         var behavior = Create(TransactionRequirement.CommandsAndQueries, active: false);
 
-        await Assert.ThrowsAsync<InvalidOperationException>(
+        var exception = await Assert.ThrowsAsync<InvalidOperationException>(
             async () => await behavior.HandleAsync(new GetInvoice(), _ => new ValueTask<string>("x"), Ct));
+
+        Assert.Contains("inside a transaction", exception.Message, StringComparison.Ordinal);
+        Assert.Empty(_log);
+    }
+
+    [Fact]
+    public async Task CommandsAndQueries_WithoutATransaction_StreamQueriesThrowAtFirstEnumeration()
+    {
+        var behavior = Create(TransactionRequirement.CommandsAndQueries, active: false);
+
         var results = behavior.HandleAsync(new ListInvoices(), _ => new[] { 1 }.ToAsyncEnumerable(), Ct);
         var exception = await Assert.ThrowsAsync<InvalidOperationException>(async () => await results.ToListAsync(Ct));
 
-        Assert.Contains("inside a transaction", exception.Message);
-        Assert.Empty(_log);   // refused before any authorizer runs
+        Assert.Contains("inside a transaction", exception.Message, StringComparison.Ordinal);
+
+        // Refused before any authorizer runs.
+        Assert.Empty(_log);
     }
 
     [Fact]
     public async Task InsideATransaction_EveryKindIsAuthorized()
     {
         var behavior = Create(TransactionRequirement.CommandsAndQueries, active: true);
+        var ran = false;
 
-        await behavior.HandleAsync(new DeleteInvoice(1), _ => default, Ct);
+        await behavior.HandleAsync(new DeleteInvoice(1), _ =>
+        {
+            ran = true;
+            return default;
+        }, Ct);
+        Assert.True(ran);
         Assert.Equal("x", await behavior.HandleAsync(new GetInvoice(), _ => new ValueTask<string>("x"), Ct));
         Assert.Equal([1], await behavior.HandleAsync(new ListInvoices(), _ => new[] { 1 }.ToAsyncEnumerable(), Ct).ToListAsync(Ct));
     }
@@ -80,8 +119,15 @@ public sealed class RequireTransactionTests
     public async Task AnonymousActions_AreNotChecked()
     {
         var behavior = Create(TransactionRequirement.CommandsAndQueries, active: false);
+        var ran = false;
 
-        await behavior.HandleAsync(new AnonymousBase(), _ => default, Ct);
+        await behavior.HandleAsync(new AnonymousBase(), _ =>
+        {
+            ran = true;
+            return default;
+        }, Ct);
+
+        Assert.True(ran);
     }
 
     [Fact]
@@ -90,8 +136,15 @@ public sealed class RequireTransactionTests
         var options = new AuthorizationBehaviorOptions();
         var behavior = new AuthorizationBehavior(Services(active: false), options);
         options.RequireTransaction = TransactionRequirement.CommandsAndQueries;
+        var ran = false;
 
-        await behavior.HandleAsync(new DeleteInvoice(1), _ => default, Ct);
+        await behavior.HandleAsync(new DeleteInvoice(1), _ =>
+        {
+            ran = true;
+            return default;
+        }, Ct);
+
+        Assert.True(ran);
     }
 
     private AuthorizationBehavior Create(TransactionRequirement requirement, bool active) =>

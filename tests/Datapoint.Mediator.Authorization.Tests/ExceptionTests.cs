@@ -6,7 +6,7 @@ namespace Datapoint.Mediator.Authorization.Tests;
 public sealed class ExceptionTests
 {
     [Fact]
-    public void AuthenticationRequiredException_Constructors()
+    public void AuthenticationRequiredException_Constructors_SetTheMessageAndInnerException()
     {
         var inner = new InvalidOperationException();
 
@@ -18,7 +18,7 @@ public sealed class ExceptionTests
     }
 
     [Fact]
-    public void AccessDeniedException_Constructors()
+    public void AccessDeniedException_Constructors_SetTheMessageAndInnerException()
     {
         var inner = new InvalidOperationException();
 

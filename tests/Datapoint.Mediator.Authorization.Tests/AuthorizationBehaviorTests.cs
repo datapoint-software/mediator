@@ -232,41 +232,60 @@ public sealed class AuthorizationBehaviorTests
     }
 
     [Fact]
-    public async Task CommandWithResult_IsAuthorized()
+    public async Task CommandWithResult_Allowed_ReturnsTheResult()
     {
-        var allowed = CreateBehavior(Principals.SignedIn(), s => s.AddAuthorizer<CreateInvoice>("allow", true, _log));
-        var denied = CreateBehavior(Principals.SignedIn(), _ => { });
+        var behavior = CreateBehavior(Principals.SignedIn(), s => s.AddAuthorizer<CreateInvoice>("allow", true, _log));
 
-        Assert.Equal(5, await allowed.HandleAsync(new CreateInvoice(), NextWithResult(5), TestContext.Current.CancellationToken));
-        await Assert.ThrowsAsync<AccessDeniedException>(
-            async () => await denied.HandleAsync(new CreateInvoice(), NextWithResult(5), TestContext.Current.CancellationToken));
+        Assert.Equal(5, await behavior.HandleAsync(new CreateInvoice(), NextWithResult(5), TestContext.Current.CancellationToken));
     }
 
     [Fact]
-    public async Task Query_IsAuthorized()
+    public async Task CommandWithResult_WithoutAuthorizer_IsDenied()
     {
-        var allowed = CreateBehavior(Principals.SignedIn(), s => s.AddAuthorizer<GetInvoice>("allow", true, _log));
-        var denied = CreateBehavior(Principals.SignedIn(), _ => { });
+        var behavior = CreateBehavior(Principals.SignedIn(), _ => { });
 
-        Assert.Equal("invoice", await allowed.HandleAsync(new GetInvoice(), NextWithResult("invoice"), TestContext.Current.CancellationToken));
         await Assert.ThrowsAsync<AccessDeniedException>(
-            async () => await denied.HandleAsync(new GetInvoice(), NextWithResult("invoice"), TestContext.Current.CancellationToken));
+            async () => await behavior.HandleAsync(new CreateInvoice(), NextWithResult(5), TestContext.Current.CancellationToken));
+        Assert.False(_nextCalled);
     }
 
     [Fact]
-    public async Task StreamQuery_IsAuthorizedWhenEnumerated()
+    public async Task Query_Allowed_ReturnsTheResult()
     {
-        var allowed = CreateBehavior(Principals.SignedIn(), s => s.AddAuthorizer<ListInvoices>("allow", true, _log));
-        var denied = CreateBehavior(Principals.SignedIn(), _ => { });
+        var behavior = CreateBehavior(Principals.SignedIn(), s => s.AddAuthorizer<GetInvoice>("allow", true, _log));
 
-        var results = await allowed.HandleAsync(new ListInvoices(), NextStream, TestContext.Current.CancellationToken)
+        Assert.Equal("invoice", await behavior.HandleAsync(new GetInvoice(), NextWithResult("invoice"), TestContext.Current.CancellationToken));
+    }
+
+    [Fact]
+    public async Task Query_WithoutAuthorizer_IsDenied()
+    {
+        var behavior = CreateBehavior(Principals.SignedIn(), _ => { });
+
+        await Assert.ThrowsAsync<AccessDeniedException>(
+            async () => await behavior.HandleAsync(new GetInvoice(), NextWithResult("invoice"), TestContext.Current.CancellationToken));
+        Assert.False(_nextCalled);
+    }
+
+    [Fact]
+    public async Task StreamQuery_Allowed_ReturnsTheResults()
+    {
+        var behavior = CreateBehavior(Principals.SignedIn(), s => s.AddAuthorizer<ListInvoices>("allow", true, _log));
+
+        var results = await behavior.HandleAsync(new ListInvoices(), NextStream, TestContext.Current.CancellationToken)
             .ToListAsync(TestContext.Current.CancellationToken);
-        Assert.Equal([1, 2], results);
 
-        _nextCalled = false;
-        var deniedResults = denied.HandleAsync(new ListInvoices(), NextStream, TestContext.Current.CancellationToken);
-        await Assert.ThrowsAsync<AccessDeniedException>(
-            async () => await deniedResults.ToListAsync(TestContext.Current.CancellationToken));
+        Assert.Equal([1, 2], results);
+    }
+
+    [Fact]
+    public async Task StreamQuery_WithoutAuthorizer_IsDeniedWhenEnumerated()
+    {
+        var behavior = CreateBehavior(Principals.SignedIn(), _ => { });
+
+        var results = behavior.HandleAsync(new ListInvoices(), NextStream, TestContext.Current.CancellationToken);
+
+        await Assert.ThrowsAsync<AccessDeniedException>(async () => await results.ToListAsync(TestContext.Current.CancellationToken));
         Assert.False(_nextCalled);
     }
 

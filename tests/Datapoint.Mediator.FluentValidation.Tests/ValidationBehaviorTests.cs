@@ -178,10 +178,10 @@ public sealed class ValidationBehaviorTests
     {
         var log = new List<string>();
         var tokens = new List<CancellationToken>();
-        // The first validator is slower, so running them concurrently would log "second" first.
+        // The first validator completes asynchronously, so running them concurrently would log "second" first.
         var behavior = CreateBehavior(s => s
-            .AddSingleton<IValidator<CreateUser>>(new LoggingValidator("first", TimeSpan.FromMilliseconds(50), log, tokens))
-            .AddSingleton<IValidator<CreateUser>>(new LoggingValidator("second", TimeSpan.Zero, log, tokens)));
+            .AddSingleton<IValidator<CreateUser>>(new LoggingValidator("first", yieldFirst: true, log, tokens))
+            .AddSingleton<IValidator<CreateUser>>(new LoggingValidator("second", yieldFirst: false, log, tokens)));
 
         await behavior.HandleAsync(ValidUser, Next, TestContext.Current.CancellationToken);
 
@@ -194,7 +194,7 @@ public sealed class ValidationBehaviorTests
         using var cts = new CancellationTokenSource();
         var tokens = new List<CancellationToken>();
         var behavior = CreateBehavior(s =>
-            s.AddSingleton<IValidator<CreateUser>>(new LoggingValidator("only", TimeSpan.Zero, [], tokens)));
+            s.AddSingleton<IValidator<CreateUser>>(new LoggingValidator("only", yieldFirst: false, [], tokens)));
 
         await behavior.HandleAsync(ValidUser, Next, cts.Token);
 

@@ -8,7 +8,7 @@ namespace Datapoint.Mediator.DependencyInjection.Tests;
 public sealed class IntegrationTests
 {
     [Fact]
-    public async Task DispatchesThroughRealContainer()
+    public async Task AddMediator_WithTheMicrosoftContainer_DispatchesEveryKind()
     {
         await using var provider = BuildProvider();
         await using var scope = provider.CreateAsyncScope();
