@@ -18,7 +18,7 @@ public interface IQueryHandler<in TQuery, TResult>
     /// Handles the specified query.
     /// </summary>
     /// <param name="query">The query to handle.</param>
-    /// <param name="ct">A token to cancel the operation.</param>
+    /// <param name="cancellationToken">A token to cancel the operation.</param>
     /// <returns>A task that completes with the query's result. Await it only once.</returns>
-    ValueTask<TResult> HandleAsync(TQuery query, CancellationToken ct = default);
+    ValueTask<TResult> HandleAsync(TQuery query, CancellationToken cancellationToken = default);
 }

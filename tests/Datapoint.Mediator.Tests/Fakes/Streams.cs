@@ -11,11 +11,11 @@ public static class Streams
     public static async IAsyncEnumerable<int> CountTo(
         int count,
         List<string>? log = null,
-        [EnumeratorCancellation] CancellationToken ct = default)
+        [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
         for (var i = 1; i <= count; i++)
         {
-            ct.ThrowIfCancellationRequested();
+            cancellationToken.ThrowIfCancellationRequested();
             await Task.Yield();
             log?.Add(i.ToString());
             yield return i;

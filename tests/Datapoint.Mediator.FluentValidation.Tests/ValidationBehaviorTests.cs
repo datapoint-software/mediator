@@ -234,13 +234,13 @@ public sealed class ValidationBehaviorTests
         return new ValidationBehavior(services.BuildServiceProvider());
     }
 
-    private ValueTask Next(CancellationToken ct)
+    private ValueTask Next(CancellationToken cancellationToken)
     {
         _nextCalled = true;
         return default;
     }
 
-    private async IAsyncEnumerable<string> NextStream([EnumeratorCancellation] CancellationToken ct)
+    private async IAsyncEnumerable<string> NextStream([EnumeratorCancellation] CancellationToken cancellationToken)
     {
         _nextCalled = true;
         await Task.Yield();

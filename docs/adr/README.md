@@ -44,5 +44,6 @@ Each record follows [Michael Nygard's format](https://cognitect.com/blog/2011/11
 | [0036](0036-release-candidates-freeze-the-api.md) | Release candidates freeze the API before 4.0.0 | Accepted |
 | [0037](0037-mcp-never-rethrows.md) | MCP errors are tool results, and nothing is rethrown to the SDK | Accepted |
 | [0038](0038-cli-parse-errors-name-the-expected-format.md) | The CLI parses with the invariant culture, and its parse errors name the expected format | Accepted |
+| [0039](0039-public-names-follow-microsofts-rules.md) | Public names and parameters follow Microsoft's design guidelines | Accepted |
 
 To add a record, copy the structure of an existing one, use the next number, and add it to this table.

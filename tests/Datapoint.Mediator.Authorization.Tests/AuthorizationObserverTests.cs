@@ -224,7 +224,7 @@ public sealed class AuthorizationObserverTests
         return new AuthorizationBehavior(services.BuildServiceProvider());
     }
 
-    private ValueTask Next(CancellationToken ct)
+    private ValueTask Next(CancellationToken cancellationToken)
     {
         _nextCalled = true;
         _log.Add("next");

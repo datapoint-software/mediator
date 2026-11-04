@@ -18,7 +18,7 @@ internal abstract class ResultCommandDispatcher<TResult>
     public abstract ValueTask<TResult> DispatchAsync(
         ICommand<TResult> command,
         IServiceProvider serviceProvider,
-        CancellationToken ct);
+        CancellationToken cancellationToken);
 }
 
 internal sealed class ResultCommandDispatcher<TCommand, TResult> : ResultCommandDispatcher<TResult>
@@ -27,7 +27,7 @@ internal sealed class ResultCommandDispatcher<TCommand, TResult> : ResultCommand
     public override ValueTask<TResult> DispatchAsync(
         ICommand<TResult> command,
         IServiceProvider serviceProvider,
-        CancellationToken ct)
+        CancellationToken cancellationToken)
     {
         var handler = serviceProvider.GetRequiredHandler<ICommandHandler<TCommand, TResult>>(typeof(TCommand));
         var typedCommand = (TCommand)command;
@@ -35,10 +35,10 @@ internal sealed class ResultCommandDispatcher<TCommand, TResult> : ResultCommand
 
         if (behaviors.Length == 0)
         {
-            return handler.HandleAsync(typedCommand, ct);
+            return handler.HandleAsync(typedCommand, cancellationToken);
         }
 
-        return InvokePipelineAsync(behaviors, handler, command, typedCommand, ct);
+        return InvokePipelineAsync(behaviors, handler, command, typedCommand, cancellationToken);
     }
 
     // Kept separate from DispatchAsync, so the closures are only allocated when there are behaviours.
@@ -47,7 +47,7 @@ internal sealed class ResultCommandDispatcher<TCommand, TResult> : ResultCommand
         ICommandHandler<TCommand, TResult> handler,
         ICommand<TResult> command,
         TCommand typedCommand,
-        CancellationToken ct)
+        CancellationToken cancellationToken)
     {
         // Built from the innermost behaviour outwards, so the first registered behaviour runs first.
         Func<CancellationToken, ValueTask<TResult>> next = c => handler.HandleAsync(typedCommand, c);
@@ -59,6 +59,6 @@ internal sealed class ResultCommandDispatcher<TCommand, TResult> : ResultCommand
             next = c => behavior.HandleAsync(command, inner, c);
         }
 
-        return next(ct);
+        return next(cancellationToken);
     }
 }

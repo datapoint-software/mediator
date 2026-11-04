@@ -17,44 +17,44 @@ public sealed record SkippedCommand : ICommand;
 
 public sealed class FixtureCommandHandler : ICommandHandler<FixtureCommand>
 {
-    public ValueTask HandleAsync(FixtureCommand command, CancellationToken ct = default) => default;
+    public ValueTask HandleAsync(FixtureCommand command, CancellationToken cancellationToken = default) => default;
 }
 
 internal sealed class InternalQueryHandler : IQueryHandler<FixtureQuery, int>
 {
-    public ValueTask<int> HandleAsync(FixtureQuery query, CancellationToken ct = default) => new(42);
+    public ValueTask<int> HandleAsync(FixtureQuery query, CancellationToken cancellationToken = default) => new(42);
 }
 
 public sealed class ZetaMessageHandler : IMessageHandler<FixtureMessage>
 {
-    public ValueTask HandleAsync(FixtureMessage message, CancellationToken ct = default) => default;
+    public ValueTask HandleAsync(FixtureMessage message, CancellationToken cancellationToken = default) => default;
 }
 
 public sealed class AlphaMessageHandler : IMessageHandler<FixtureMessage>
 {
-    public ValueTask HandleAsync(FixtureMessage message, CancellationToken ct = default) => default;
+    public ValueTask HandleAsync(FixtureMessage message, CancellationToken cancellationToken = default) => default;
 }
 
 public sealed class MiddleMessageHandler : IMessageHandler<FixtureMessage>
 {
-    public ValueTask HandleAsync(FixtureMessage message, CancellationToken ct = default) => default;
+    public ValueTask HandleAsync(FixtureMessage message, CancellationToken cancellationToken = default) => default;
 }
 
 // Must be skipped by scanning: abstract.
 public abstract class AbstractSkippedHandler : ICommandHandler<SkippedCommand>
 {
-    public abstract ValueTask HandleAsync(SkippedCommand command, CancellationToken ct = default);
+    public abstract ValueTask HandleAsync(SkippedCommand command, CancellationToken cancellationToken = default);
 }
 
 // Must be skipped by scanning: open generic.
 public sealed class GenericSkippedHandler<T> : ICommandHandler<SkippedCommand>
 {
-    public ValueTask HandleAsync(SkippedCommand command, CancellationToken ct = default) => default;
+    public ValueTask HandleAsync(SkippedCommand command, CancellationToken cancellationToken = default) => default;
 }
 
 // Must be skipped by scanning: behaviours are only registered explicitly.
 public sealed class FixtureBehavior : IBehavior
 {
-    public ValueTask HandleAsync(ICommand command, Func<CancellationToken, ValueTask> next, CancellationToken ct = default) =>
-        next(ct);
+    public ValueTask HandleAsync(ICommand command, Func<CancellationToken, ValueTask> next, CancellationToken cancellationToken = default) =>
+        next(cancellationToken);
 }

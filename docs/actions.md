@@ -120,12 +120,12 @@ public sealed class TenantDispatcher(ActionDispatcher inner, IActionCatalog cata
     : IActionDispatcher
 {
     public ValueTask<object?> DispatchAsync(
-        string name, JsonElement arguments, JsonSerializerOptions? options = null, CancellationToken ct = default) =>
-        inner.DispatchAsync(name, WithTenant(name, arguments, options), options, ct);
+        string name, JsonElement arguments, JsonSerializerOptions? options = null, CancellationToken cancellationToken = default) =>
+        inner.DispatchAsync(name, WithTenant(name, arguments, options), options, cancellationToken);
 
     public IAsyncEnumerable<object?> StreamAsync(
-        string name, JsonElement arguments, JsonSerializerOptions? options = null, CancellationToken ct = default) =>
-        inner.StreamAsync(name, WithTenant(name, arguments, options), options, ct);
+        string name, JsonElement arguments, JsonSerializerOptions? options = null, CancellationToken cancellationToken = default) =>
+        inner.StreamAsync(name, WithTenant(name, arguments, options), options, cancellationToken);
 
     private JsonElement WithTenant(string name, JsonElement arguments, JsonSerializerOptions? options)
     {
@@ -178,10 +178,10 @@ foreach (var action in catalog.Actions)
 
 // Dispatches by name, with the arguments as JSON.
 using var arguments = JsonDocument.Parse("""{ "customer": "Ana", "amount": 100 }""");
-var result = await dispatcher.DispatchAsync("invoices.create", arguments.RootElement, ct: ct);
+var result = await dispatcher.DispatchAsync("invoices.create", arguments.RootElement, cancellationToken: cancellationToken);
 
 // Stream queries
-await foreach (var item in dispatcher.StreamAsync("invoices.list", default, ct: ct)) { }
+await foreach (var item in dispatcher.StreamAsync("invoices.list", default, cancellationToken: cancellationToken)) { }
 ```
 
 - `IActionCatalog` is a singleton, and `IActionDispatcher` is scoped.

@@ -220,11 +220,11 @@ internal sealed partial class ActionCommand
 
     // Everything that can fail runs inside the try, including resolving the dispatcher and disposing the scope, so no
     // exception reaches System.CommandLine's default handler, which would print its message and stack trace.
-    private async Task<int> RunAsync(ParseResult parseResult, CancellationToken ct)
+    private async Task<int> RunAsync(ParseResult parseResult, CancellationToken cancellationToken)
     {
         try
         {
-            return await DispatchAsync(parseResult, ct).ConfigureAwait(false);
+            return await DispatchAsync(parseResult, cancellationToken).ConfigureAwait(false);
         }
         catch (Exception exception) when (exception is not OperationCanceledException)
         {
@@ -234,7 +234,7 @@ internal sealed partial class ActionCommand
         }
     }
 
-    private async Task<int> DispatchAsync(ParseResult parseResult, CancellationToken ct)
+    private async Task<int> DispatchAsync(ParseResult parseResult, CancellationToken cancellationToken)
     {
         var output = parseResult.InvocationConfiguration.Output;
         var error = parseResult.InvocationConfiguration.Error;
@@ -285,14 +285,14 @@ internal sealed partial class ActionCommand
             if (_action.Kind == ActionKind.StreamQuery)
             {
                 // JSON Lines: one result per line, written as it arrives.
-                await foreach (var item in dispatcher.StreamAsync(_action.Name, arguments, _serializerOptions, ct).ConfigureAwait(false))
+                await foreach (var item in dispatcher.StreamAsync(_action.Name, arguments, _serializerOptions, cancellationToken).ConfigureAwait(false))
                 {
                     await output.WriteLineAsync(JsonSerializer.Serialize(item, _serializerOptions)).ConfigureAwait(false);
                 }
             }
             else
             {
-                var result = await dispatcher.DispatchAsync(_action.Name, arguments, _serializerOptions, ct).ConfigureAwait(false);
+                var result = await dispatcher.DispatchAsync(_action.Name, arguments, _serializerOptions, cancellationToken).ConfigureAwait(false);
 
                 if (_action.Kind != ActionKind.Command)
                 {

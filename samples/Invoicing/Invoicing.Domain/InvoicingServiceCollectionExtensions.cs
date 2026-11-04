@@ -29,10 +29,10 @@ public static class InvoicingServiceCollectionExtensions
             Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData, Environment.SpecialFolderOption.Create),
             "datapoint-mediator-invoicing.db");
 
-    public static async Task EnsureInvoicingDatabaseAsync(this IServiceProvider services, CancellationToken ct = default)
+    public static async Task EnsureInvoicingDatabaseAsync(this IServiceProvider services, CancellationToken cancellationToken = default)
     {
         await using var scope = services.CreateAsyncScope();
-        await scope.ServiceProvider.GetRequiredService<InvoicingDbContext>().Database.EnsureCreatedAsync(ct);
+        await scope.ServiceProvider.GetRequiredService<InvoicingDbContext>().Database.EnsureCreatedAsync(cancellationToken);
     }
 
     // For hosts that act for one user, such as the CLI and the MCP server: INVOICING_USER names the user, and

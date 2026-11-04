@@ -21,7 +21,7 @@ internal static class Authentication
         IServiceProvider serviceProvider,
         object action,
         IAuthorizationObserver[] observers,
-        CancellationToken ct)
+        CancellationToken cancellationToken)
     {
         var accessor = serviceProvider.GetService(typeof(IPrincipalAccessor)) as IPrincipalAccessor
             ?? throw new InvalidOperationException(
@@ -31,7 +31,7 @@ internal static class Authentication
 
         if (principal?.Identity?.IsAuthenticated != true)
         {
-            await ObserveAsync(observers, action, principal, AuthorizationOutcome.AuthenticationRequired, null, null, ct)
+            await ObserveAsync(observers, action, principal, AuthorizationOutcome.AuthenticationRequired, null, null, cancellationToken)
                 .ConfigureAwait(false);
 
             throw new AuthenticationRequiredException($"Authentication is required to run '{action.GetType()}'.");
@@ -57,7 +57,7 @@ internal static class Authentication
         AuthorizationOutcome outcome,
         AuthorizationResult? result,
         Exception? exception,
-        CancellationToken ct)
+        CancellationToken cancellationToken)
     {
         if (observers.Length == 0)
         {
@@ -68,7 +68,7 @@ internal static class Authentication
 
         foreach (var observer in observers)
         {
-            await observer.OnAuthorizedAsync(authorization, ct).ConfigureAwait(false);
+            await observer.OnAuthorizedAsync(authorization, cancellationToken).ConfigureAwait(false);
         }
     }
 }

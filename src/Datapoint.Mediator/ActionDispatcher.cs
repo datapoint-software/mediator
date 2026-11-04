@@ -40,10 +40,10 @@ public sealed class ActionDispatcher : IActionDispatcher
         string name,
         JsonElement arguments,
         JsonSerializerOptions? options = null,
-        CancellationToken ct = default)
+        CancellationToken cancellationToken = default)
     {
         var (descriptor, action) = Resolve(name, arguments, options);
-        return ActionInvoker.Get(descriptor).InvokeAsync(_mediator, action, ct);
+        return ActionInvoker.Get(descriptor).InvokeAsync(_mediator, action, cancellationToken);
     }
 
     /// <inheritdoc/>
@@ -51,10 +51,10 @@ public sealed class ActionDispatcher : IActionDispatcher
         string name,
         JsonElement arguments,
         JsonSerializerOptions? options = null,
-        CancellationToken ct = default)
+        CancellationToken cancellationToken = default)
     {
         var (descriptor, action) = Resolve(name, arguments, options);
-        return ActionInvoker.Get(descriptor).StreamAsync(_mediator, action, ct);
+        return ActionInvoker.Get(descriptor).StreamAsync(_mediator, action, cancellationToken);
     }
 
     private (ActionDescriptor Descriptor, object Action) Resolve(string name, JsonElement arguments, JsonSerializerOptions? options)

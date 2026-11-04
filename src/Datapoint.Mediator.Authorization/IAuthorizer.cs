@@ -20,10 +20,10 @@ public interface IAuthorizer<in TAction>
     /// </summary>
     /// <param name="action">The command, query or stream query to run.</param>
     /// <param name="principal">The signed-in user.</param>
-    /// <param name="ct">A token to cancel the operation.</param>
+    /// <param name="cancellationToken">A token to cancel the operation.</param>
     /// <returns>
     /// A task that completes with the decision, such as <see cref="AuthorizationDecision.Allow"/>,
     /// <see cref="AuthorizationDecision.Deny"/> or <see cref="AuthorizationDecision.AllowIf"/>. Await it only once.
     /// </returns>
-    ValueTask<AuthorizationDecision> AuthorizeAsync(TAction action, ClaimsPrincipal principal, CancellationToken ct = default);
+    ValueTask<AuthorizationDecision> AuthorizeAsync(TAction action, ClaimsPrincipal principal, CancellationToken cancellationToken = default);
 }

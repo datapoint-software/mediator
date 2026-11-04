@@ -51,7 +51,7 @@ Compare the `Allocated` column before and after your change.
 [CODING-GUIDELINES.md](CODING-GUIDELINES.md) covers naming, API design, async, errors, comments and tests, with the Microsoft sources behind each rule. In short:
 
 - Follow Microsoft's [.NET design guidelines](https://learn.microsoft.com/dotnet/standard/design-guidelines/) and naming conventions.
-- Name `CancellationToken` parameters `ct`, as the last parameter, optional.
+- Name `CancellationToken` parameters `cancellationToken`, as the last parameter, optional ([ADR 0039](docs/adr/0039-public-names-follow-microsofts-rules.md)).
 - Put generic variants of the same name in one file, such as `ICommand` and `ICommand<TResult>` in `ICommand.cs`.
 - Make public classes `sealed`, unless they're designed for inheritance.
 - Document every public member with XML docs, including the exceptions it throws.

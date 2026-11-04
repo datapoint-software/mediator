@@ -35,9 +35,9 @@ public sealed class PublishTests
         using var cts = new CancellationTokenSource();
         var message = new Notified();
         var received = new List<(Notified Message, CancellationToken Token)>();
-        var handler = new MessageHandler<Notified>((m, ct) =>
+        var handler = new MessageHandler<Notified>((m, cancellationToken) =>
         {
-            received.Add((m, ct));
+            received.Add((m, cancellationToken));
             return default;
         });
         var provider = new FakeServiceProvider().AddAll<IMessageHandler<Notified>>(handler, handler);

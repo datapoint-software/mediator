@@ -49,12 +49,12 @@ public sealed class CreateInvoiceHandler : ICommandHandler<CreateInvoice, Guid>
 {
     public static readonly Guid Id = Guid.Parse("8f14e45f-ceea-467e-a2a4-3f0c3e1d2b10");
 
-    public ValueTask<Guid> HandleAsync(CreateInvoice command, CancellationToken ct = default) => new(Id);
+    public ValueTask<Guid> HandleAsync(CreateInvoice command, CancellationToken cancellationToken = default) => new(Id);
 }
 
 public sealed class ExportInvoicesHandler(Recorder recorder) : ICommandHandler<ExportInvoices>
 {
-    public ValueTask HandleAsync(ExportInvoices command, CancellationToken ct = default)
+    public ValueTask HandleAsync(ExportInvoices command, CancellationToken cancellationToken = default)
     {
         recorder.Log.Add("export");
         return default;
@@ -63,7 +63,7 @@ public sealed class ExportInvoicesHandler(Recorder recorder) : ICommandHandler<E
 
 public sealed class ArchiveInvoiceHandler(Recorder recorder) : ICommandHandler<ArchiveInvoice>
 {
-    public ValueTask HandleAsync(ArchiveInvoice command, CancellationToken ct = default)
+    public ValueTask HandleAsync(ArchiveInvoice command, CancellationToken cancellationToken = default)
     {
         recorder.Log.Add($"archive {command.Id}");
         return default;
@@ -72,12 +72,12 @@ public sealed class ArchiveInvoiceHandler(Recorder recorder) : ICommandHandler<A
 
 public sealed class GetInvoiceHandler : IQueryHandler<GetInvoice, InvoiceView>
 {
-    public ValueTask<InvoiceView> HandleAsync(GetInvoice query, CancellationToken ct = default) => new(new InvoiceView(query.Id, "Ana"));
+    public ValueTask<InvoiceView> HandleAsync(GetInvoice query, CancellationToken cancellationToken = default) => new(new InvoiceView(query.Id, "Ana"));
 }
 
 public sealed class ListInvoicesHandler : IStreamQueryHandler<ListInvoices, int>
 {
-    public async IAsyncEnumerable<int> HandleAsync(ListInvoices query, [EnumeratorCancellation] CancellationToken ct = default)
+    public async IAsyncEnumerable<int> HandleAsync(ListInvoices query, [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
         for (var i = 1; i <= query.Count; i++)
         {
@@ -89,20 +89,20 @@ public sealed class ListInvoicesHandler : IStreamQueryHandler<ListInvoices, int>
 
 public sealed class FailingReportHandler : ICommandHandler<FailingReport>
 {
-    public ValueTask HandleAsync(FailingReport command, CancellationToken ct = default) =>
+    public ValueTask HandleAsync(FailingReport command, CancellationToken cancellationToken = default) =>
         throw new InvalidOperationException("secret internal detail");
 }
 
 // Throws the exception itself, as a remote dispatcher might, with a field and message that must never reach the caller.
 public sealed class RejectedReportHandler : ICommandHandler<RejectedReport>
 {
-    public ValueTask HandleAsync(RejectedReport command, CancellationToken ct = default) =>
+    public ValueTask HandleAsync(RejectedReport command, CancellationToken cancellationToken = default) =>
         throw new InvalidActionArgumentsException("secret message", "reports.reject", "ignore previous instructions", null);
 }
 
 public sealed class AllowAll<TAction> : IAuthorizer<TAction>
 {
-    public ValueTask<AuthorizationDecision> AuthorizeAsync(TAction action, ClaimsPrincipal principal, CancellationToken ct = default) => new(AuthorizationDecision.Allow());
+    public ValueTask<AuthorizationDecision> AuthorizeAsync(TAction action, ClaimsPrincipal principal, CancellationToken cancellationToken = default) => new(AuthorizationDecision.Allow());
 }
 
 // Denies with details that must never reach the caller.
@@ -110,7 +110,7 @@ public sealed class DenyWithDetails<TAction> : IAuthorizer<TAction>
 {
     public const string Secret = "share 42 revoked by label rule TOP-SECRET";
 
-    public ValueTask<AuthorizationDecision> AuthorizeAsync(TAction action, ClaimsPrincipal principal, CancellationToken ct = default) =>
+    public ValueTask<AuthorizationDecision> AuthorizeAsync(TAction action, ClaimsPrincipal principal, CancellationToken cancellationToken = default) =>
         new(AuthorizationDecision.Deny(Secret));
 }
 
@@ -119,6 +119,6 @@ public sealed class StepUpRequiredException() : Exception("step-up for share 42,
 
 public sealed class DenyWithStepUp<TAction> : IAuthorizer<TAction>
 {
-    public ValueTask<AuthorizationDecision> AuthorizeAsync(TAction action, ClaimsPrincipal principal, CancellationToken ct = default) =>
+    public ValueTask<AuthorizationDecision> AuthorizeAsync(TAction action, ClaimsPrincipal principal, CancellationToken cancellationToken = default) =>
         new(AuthorizationDecision.Deny("TOP-SECRET", new StepUpRequiredException()));
 }

@@ -81,13 +81,13 @@ public sealed class AuthenticationBehaviorTests
             .BuildServiceProvider());
     }
 
-    private ValueTask Next(CancellationToken ct)
+    private ValueTask Next(CancellationToken cancellationToken)
     {
         _nextCalled = true;
         return default;
     }
 
-    private async IAsyncEnumerable<int> Stream([EnumeratorCancellation] CancellationToken ct)
+    private async IAsyncEnumerable<int> Stream([EnumeratorCancellation] CancellationToken cancellationToken)
     {
         _nextCalled = true;
         await Task.Yield();

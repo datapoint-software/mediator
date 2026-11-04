@@ -31,7 +31,7 @@ public interface ITransactionInitializer<in TDbContext>
     /// </summary>
     /// <param name="dbContext">The database context, in its transaction.</param>
     /// <param name="transaction">The request and the transaction being prepared.</param>
-    /// <param name="ct">A token to cancel the operation.</param>
+    /// <param name="cancellationToken">A token to cancel the operation.</param>
     /// <returns>A task that completes when the transaction is prepared. Await it only once.</returns>
-    ValueTask InitializeAsync(TDbContext dbContext, TransactionInitialization transaction, CancellationToken ct = default);
+    ValueTask InitializeAsync(TDbContext dbContext, TransactionInitialization transaction, CancellationToken cancellationToken = default);
 }

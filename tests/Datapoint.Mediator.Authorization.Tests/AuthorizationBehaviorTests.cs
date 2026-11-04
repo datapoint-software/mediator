@@ -288,7 +288,7 @@ public sealed class AuthorizationBehaviorTests
         return new AuthorizationBehavior(services.BuildServiceProvider());
     }
 
-    private ValueTask Next(CancellationToken ct)
+    private ValueTask Next(CancellationToken cancellationToken)
     {
         _nextCalled = true;
         return default;
@@ -300,7 +300,7 @@ public sealed class AuthorizationBehaviorTests
         return new(result);
     };
 
-    private async IAsyncEnumerable<int> NextStream([EnumeratorCancellation] CancellationToken ct)
+    private async IAsyncEnumerable<int> NextStream([EnumeratorCancellation] CancellationToken cancellationToken)
     {
         _nextCalled = true;
         await Task.Yield();

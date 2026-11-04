@@ -31,11 +31,11 @@ public sealed class StreamQueryTests
         CountTo? receivedQuery = null;
         CancellationToken receivedToken = default;
         var provider = new FakeServiceProvider().Add<IStreamQueryHandler<CountTo, int>>(
-            new StreamQueryHandler<CountTo, int>((q, ct) =>
+            new StreamQueryHandler<CountTo, int>((q, cancellationToken) =>
             {
                 receivedQuery = q;
-                receivedToken = ct;
-                return Streams.CountTo(q.Count, ct: ct);
+                receivedToken = cancellationToken;
+                return Streams.CountTo(q.Count, cancellationToken: cancellationToken);
             }));
 
         await new Mediator(provider).StreamAsync(query, cts.Token).ToListAsync(TestContext.Current.CancellationToken);
@@ -151,14 +151,14 @@ public sealed class StreamQueryTests
 
     private FakeServiceProvider WithCountHandler(FakeServiceProvider provider) =>
         provider.Add<IStreamQueryHandler<CountTo, int>>(
-            new StreamQueryHandler<CountTo, int>((q, ct) => Streams.CountTo(q.Count, _log, ct)));
+            new StreamQueryHandler<CountTo, int>((q, cancellationToken) => Streams.CountTo(q.Count, _log, cancellationToken)));
 
     private sealed class CachedStreamBehavior : IBehavior
     {
         public async IAsyncEnumerable<TResult> HandleAsync<TResult>(
             IStreamQuery<TResult> query,
             Func<CancellationToken, IAsyncEnumerable<TResult>> next,
-            [EnumeratorCancellation] CancellationToken ct = default)
+            [EnumeratorCancellation] CancellationToken cancellationToken = default)
         {
             await Task.Yield();
             yield return (TResult)(object)42;
@@ -167,10 +167,10 @@ public sealed class StreamQueryTests
 
     private sealed class CommandOnlyBehavior(List<string> log) : IBehavior
     {
-        public ValueTask HandleAsync(ICommand command, Func<CancellationToken, ValueTask> next, CancellationToken ct = default)
+        public ValueTask HandleAsync(ICommand command, Func<CancellationToken, ValueTask> next, CancellationToken cancellationToken = default)
         {
             log.Add("command");
-            return next(ct);
+            return next(cancellationToken);
         }
     }
 }

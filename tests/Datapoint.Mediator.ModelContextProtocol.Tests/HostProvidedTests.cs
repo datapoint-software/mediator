@@ -204,7 +204,7 @@ public sealed record TenantAudit : ICommand
 
 public sealed class TenantTotalsHandler(Recorder recorder) : IQueryHandler<TenantTotals, string>
 {
-    public ValueTask<string> HandleAsync(TenantTotals query, CancellationToken ct = default)
+    public ValueTask<string> HandleAsync(TenantTotals query, CancellationToken cancellationToken = default)
     {
         recorder.Log.Add("totals");
         return new($"{query.TenantId} {query.Customer}");
@@ -213,7 +213,7 @@ public sealed class TenantTotalsHandler(Recorder recorder) : IQueryHandler<Tenan
 
 public sealed class TenantBalanceHandler(Recorder recorder) : IQueryHandler<TenantBalance, string>
 {
-    public ValueTask<string> HandleAsync(TenantBalance query, CancellationToken ct = default)
+    public ValueTask<string> HandleAsync(TenantBalance query, CancellationToken cancellationToken = default)
     {
         recorder.Log.Add("balance");
         return new($"{query.TenantId} {query.Customer}");
@@ -222,7 +222,7 @@ public sealed class TenantBalanceHandler(Recorder recorder) : IQueryHandler<Tena
 
 public sealed class TenantAuditHandler(Recorder recorder) : ICommandHandler<TenantAudit>
 {
-    public ValueTask HandleAsync(TenantAudit command, CancellationToken ct = default)
+    public ValueTask HandleAsync(TenantAudit command, CancellationToken cancellationToken = default)
     {
         recorder.Log.Add("audit");
         return default;
@@ -234,13 +234,13 @@ public sealed class TenantDispatcher(ActionDispatcher inner) : IActionDispatcher
 {
     public static readonly Guid TenantId = Guid.Parse("5d41402a-bc4b-4a76-b971-9d911017c592");
 
-    public ValueTask<object?> DispatchAsync(string name, JsonElement arguments, JsonSerializerOptions? options = null, CancellationToken ct = default)
+    public ValueTask<object?> DispatchAsync(string name, JsonElement arguments, JsonSerializerOptions? options = null, CancellationToken cancellationToken = default)
     {
         var json = JsonObject.Create(arguments)!;
         json["tenantId"] = TenantId;
-        return inner.DispatchAsync(name, JsonSerializer.SerializeToElement(json), options, ct);
+        return inner.DispatchAsync(name, JsonSerializer.SerializeToElement(json), options, cancellationToken);
     }
 
-    public IAsyncEnumerable<object?> StreamAsync(string name, JsonElement arguments, JsonSerializerOptions? options = null, CancellationToken ct = default) =>
-        inner.StreamAsync(name, arguments, options, ct);
+    public IAsyncEnumerable<object?> StreamAsync(string name, JsonElement arguments, JsonSerializerOptions? options = null, CancellationToken cancellationToken = default) =>
+        inner.StreamAsync(name, arguments, options, cancellationToken);
 }

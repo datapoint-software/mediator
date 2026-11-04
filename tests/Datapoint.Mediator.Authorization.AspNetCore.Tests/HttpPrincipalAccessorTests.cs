@@ -138,7 +138,7 @@ public sealed class Recorder
 
 public sealed class ApproveInvoiceHandler(Recorder recorder, IPrincipalAccessor principalAccessor) : ICommandHandler<ApproveInvoice>
 {
-    public ValueTask HandleAsync(ApproveInvoice command, CancellationToken ct = default)
+    public ValueTask HandleAsync(ApproveInvoice command, CancellationToken cancellationToken = default)
     {
         recorder.Log.Add($"approved by {principalAccessor.Principal?.Identity?.Name}");
         return default;
@@ -147,7 +147,7 @@ public sealed class ApproveInvoiceHandler(Recorder recorder, IPrincipalAccessor 
 
 public sealed class ApproveInvoiceAuthorizer : IAuthorizer<ApproveInvoice>
 {
-    public ValueTask<AuthorizationDecision> AuthorizeAsync(ApproveInvoice action, ClaimsPrincipal principal, CancellationToken ct = default) =>
+    public ValueTask<AuthorizationDecision> AuthorizeAsync(ApproveInvoice action, ClaimsPrincipal principal, CancellationToken cancellationToken = default) =>
         new(AuthorizationDecision.Allow());
 }
 

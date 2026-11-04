@@ -25,7 +25,7 @@ internal abstract class ActionAuthorization
         ClaimsPrincipal principal,
         IServiceProvider serviceProvider,
         List<AuthorizerDecision> decisions,
-        CancellationToken ct);
+        CancellationToken cancellationToken);
 }
 
 internal sealed class ActionAuthorization<TAction> : ActionAuthorization
@@ -35,7 +35,7 @@ internal sealed class ActionAuthorization<TAction> : ActionAuthorization
         ClaimsPrincipal principal,
         IServiceProvider serviceProvider,
         List<AuthorizerDecision> decisions,
-        CancellationToken ct)
+        CancellationToken cancellationToken)
     {
         // Containers other than Microsoft's may return null or a non-array enumerable.
         var authorizers = serviceProvider.GetService(typeof(IEnumerable<IAuthorizer<TAction>>)) switch
@@ -50,7 +50,7 @@ internal sealed class ActionAuthorization<TAction> : ActionAuthorization
         foreach (var authorizer in authorizers)
         {
             // A null decision, from a careless implementation, is treated as a denial.
-            var decision = await authorizer.AuthorizeAsync(typedAction, principal, ct).ConfigureAwait(false)
+            var decision = await authorizer.AuthorizeAsync(typedAction, principal, cancellationToken).ConfigureAwait(false)
                 ?? AuthorizationDecision.Deny();
 
             decisions.Add(new AuthorizerDecision(authorizer.GetType(), decision));

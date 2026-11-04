@@ -54,7 +54,7 @@ public sealed class HostProvidedTests
         schema.TryGetProperty("required", out var required) ? [.. required.EnumerateArray().Select(r => r.GetString())] : [];
 
     // The transformer shown in docs/hosts/aspnetcore.md, kept identical.
-    private static Task MarkHostProvidedReadOnly(OpenApiSchema schema, OpenApiSchemaTransformerContext context, CancellationToken ct)
+    private static Task MarkHostProvidedReadOnly(OpenApiSchema schema, OpenApiSchemaTransformerContext context, CancellationToken cancellationToken)
     {
         var catalog = context.ApplicationServices.GetRequiredService<IActionCatalog>();
         var action = catalog.Actions.FirstOrDefault(a => a.ActionType == context.JsonTypeInfo.Type);
@@ -82,5 +82,5 @@ public sealed record TenantTotals([HostProvided] Guid TenantId, string Customer)
 
 public sealed class TenantTotalsHandler : IQueryHandler<TenantTotals, string>
 {
-    public ValueTask<string> HandleAsync(TenantTotals query, CancellationToken ct = default) => new($"{query.TenantId} {query.Customer}");
+    public ValueTask<string> HandleAsync(TenantTotals query, CancellationToken cancellationToken = default) => new($"{query.TenantId} {query.Customer}");
 }

@@ -63,7 +63,7 @@ A property marked [`[HostProvided]`](../actions.md#host-provided-properties), su
 In OpenAPI, mark it `readOnly`, which means "not sent in requests", and take it out of `required`. This package doesn't depend on `Microsoft.AspNetCore.OpenApi`, so add this schema transformer to your app:
 
 ```csharp
-builder.Services.AddOpenApi(o => o.AddSchemaTransformer((schema, context, ct) =>
+builder.Services.AddOpenApi(o => o.AddSchemaTransformer((schema, context, cancellationToken) =>
 {
     var catalog = context.ApplicationServices.GetRequiredService<IActionCatalog>();
     var action = catalog.Actions.FirstOrDefault(a => a.ActionType == context.JsonTypeInfo.Type);

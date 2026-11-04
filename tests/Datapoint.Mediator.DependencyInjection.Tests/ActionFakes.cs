@@ -31,35 +31,35 @@ public sealed record ReportCreated : IMessage;
 
 public sealed class GenerateReportHandler : ICommandHandler<GenerateReport, string>
 {
-    public ValueTask<string> HandleAsync(GenerateReport command, CancellationToken ct = default) => new($"report: {command.Title}");
+    public ValueTask<string> HandleAsync(GenerateReport command, CancellationToken cancellationToken = default) => new($"report: {command.Title}");
 }
 
 public sealed class ArchiveReportHandler : ICommandHandler<ArchiveReport>
 {
-    public ValueTask HandleAsync(ArchiveReport command, CancellationToken ct = default) => default;
+    public ValueTask HandleAsync(ArchiveReport command, CancellationToken cancellationToken = default) => default;
 }
 
 public sealed class SecretReportHandler : ICommandHandler<SecretReport>
 {
-    public ValueTask HandleAsync(SecretReport command, CancellationToken ct = default) => default;
+    public ValueTask HandleAsync(SecretReport command, CancellationToken cancellationToken = default) => default;
 }
 
 public sealed class UnofferedReportHandler : ICommandHandler<UnofferedReport>
 {
-    public ValueTask HandleAsync(UnofferedReport command, CancellationToken ct = default) => default;
+    public ValueTask HandleAsync(UnofferedReport command, CancellationToken cancellationToken = default) => default;
 }
 
 public sealed class DuplicateReportHandler : ICommandHandler<DuplicateReport>
 {
-    public ValueTask HandleAsync(DuplicateReport command, CancellationToken ct = default) => default;
+    public ValueTask HandleAsync(DuplicateReport command, CancellationToken cancellationToken = default) => default;
 }
 
 public sealed class BadlyNamedReportHandler : ICommandHandler<BadlyNamedReport>
 {
-    public ValueTask HandleAsync(BadlyNamedReport command, CancellationToken ct = default) => default;
+    public ValueTask HandleAsync(BadlyNamedReport command, CancellationToken cancellationToken = default) => default;
 }
 
 public sealed class ReportCreatedHandler : IMessageHandler<ReportCreated>
 {
-    public ValueTask HandleAsync(ReportCreated message, CancellationToken ct = default) => default;
+    public ValueTask HandleAsync(ReportCreated message, CancellationToken cancellationToken = default) => default;
 }

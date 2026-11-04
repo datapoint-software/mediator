@@ -40,24 +40,24 @@ public sealed class AuthenticationBehavior : IBehavior
 
     /// <inheritdoc/>
     /// <exception cref="AuthenticationRequiredException">There is no signed-in user.</exception>
-    public ValueTask HandleAsync(ICommand command, Func<CancellationToken, ValueTask> next, CancellationToken ct = default) =>
-        Authentication.IsAnonymous(command.GetType()) ? next(ct) : AuthenticateThenHandleAsync(command, next, ct);
+    public ValueTask HandleAsync(ICommand command, Func<CancellationToken, ValueTask> next, CancellationToken cancellationToken = default) =>
+        Authentication.IsAnonymous(command.GetType()) ? next(cancellationToken) : AuthenticateThenHandleAsync(command, next, cancellationToken);
 
     /// <inheritdoc/>
     /// <exception cref="AuthenticationRequiredException">There is no signed-in user.</exception>
     public ValueTask<TResult> HandleAsync<TResult>(
         ICommand<TResult> command,
         Func<CancellationToken, ValueTask<TResult>> next,
-        CancellationToken ct = default) =>
-        Authentication.IsAnonymous(command.GetType()) ? next(ct) : AuthenticateThenHandleAsync(command, next, ct);
+        CancellationToken cancellationToken = default) =>
+        Authentication.IsAnonymous(command.GetType()) ? next(cancellationToken) : AuthenticateThenHandleAsync(command, next, cancellationToken);
 
     /// <inheritdoc/>
     /// <exception cref="AuthenticationRequiredException">There is no signed-in user.</exception>
     public ValueTask<TResult> HandleAsync<TResult>(
         IQuery<TResult> query,
         Func<CancellationToken, ValueTask<TResult>> next,
-        CancellationToken ct = default) =>
-        Authentication.IsAnonymous(query.GetType()) ? next(ct) : AuthenticateThenHandleAsync(query, next, ct);
+        CancellationToken cancellationToken = default) =>
+        Authentication.IsAnonymous(query.GetType()) ? next(cancellationToken) : AuthenticateThenHandleAsync(query, next, cancellationToken);
 
     /// <inheritdoc/>
     /// <exception cref="AuthenticationRequiredException">
@@ -66,38 +66,38 @@ public sealed class AuthenticationBehavior : IBehavior
     public IAsyncEnumerable<TResult> HandleAsync<TResult>(
         IStreamQuery<TResult> query,
         Func<CancellationToken, IAsyncEnumerable<TResult>> next,
-        CancellationToken ct = default) =>
-        Authentication.IsAnonymous(query.GetType()) ? next(ct) : AuthenticateThenStreamAsync(query, next, ct);
+        CancellationToken cancellationToken = default) =>
+        Authentication.IsAnonymous(query.GetType()) ? next(cancellationToken) : AuthenticateThenStreamAsync(query, next, cancellationToken);
 
-    private async ValueTask AuthenticateThenHandleAsync(object action, Func<CancellationToken, ValueTask> next, CancellationToken ct)
+    private async ValueTask AuthenticateThenHandleAsync(object action, Func<CancellationToken, ValueTask> next, CancellationToken cancellationToken)
     {
-        await AuthenticateAsync(action, ct).ConfigureAwait(false);
-        await next(ct).ConfigureAwait(false);
+        await AuthenticateAsync(action, cancellationToken).ConfigureAwait(false);
+        await next(cancellationToken).ConfigureAwait(false);
     }
 
     private async ValueTask<TResult> AuthenticateThenHandleAsync<TResult>(
         object action,
         Func<CancellationToken, ValueTask<TResult>> next,
-        CancellationToken ct)
+        CancellationToken cancellationToken)
     {
-        await AuthenticateAsync(action, ct).ConfigureAwait(false);
-        return await next(ct).ConfigureAwait(false);
+        await AuthenticateAsync(action, cancellationToken).ConfigureAwait(false);
+        return await next(cancellationToken).ConfigureAwait(false);
     }
 
     private async IAsyncEnumerable<TResult> AuthenticateThenStreamAsync<TResult>(
         object action,
         Func<CancellationToken, IAsyncEnumerable<TResult>> next,
-        [EnumeratorCancellation] CancellationToken ct)
+        [EnumeratorCancellation] CancellationToken cancellationToken)
     {
-        await AuthenticateAsync(action, ct).ConfigureAwait(false);
+        await AuthenticateAsync(action, cancellationToken).ConfigureAwait(false);
 
-        await foreach (var result in next(ct).ConfigureAwait(false))
+        await foreach (var result in next(cancellationToken).ConfigureAwait(false))
         {
             yield return result;
         }
     }
 
-    private async ValueTask AuthenticateAsync(object action, CancellationToken ct) =>
-        await Authentication.RequirePrincipalAsync(_serviceProvider, action, Authentication.GetObservers(_serviceProvider), ct)
+    private async ValueTask AuthenticateAsync(object action, CancellationToken cancellationToken) =>
+        await Authentication.RequirePrincipalAsync(_serviceProvider, action, Authentication.GetObservers(_serviceProvider), cancellationToken)
             .ConfigureAwait(false);
 }

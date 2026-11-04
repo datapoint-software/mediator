@@ -26,10 +26,10 @@ public sealed class SendCommandWithResultTests
         var command = new Add(1, 1);
         Add? receivedCommand = null;
         CancellationToken receivedToken = default;
-        var provider = new FakeServiceProvider().Add<ICommandHandler<Add, int>>(new CommandHandler<Add, int>((c, ct) =>
+        var provider = new FakeServiceProvider().Add<ICommandHandler<Add, int>>(new CommandHandler<Add, int>((c, cancellationToken) =>
         {
             receivedCommand = c;
-            receivedToken = ct;
+            receivedToken = cancellationToken;
             return new(0);
         }));
 

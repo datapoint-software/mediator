@@ -26,10 +26,10 @@ public sealed class QueryTests
         var query = new Echo("value");
         Echo? receivedQuery = null;
         CancellationToken receivedToken = default;
-        var provider = new FakeServiceProvider().Add<IQueryHandler<Echo, string>>(new QueryHandler<Echo, string>((q, ct) =>
+        var provider = new FakeServiceProvider().Add<IQueryHandler<Echo, string>>(new QueryHandler<Echo, string>((q, cancellationToken) =>
         {
             receivedQuery = q;
-            receivedToken = ct;
+            receivedToken = cancellationToken;
             return new(q.Value);
         }));
 

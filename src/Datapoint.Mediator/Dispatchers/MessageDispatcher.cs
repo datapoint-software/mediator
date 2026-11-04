@@ -14,13 +14,13 @@ internal abstract class MessageDispatcher
             messageType,
             static type => (MessageDispatcher)Activator.CreateInstance(typeof(MessageDispatcher<>).MakeGenericType(type))!);
 
-    public abstract ValueTask DispatchAsync(IMessage message, IServiceProvider serviceProvider, CancellationToken ct);
+    public abstract ValueTask DispatchAsync(IMessage message, IServiceProvider serviceProvider, CancellationToken cancellationToken);
 }
 
 internal sealed class MessageDispatcher<TMessage> : MessageDispatcher
     where TMessage : IMessage
 {
-    public override ValueTask DispatchAsync(IMessage message, IServiceProvider serviceProvider, CancellationToken ct)
+    public override ValueTask DispatchAsync(IMessage message, IServiceProvider serviceProvider, CancellationToken cancellationToken)
     {
         var handlers = serviceProvider.GetAll<IMessageHandler<TMessage>>();
         var typedMessage = (TMessage)message;
@@ -28,10 +28,10 @@ internal sealed class MessageDispatcher<TMessage> : MessageDispatcher
 
         if (behaviors.Length == 0)
         {
-            return handlers.Length == 0 ? default : PublishAsync(handlers, typedMessage, ct);
+            return handlers.Length == 0 ? default : PublishAsync(handlers, typedMessage, cancellationToken);
         }
 
-        return InvokePipelineAsync(behaviors, handlers, message, typedMessage, ct);
+        return InvokePipelineAsync(behaviors, handlers, message, typedMessage, cancellationToken);
     }
 
     // Kept separate from DispatchAsync, so the closures are only allocated when there are behaviours.
@@ -40,7 +40,7 @@ internal sealed class MessageDispatcher<TMessage> : MessageDispatcher
         IMessageHandler<TMessage>[] handlers,
         IMessage message,
         TMessage typedMessage,
-        CancellationToken ct)
+        CancellationToken cancellationToken)
     {
         // Built from the innermost behaviour outwards, so the first registered behaviour runs first.
         Func<CancellationToken, ValueTask> next = c => PublishAsync(handlers, typedMessage, c);
@@ -52,15 +52,15 @@ internal sealed class MessageDispatcher<TMessage> : MessageDispatcher
             next = c => behavior.HandleAsync(message, inner, c);
         }
 
-        return next(ct);
+        return next(cancellationToken);
     }
 
     // Runs the handlers one after another, in registration order, and stops at the first exception.
-    private static async ValueTask PublishAsync(IMessageHandler<TMessage>[] handlers, TMessage message, CancellationToken ct)
+    private static async ValueTask PublishAsync(IMessageHandler<TMessage>[] handlers, TMessage message, CancellationToken cancellationToken)
     {
         foreach (var handler in handlers)
         {
-            await handler.HandleAsync(message, ct).ConfigureAwait(false);
+            await handler.HandleAsync(message, cancellationToken).ConfigureAwait(false);
         }
     }
 }

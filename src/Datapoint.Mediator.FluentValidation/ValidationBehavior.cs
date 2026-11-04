@@ -51,10 +51,10 @@ public sealed class ValidationBehavior : IBehavior
 
     /// <inheritdoc/>
     /// <exception cref="ValidationException">The command is not valid.</exception>
-    public ValueTask HandleAsync(ICommand command, Func<CancellationToken, ValueTask> next, CancellationToken ct = default)
+    public ValueTask HandleAsync(ICommand command, Func<CancellationToken, ValueTask> next, CancellationToken cancellationToken = default)
     {
         var validators = GetValidators(command);
-        return validators.Length == 0 ? next(ct) : ValidateThenHandleAsync(command, validators, next, ct);
+        return validators.Length == 0 ? next(cancellationToken) : ValidateThenHandleAsync(command, validators, next, cancellationToken);
     }
 
     /// <inheritdoc/>
@@ -62,10 +62,10 @@ public sealed class ValidationBehavior : IBehavior
     public ValueTask<TResult> HandleAsync<TResult>(
         ICommand<TResult> command,
         Func<CancellationToken, ValueTask<TResult>> next,
-        CancellationToken ct = default)
+        CancellationToken cancellationToken = default)
     {
         var validators = GetValidators(command);
-        return validators.Length == 0 ? next(ct) : ValidateThenHandleAsync(command, validators, next, ct);
+        return validators.Length == 0 ? next(cancellationToken) : ValidateThenHandleAsync(command, validators, next, cancellationToken);
     }
 
     /// <inheritdoc/>
@@ -73,10 +73,10 @@ public sealed class ValidationBehavior : IBehavior
     public ValueTask<TResult> HandleAsync<TResult>(
         IQuery<TResult> query,
         Func<CancellationToken, ValueTask<TResult>> next,
-        CancellationToken ct = default)
+        CancellationToken cancellationToken = default)
     {
         var validators = GetValidators(query);
-        return validators.Length == 0 ? next(ct) : ValidateThenHandleAsync(query, validators, next, ct);
+        return validators.Length == 0 ? next(cancellationToken) : ValidateThenHandleAsync(query, validators, next, cancellationToken);
     }
 
     /// <inheritdoc/>
@@ -84,10 +84,10 @@ public sealed class ValidationBehavior : IBehavior
     public IAsyncEnumerable<TResult> HandleAsync<TResult>(
         IStreamQuery<TResult> query,
         Func<CancellationToken, IAsyncEnumerable<TResult>> next,
-        CancellationToken ct = default)
+        CancellationToken cancellationToken = default)
     {
         var validators = GetValidators(query);
-        return validators.Length == 0 ? next(ct) : ValidateThenStreamAsync(query, validators, next, ct);
+        return validators.Length == 0 ? next(cancellationToken) : ValidateThenStreamAsync(query, validators, next, cancellationToken);
     }
 
     private IValidator[] GetValidators(object action)
@@ -109,45 +109,45 @@ public sealed class ValidationBehavior : IBehavior
         object action,
         IValidator[] validators,
         Func<CancellationToken, ValueTask> next,
-        CancellationToken ct)
+        CancellationToken cancellationToken)
     {
-        await ValidateAsync(action, validators, ct).ConfigureAwait(false);
-        await next(ct).ConfigureAwait(false);
+        await ValidateAsync(action, validators, cancellationToken).ConfigureAwait(false);
+        await next(cancellationToken).ConfigureAwait(false);
     }
 
     private static async ValueTask<TResult> ValidateThenHandleAsync<TResult>(
         object action,
         IValidator[] validators,
         Func<CancellationToken, ValueTask<TResult>> next,
-        CancellationToken ct)
+        CancellationToken cancellationToken)
     {
-        await ValidateAsync(action, validators, ct).ConfigureAwait(false);
-        return await next(ct).ConfigureAwait(false);
+        await ValidateAsync(action, validators, cancellationToken).ConfigureAwait(false);
+        return await next(cancellationToken).ConfigureAwait(false);
     }
 
     private static async IAsyncEnumerable<TResult> ValidateThenStreamAsync<TResult>(
         object action,
         IValidator[] validators,
         Func<CancellationToken, IAsyncEnumerable<TResult>> next,
-        [EnumeratorCancellation] CancellationToken ct)
+        [EnumeratorCancellation] CancellationToken cancellationToken)
     {
-        await ValidateAsync(action, validators, ct).ConfigureAwait(false);
+        await ValidateAsync(action, validators, cancellationToken).ConfigureAwait(false);
 
-        await foreach (var result in next(ct).ConfigureAwait(false))
+        await foreach (var result in next(cancellationToken).ConfigureAwait(false))
         {
             yield return result;
         }
     }
 
     // Runs every validator, one after another, and throws once with all of their failures.
-    private static async ValueTask ValidateAsync(object action, IValidator[] validators, CancellationToken ct)
+    private static async ValueTask ValidateAsync(object action, IValidator[] validators, CancellationToken cancellationToken)
     {
         List<ValidationFailure>? failures = null;
 
         foreach (var validator in validators)
         {
             // A new context per validator, because a context accumulates the failures of every validator it is given.
-            var result = await validator.ValidateAsync(new ValidationContext<object>(action), ct).ConfigureAwait(false);
+            var result = await validator.ValidateAsync(new ValidationContext<object>(action), cancellationToken).ConfigureAwait(false);
 
             if (!result.IsValid)
             {

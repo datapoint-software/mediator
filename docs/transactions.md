@@ -22,7 +22,7 @@ For each command, the behaviour begins a transaction, runs the handler, calls `S
 ```csharp
 public sealed class CreateInvoiceHandler(InvoicingDbContext db) : ICommandHandler<CreateInvoice, Guid>
 {
-    public ValueTask<Guid> HandleAsync(CreateInvoice command, CancellationToken ct = default)
+    public ValueTask<Guid> HandleAsync(CreateInvoice command, CancellationToken cancellationToken = default)
     {
         // Generated here, because database-generated keys are only known after the save.
         var invoice = new Invoice { Id = Guid.CreateVersion7(), Customer = command.Customer, Amount = command.Amount };
@@ -81,8 +81,8 @@ public sealed record ChargeInvoice(Guid InvoiceId) : ICommand;
 
 // In its handler:
 invoice.Status = InvoiceStatus.Charging;
-await db.SaveChangesAsync(ct);                             // commit first
-await payments.ChargeAsync(invoice, idempotencyKey: invoice.Id, ct);   // then call out
+await db.SaveChangesAsync(cancellationToken);                             // commit first
+await payments.ChargeAsync(invoice, idempotencyKey: invoice.Id, cancellationToken);   // then call out
 ```
 
 In the rare case where the connection drops while committing, the commit may have succeeded on the server, and the retry saves the same changes again. A unique constraint, such as on an idempotency key, turns that into an error instead of a duplicate.
@@ -117,7 +117,7 @@ An `ITransactionInitializer<TDbContext>` runs right after the transaction begins
 ```csharp
 public sealed class TenantInitializer(IPrincipalAccessor principals) : ITransactionInitializer<AppDbContext>
 {
-    public async ValueTask InitializeAsync(AppDbContext db, TransactionInitialization transaction, CancellationToken ct = default)
+    public async ValueTask InitializeAsync(AppDbContext db, TransactionInitialization transaction, CancellationToken cancellationToken = default)
     {
         if (transaction.IsJoined)
         {
@@ -129,7 +129,7 @@ public sealed class TenantInitializer(IPrincipalAccessor principals) : ITransact
 
         if (tenantId is not null)
         {
-            await db.Database.ExecuteSqlAsync($"SELECT set_config('app.tenant_id', {tenantId}, true)", ct);
+            await db.Database.ExecuteSqlAsync($"SELECT set_config('app.tenant_id', {tenantId}, true)", cancellationToken);
         }
     }
 }

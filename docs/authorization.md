@@ -13,10 +13,10 @@ An authorizer decides whether a user may run one action, and returns an `Authori
 ```csharp
 public sealed class InvoiceAuthorizer : IAuthorizer<CreateInvoice>, IAuthorizer<GetInvoice>
 {
-    public ValueTask<AuthorizationDecision> AuthorizeAsync(CreateInvoice action, ClaimsPrincipal principal, CancellationToken ct = default) =>
+    public ValueTask<AuthorizationDecision> AuthorizeAsync(CreateInvoice action, ClaimsPrincipal principal, CancellationToken cancellationToken = default) =>
         new(AuthorizationDecision.AllowIf(principal.IsInRole("Finance")));
 
-    public ValueTask<AuthorizationDecision> AuthorizeAsync(GetInvoice action, ClaimsPrincipal principal, CancellationToken ct = default) =>
+    public ValueTask<AuthorizationDecision> AuthorizeAsync(GetInvoice action, ClaimsPrincipal principal, CancellationToken cancellationToken = default) =>
         new(AuthorizationDecision.Allow());   // any signed-in user
 }
 ```
@@ -32,11 +32,11 @@ public sealed record ReadGrant(string ShareId, string Role, bool BrowseOnly, boo
 
 public sealed class DownloadItemAuthorizer(AppDbContext db) : IAuthorizer<DownloadItem>
 {
-    public async ValueTask<AuthorizationDecision> AuthorizeAsync(DownloadItem action, ClaimsPrincipal principal, CancellationToken ct = default)
+    public async ValueTask<AuthorizationDecision> AuthorizeAsync(DownloadItem action, ClaimsPrincipal principal, CancellationToken cancellationToken = default)
     {
         var share = await db.Shares.AsNoTracking()
             .Where(s => s.ItemId == action.ItemId && s.UserId == principal.FindFirstValue("sub"))
-            .FirstOrDefaultAsync(ct);
+            .FirstOrDefaultAsync(cancellationToken);
 
         return share is null
             ? AuthorizationDecision.Deny(new NoShare(action.ItemId))
@@ -112,7 +112,7 @@ services.AddAuthorizationContext();
 public sealed class DownloadItemHandler(IAuthorizationContext authorization, FileStore files)
     : IQueryHandler<DownloadItem, FileDownload>
 {
-    public async ValueTask<FileDownload> HandleAsync(DownloadItem query, CancellationToken ct = default)
+    public async ValueTask<FileDownload> HandleAsync(DownloadItem query, CancellationToken cancellationToken = default)
     {
         // For(query) returns the decision only if it was made for this exact request.
         // Fail closed: without a grant, don't guess the constraints.
@@ -121,7 +121,7 @@ public sealed class DownloadItemHandler(IAuthorizationContext authorization, Fil
             throw new InvalidOperationException("DownloadItem was not authorized with a ReadGrant.");
         }
 
-        return grant.BrowseOnly ? FileDownload.PreviewOnly(query.ItemId) : await files.OpenAsync(query.ItemId, grant.Watermark, ct);
+        return grant.BrowseOnly ? FileDownload.PreviewOnly(query.ItemId) : await files.OpenAsync(query.ItemId, grant.Watermark, cancellationToken);
     }
 }
 ```
@@ -139,9 +139,9 @@ An `IAuthorizationObserver` is told every outcome, allowed or not, with the reas
 ```csharp
 public sealed class AuthorizationAuditor(IDbContextFactory<AuditDbContext> audits) : IAuthorizationObserver
 {
-    public async ValueTask OnAuthorizedAsync(AuthorizationEvent authorization, CancellationToken ct = default)
+    public async ValueTask OnAuthorizedAsync(AuthorizationEvent authorization, CancellationToken cancellationToken = default)
     {
-        await using var audit = await audits.CreateDbContextAsync(ct);   // its own connection: survives a rollback
+        await using var audit = await audits.CreateDbContextAsync(cancellationToken);   // its own connection: survives a rollback
         audit.Entries.Add(new AuditEntry
         {
             Action = authorization.Action.GetType().Name,              // the type, never the action's contents
@@ -150,7 +150,7 @@ public sealed class AuthorizationAuditor(IDbContextFactory<AuditDbContext> audit
             Reasons = authorization.Result?.Decisions.Select(d => new AuditReason(d.AuthorizerType.Name, d.Decision.IsAllowed, d.Decision.Details)).ToList() ?? [],
             Error = authorization.Exception?.GetType().FullName,
         });
-        await audit.SaveChangesAsync(ct);
+        await audit.SaveChangesAsync(cancellationToken);
     }
 }
 ```
@@ -181,14 +181,14 @@ public sealed record ExplainDownload(Guid ItemId) : IQuery<AccessExplanation>;
 public sealed class ExplainDownloadHandler(IEnumerable<IAuthorizer<DownloadItem>> authorizers, IPrincipalAccessor user)
     : IQueryHandler<ExplainDownload, AccessExplanation>
 {
-    public async ValueTask<AccessExplanation> HandleAsync(ExplainDownload query, CancellationToken ct = default)
+    public async ValueTask<AccessExplanation> HandleAsync(ExplainDownload query, CancellationToken cancellationToken = default)
     {
         var reasons = new List<object?>();
         var allowed = false;
 
         foreach (var authorizer in authorizers)
         {
-            var decision = await authorizer.AuthorizeAsync(new DownloadItem(query.ItemId), user.Principal!, ct);
+            var decision = await authorizer.AuthorizeAsync(new DownloadItem(query.ItemId), user.Principal!, cancellationToken);
             reasons.Add(decision.Details);
             allowed = decision.IsAllowed;
 
@@ -243,7 +243,7 @@ Messages are **not** authorized: their handlers run without any check. That's sa
 
 ```csharp
 // In CancelInvoiceHandler, which was authorized:
-await mediator.PublishAsync(new InvoiceCancelled(invoice.Id, command.Reason), ct);
+await mediator.PublishAsync(new InvoiceCancelled(invoice.Id, command.Reason), cancellationToken);
 ```
 
 > **Security:** never publish a message built directly from user input, such as in an endpoint or a custom MCP tool. An attacker could trigger any message handler without permission. Send an authorized command instead, and publish the message from its handler.

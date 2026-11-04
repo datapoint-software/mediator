@@ -218,10 +218,10 @@ public sealed class TransactionOptionsTests : IAsyncLifetime
         // While the mediator's transaction is active on one context, another context begins its own and sends a command.
         await new TransactionBehavior<AppDbContext>(outerDb).HandleAsync(
             new CreateInvoice(1),
-            async ct =>
+            async cancellationToken =>
             {
-                await using var transaction = await innerDb.Database.BeginTransactionAsync(ct);
-                refused = await Record.ExceptionAsync(async () => await inner.HandleAsync(new CreateInvoice(2), _ => new ValueTask<Guid>(Guid.Empty), ct));
+                await using var transaction = await innerDb.Database.BeginTransactionAsync(cancellationToken);
+                refused = await Record.ExceptionAsync(async () => await inner.HandleAsync(new CreateInvoice(2), _ => new ValueTask<Guid>(Guid.Empty), cancellationToken));
                 return Guid.Empty;
             },
             Ct);

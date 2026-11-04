@@ -98,7 +98,7 @@ public sealed class ActionRegistrationTests
         var result = await dispatcher.DispatchAsync(
             "report.generate",
             JsonDocument.Parse("""{ "title": "Q4" }""").RootElement,
-            ct: TestContext.Current.CancellationToken);
+            cancellationToken: TestContext.Current.CancellationToken);
 
         Assert.Equal("report: Q4", result);
     }

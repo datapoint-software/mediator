@@ -49,15 +49,15 @@ public sealed record CancelExpiredInvoices : ICommand;
 ```csharp
 public sealed class ExpiredInvoicesJob(IServiceScopeFactory scopes) : BackgroundService
 {
-    protected override async Task ExecuteAsync(CancellationToken ct)
+    protected override async Task ExecuteAsync(CancellationToken cancellationToken)
     {
         using var timer = new PeriodicTimer(TimeSpan.FromHours(24));
         do
         {
             await using var scope = scopes.CreateAsyncScope();   // one scope per run
-            await scope.ServiceProvider.GetRequiredService<IMediator>().SendAsync(new CancelExpiredInvoices(), ct);
+            await scope.ServiceProvider.GetRequiredService<IMediator>().SendAsync(new CancelExpiredInvoices(), cancellationToken);
         }
-        while (await timer.WaitForNextTickAsync(ct));
+        while (await timer.WaitForNextTickAsync(cancellationToken));
     }
 }
 ```
@@ -91,17 +91,17 @@ public sealed record ChargeInvoice(Guid Id) : ICommand;
 
 public sealed class ChargeInvoiceHandler(InvoicingDbContext db, IPayments payments) : ICommandHandler<ChargeInvoice>
 {
-    public async ValueTask HandleAsync(ChargeInvoice command, CancellationToken ct = default)
+    public async ValueTask HandleAsync(ChargeInvoice command, CancellationToken cancellationToken = default)
     {
-        var invoice = await db.Invoices.SingleAsync(i => i.Id == command.Id, ct);
+        var invoice = await db.Invoices.SingleAsync(i => i.Id == command.Id, cancellationToken);
         invoice.Status = InvoiceStatus.Charging;
-        await db.SaveChangesAsync(ct);
+        await db.SaveChangesAsync(cancellationToken);
 
         // The payment provider ignores a second request with the same key.
-        await payments.ChargeAsync(invoice.Amount, idempotencyKey: invoice.Id.ToString(), ct);
+        await payments.ChargeAsync(invoice.Amount, idempotencyKey: invoice.Id.ToString(), cancellationToken);
 
         invoice.Status = InvoiceStatus.Paid;
-        await db.SaveChangesAsync(ct);
+        await db.SaveChangesAsync(cancellationToken);
     }
 }
 ```

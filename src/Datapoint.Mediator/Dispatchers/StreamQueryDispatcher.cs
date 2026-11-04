@@ -18,7 +18,7 @@ internal abstract class StreamQueryDispatcher<TResult>
     public abstract IAsyncEnumerable<TResult> Dispatch(
         IStreamQuery<TResult> query,
         IServiceProvider serviceProvider,
-        CancellationToken ct);
+        CancellationToken cancellationToken);
 }
 
 internal sealed class StreamQueryDispatcher<TQuery, TResult> : StreamQueryDispatcher<TResult>
@@ -27,7 +27,7 @@ internal sealed class StreamQueryDispatcher<TQuery, TResult> : StreamQueryDispat
     public override IAsyncEnumerable<TResult> Dispatch(
         IStreamQuery<TResult> query,
         IServiceProvider serviceProvider,
-        CancellationToken ct)
+        CancellationToken cancellationToken)
     {
         var handler = serviceProvider.GetRequiredHandler<IStreamQueryHandler<TQuery, TResult>>(typeof(TQuery));
         var typedQuery = (TQuery)query;
@@ -35,10 +35,10 @@ internal sealed class StreamQueryDispatcher<TQuery, TResult> : StreamQueryDispat
 
         if (behaviors.Length == 0)
         {
-            return handler.HandleAsync(typedQuery, ct);
+            return handler.HandleAsync(typedQuery, cancellationToken);
         }
 
-        return InvokePipeline(behaviors, handler, query, typedQuery, ct);
+        return InvokePipeline(behaviors, handler, query, typedQuery, cancellationToken);
     }
 
     // Kept separate from Dispatch, so the closures are only allocated when there are behaviours.
@@ -47,7 +47,7 @@ internal sealed class StreamQueryDispatcher<TQuery, TResult> : StreamQueryDispat
         IStreamQueryHandler<TQuery, TResult> handler,
         IStreamQuery<TResult> query,
         TQuery typedQuery,
-        CancellationToken ct)
+        CancellationToken cancellationToken)
     {
         // Built from the innermost behaviour outwards, so the first registered behaviour runs first.
         Func<CancellationToken, IAsyncEnumerable<TResult>> next = c => handler.HandleAsync(typedQuery, c);
@@ -59,6 +59,6 @@ internal sealed class StreamQueryDispatcher<TQuery, TResult> : StreamQueryDispat
             next = c => behavior.HandleAsync(query, inner, c);
         }
 
-        return next(ct);
+        return next(cancellationToken);
     }
 }

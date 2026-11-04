@@ -7,7 +7,7 @@ namespace Invoicing.Domain;
 
 public sealed class CreateInvoiceHandler(InvoicingDbContext db, IPrincipalAccessor principal) : ICommandHandler<CreateInvoice, Guid>
 {
-    public ValueTask<Guid> HandleAsync(CreateInvoice command, CancellationToken ct = default)
+    public ValueTask<Guid> HandleAsync(CreateInvoice command, CancellationToken cancellationToken = default)
     {
         var invoice = new Invoice
         {
@@ -28,17 +28,17 @@ public sealed class CreateInvoiceHandler(InvoicingDbContext db, IPrincipalAccess
 
 public sealed class GetInvoiceHandler(InvoicingDbContext db) : IQueryHandler<GetInvoice, InvoiceView?>
 {
-    public async ValueTask<InvoiceView?> HandleAsync(GetInvoice query, CancellationToken ct = default) =>
+    public async ValueTask<InvoiceView?> HandleAsync(GetInvoice query, CancellationToken cancellationToken = default) =>
         await db.Invoices
             .Where(i => i.Id == query.Id)
             .Select(i => new InvoiceView(i.Id, i.Customer, i.Amount, i.Status, i.CreatedAt))
-            .SingleOrDefaultAsync(ct);
+            .SingleOrDefaultAsync(cancellationToken);
 }
 
 public sealed class ListInvoicesHandler(InvoicingDbContext db) : IStreamQueryHandler<ListInvoices, InvoiceView>
 {
     // Results are streamed as they're read, so hosts can send them before the query finishes.
-    public async IAsyncEnumerable<InvoiceView> HandleAsync(ListInvoices query, [EnumeratorCancellation] CancellationToken ct = default)
+    public async IAsyncEnumerable<InvoiceView> HandleAsync(ListInvoices query, [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
         var invoices = db.Invoices
             .OrderByDescending(i => i.Id) // version 7 ids sort by creation time
@@ -46,7 +46,7 @@ public sealed class ListInvoicesHandler(InvoicingDbContext db) : IStreamQueryHan
             .Select(i => new InvoiceView(i.Id, i.Customer, i.Amount, i.Status, i.CreatedAt))
             .AsAsyncEnumerable();
 
-        await foreach (var invoice in invoices.WithCancellation(ct))
+        await foreach (var invoice in invoices.WithCancellation(cancellationToken))
         {
             yield return invoice;
         }
@@ -55,9 +55,9 @@ public sealed class ListInvoicesHandler(InvoicingDbContext db) : IStreamQueryHan
 
 public sealed class CancelInvoiceHandler(InvoicingDbContext db, IMediator mediator, IPrincipalAccessor principal) : ICommandHandler<CancelInvoice>
 {
-    public async ValueTask HandleAsync(CancelInvoice command, CancellationToken ct = default)
+    public async ValueTask HandleAsync(CancelInvoice command, CancellationToken cancellationToken = default)
     {
-        var invoice = await db.Invoices.SingleOrDefaultAsync(i => i.Id == command.Id, ct)
+        var invoice = await db.Invoices.SingleOrDefaultAsync(i => i.Id == command.Id, cancellationToken)
             ?? throw new InvoiceNotFoundException();
 
         if (invoice.Status == InvoiceStatus.Cancelled)
@@ -68,13 +68,13 @@ public sealed class CancelInvoiceHandler(InvoicingDbContext db, IMediator mediat
         invoice.Status = InvoiceStatus.Cancelled;
 
         // Runs now, inside this command's transaction: if anything fails later, the audit entry is rolled back too.
-        await mediator.PublishAsync(new InvoiceCancelled(invoice.Id, command.Reason, principal.Principal?.Identity?.Name ?? ""), ct);
+        await mediator.PublishAsync(new InvoiceCancelled(invoice.Id, command.Reason, principal.Principal?.Identity?.Name ?? ""), cancellationToken);
     }
 }
 
 public sealed class AuditInvoiceCancelled(InvoicingDbContext db) : IMessageHandler<InvoiceCancelled>
 {
-    public ValueTask HandleAsync(InvoiceCancelled message, CancellationToken ct = default)
+    public ValueTask HandleAsync(InvoiceCancelled message, CancellationToken cancellationToken = default)
     {
         db.AuditEntries.Add(new AuditEntry
         {

@@ -111,9 +111,9 @@ public sealed class BehaviorTests
         CancellationToken receivedToken = default;
         var provider = new FakeServiceProvider()
             .AddAll<IBehavior>(new ReplaceTokenBehavior(replacement.Token))
-            .Add<ICommandHandler<Ping>>(new CommandHandler<Ping>((_, ct) =>
+            .Add<ICommandHandler<Ping>>(new CommandHandler<Ping>((_, cancellationToken) =>
             {
-                receivedToken = ct;
+                receivedToken = cancellationToken;
                 return default;
             }));
 
@@ -154,37 +154,37 @@ public sealed class BehaviorTests
         public ValueTask<TResult> HandleAsync<TResult>(
             IQuery<TResult> query,
             Func<CancellationToken, ValueTask<TResult>> next,
-            CancellationToken ct = default) =>
+            CancellationToken cancellationToken = default) =>
             new((TResult)(object)cached);
     }
 
     private sealed class RetryOnceBehavior : IBehavior
     {
-        public async ValueTask HandleAsync(ICommand command, Func<CancellationToken, ValueTask> next, CancellationToken ct = default)
+        public async ValueTask HandleAsync(ICommand command, Func<CancellationToken, ValueTask> next, CancellationToken cancellationToken = default)
         {
             try
             {
-                await next(ct);
+                await next(cancellationToken);
             }
             catch (InvalidOperationException)
             {
-                await next(ct);
+                await next(cancellationToken);
             }
         }
     }
 
     private sealed class ReplaceTokenBehavior(CancellationToken replacement) : IBehavior
     {
-        public ValueTask HandleAsync(ICommand command, Func<CancellationToken, ValueTask> next, CancellationToken ct = default) =>
+        public ValueTask HandleAsync(ICommand command, Func<CancellationToken, ValueTask> next, CancellationToken cancellationToken = default) =>
             next(replacement);
     }
 
     private sealed class CommandOnlyBehavior(List<string> log) : IBehavior
     {
-        public ValueTask HandleAsync(ICommand command, Func<CancellationToken, ValueTask> next, CancellationToken ct = default)
+        public ValueTask HandleAsync(ICommand command, Func<CancellationToken, ValueTask> next, CancellationToken cancellationToken = default)
         {
             log.Add("command");
-            return next(ct);
+            return next(cancellationToken);
         }
     }
 }

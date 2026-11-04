@@ -22,13 +22,13 @@ internal sealed partial class ActionEndpoints(ActionDescriptor action, MediatorE
         var serializerOptions = options.SerializerOptions
             ?? services.GetService<IOptions<JsonOptions>>()?.Value.SerializerOptions
             ?? JsonSerializerOptions.Web;
-        var ct = context.RequestAborted;
+        var cancellationToken = context.RequestAborted;
 
         // The body is read first, because an empty body (treated as no arguments) can't always be recognised from
         // the headers: chunked requests have no Content-Length.
         JsonElement arguments = default;
         using var body = new MemoryStream();
-        await context.Request.Body.CopyToAsync(body, ct).ConfigureAwait(false);
+        await context.Request.Body.CopyToAsync(body, cancellationToken).ConfigureAwait(false);
 
         if (body.Length > 0)
         {
@@ -52,10 +52,10 @@ internal sealed partial class ActionEndpoints(ActionDescriptor action, MediatorE
         {
             if (action.Kind == ActionKind.StreamQuery)
             {
-                return await StreamAsync(dispatcher, arguments, serializerOptions, ct).ConfigureAwait(false);
+                return await StreamAsync(dispatcher, arguments, serializerOptions, cancellationToken).ConfigureAwait(false);
             }
 
-            var result = await dispatcher.DispatchAsync(action.Name, arguments, serializerOptions, ct).ConfigureAwait(false);
+            var result = await dispatcher.DispatchAsync(action.Name, arguments, serializerOptions, cancellationToken).ConfigureAwait(false);
 
             return action.Kind == ActionKind.Command ? Results.NoContent() : Results.Json(result, serializerOptions);
         }
@@ -71,9 +71,9 @@ internal sealed partial class ActionEndpoints(ActionDescriptor action, MediatorE
         IActionDispatcher dispatcher,
         JsonElement arguments,
         JsonSerializerOptions serializerOptions,
-        CancellationToken ct)
+        CancellationToken cancellationToken)
     {
-        var enumerator = dispatcher.StreamAsync(action.Name, arguments, serializerOptions, ct).GetAsyncEnumerator(ct);
+        var enumerator = dispatcher.StreamAsync(action.Name, arguments, serializerOptions, cancellationToken).GetAsyncEnumerator(cancellationToken);
         bool hasFirst;
 
         try

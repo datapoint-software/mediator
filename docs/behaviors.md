@@ -63,18 +63,18 @@ Implement `IBehavior`, and override only the kinds of request you care about. Ev
 ```csharp
 public sealed class SlowRequestLoggingBehavior(ILogger<SlowRequestLoggingBehavior> logger) : IBehavior
 {
-    public async ValueTask HandleAsync(ICommand command, Func<CancellationToken, ValueTask> next, CancellationToken ct = default)
+    public async ValueTask HandleAsync(ICommand command, Func<CancellationToken, ValueTask> next, CancellationToken cancellationToken = default)
     {
         var started = Stopwatch.GetTimestamp();
-        await next(ct);
+        await next(cancellationToken);
         LogIfSlow(command, started);
     }
 
     public async ValueTask<TResult> HandleAsync<TResult>(
-        ICommand<TResult> command, Func<CancellationToken, ValueTask<TResult>> next, CancellationToken ct = default)
+        ICommand<TResult> command, Func<CancellationToken, ValueTask<TResult>> next, CancellationToken cancellationToken = default)
     {
         var started = Stopwatch.GetTimestamp();
-        var result = await next(ct);
+        var result = await next(cancellationToken);
         LogIfSlow(command, started);
         return result;
     }
@@ -132,7 +132,7 @@ Checks run at the end of every `AddMediator` call, over every request registered
 | `HandleAsync(IMessage, …)` | messages, once per publish, around all of its handlers |
 
 Guidelines:
-- Call `next` at most once, and pass `ct` on.
+- Call `next` at most once, and pass `cancellationToken` on.
 - To refuse a request, throw an exception instead of calling `next`.
 - Don't log requests or results as they are: they can contain personal data. Log their type name.
 - Behaviours are resolved per dispatch. Keep their constructors cheap, and cache reflection in `static` fields, per type.

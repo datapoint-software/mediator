@@ -10,7 +10,7 @@ namespace Datapoint.Mediator;
 /// <typeparam name="TResult">The type of each result.</typeparam>
 /// <remarks>
 /// Each stream query type must have exactly one handler. When implementing <see cref="HandleAsync"/> as an
-/// <c>async</c> iterator, mark its <c>ct</c> parameter with <c>[EnumeratorCancellation]</c>, so that a token passed to
+/// <c>async</c> iterator, mark its <c>cancellationToken</c> parameter with <c>[EnumeratorCancellation]</c>, so that a token passed to
 /// <c>WithCancellation</c> also reaches the handler.
 /// </remarks>
 public interface IStreamQueryHandler<in TQuery, TResult>
@@ -20,7 +20,7 @@ public interface IStreamQueryHandler<in TQuery, TResult>
     /// Handles the specified stream query.
     /// </summary>
     /// <param name="query">The stream query to handle.</param>
-    /// <param name="ct">A token to cancel the enumeration.</param>
+    /// <param name="cancellationToken">A token to cancel the enumeration.</param>
     /// <returns>The query's results, produced as they are enumerated.</returns>
-    IAsyncEnumerable<TResult> HandleAsync(TQuery query, CancellationToken ct = default);
+    IAsyncEnumerable<TResult> HandleAsync(TQuery query, CancellationToken cancellationToken = default);
 }

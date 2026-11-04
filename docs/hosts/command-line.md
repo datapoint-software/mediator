@@ -132,7 +132,7 @@ root.AddMediatorActions(services, o =>
 
 ## Scopes and cancellation
 
-Each invocation runs in its own DI scope, created from the `IServiceProvider` you pass, and Ctrl+C cancels the running action through its `ct`.
+Each invocation runs in its own DI scope, created from the `IServiceProvider` you pass, and Ctrl+C cancels the running action through its `cancellationToken`.
 
 ## The current user
 

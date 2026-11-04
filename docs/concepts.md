@@ -5,7 +5,7 @@
 Without a mediator, an endpoint calls a service, which calls other services. Every caller depends on the classes that do the work. With a mediator, callers describe *what* they want as a small object, and the mediator finds the one class that handles it:
 
 ```csharp
-var id = await mediator.SendAsync(new CreateInvoice("Ana", 100m), ct);
+var id = await mediator.SendAsync(new CreateInvoice("Ana", 100m), cancellationToken);
 ```
 
 This keeps callers thin, gives every operation a name and a type, and lets cross-cutting concerns, such as authorization, validation and transactions, wrap every operation in one place: the [pipeline](#the-pipeline).
@@ -40,7 +40,7 @@ public sealed record ListInvoices(int Max = 50) : IStreamQuery<InvoiceView>;
 A stream query's handler returns an `IAsyncEnumerable<T>`. The caller receives results while the handler is still producing them, which suits large result sets and streaming hosts:
 
 ```csharp
-await foreach (var invoice in mediator.StreamAsync(new ListInvoices(), ct))
+await foreach (var invoice in mediator.StreamAsync(new ListInvoices(), cancellationToken))
 {
     Console.WriteLine(invoice.Customer);
 }
@@ -53,7 +53,7 @@ The handler is resolved when `StreamAsync` is called, but it only runs as the re
 ```csharp
 public sealed record InvoiceCancelled(Guid Id, string Reason) : IMessage;
 
-await mediator.PublishAsync(new InvoiceCancelled(invoice.Id, command.Reason), ct);
+await mediator.PublishAsync(new InvoiceCancelled(invoice.Id, command.Reason), cancellationToken);
 ```
 
 - A message can have no handlers, or many. They run one after another, in registration order, and the first exception stops the rest.
@@ -68,12 +68,12 @@ A handler is a class that implements one handler interface per request it handle
 ```csharp
 public sealed class GetInvoiceHandler(InvoicingDbContext db) : IQueryHandler<GetInvoice, InvoiceView?>
 {
-    public async ValueTask<InvoiceView?> HandleAsync(GetInvoice query, CancellationToken ct = default) => ...;
+    public async ValueTask<InvoiceView?> HandleAsync(GetInvoice query, CancellationToken cancellationToken = default) => ...;
 }
 ```
 
 - Every method returns `ValueTask`, so a handler that completes synchronously costs no allocation. Await the result once, and never twice.
-- Pass `ct` on to everything asynchronous, so a cancelled request stops its work.
+- Pass `cancellationToken` on to everything asynchronous, so a cancelled request stops its work.
 - Registering a second handler for the same command or query fails at startup. See [Dependency injection](dependency-injection.md).
 
 ## The pipeline

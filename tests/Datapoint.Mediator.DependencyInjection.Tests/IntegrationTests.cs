@@ -14,14 +14,14 @@ public sealed class IntegrationTests
         await using var scope = provider.CreateAsyncScope();
         var mediator = scope.ServiceProvider.GetRequiredService<IMediator>();
         var log = provider.GetRequiredService<Recorder>().Log;
-        var ct = TestContext.Current.CancellationToken;
+        var cancellationToken = TestContext.Current.CancellationToken;
 
-        await mediator.SendAsync(new Ping(), ct);
-        var sum = await mediator.SendAsync(new Add(2, 3), ct);
-        var echo = await mediator.QueryAsync(new Echo("hello"), ct);
-        await mediator.PublishAsync(new Notified(), ct);
+        await mediator.SendAsync(new Ping(), cancellationToken);
+        var sum = await mediator.SendAsync(new Add(2, 3), cancellationToken);
+        var echo = await mediator.QueryAsync(new Echo("hello"), cancellationToken);
+        await mediator.PublishAsync(new Notified(), cancellationToken);
         var counted = new List<int>();
-        await foreach (var i in mediator.StreamAsync(new CountTo(3), ct))
+        await foreach (var i in mediator.StreamAsync(new CountTo(3), cancellationToken))
         {
             counted.Add(i);
         }

@@ -21,7 +21,7 @@ public sealed class ActionDispatcherTests
             .Add<ICommandHandler<CreateInvoice>>(new CommandHandler<CreateInvoice>((c, _) => Log($"created {c.Customer} {c.Amount}")))
             .Add<ICommandHandler<ApproveInvoice, bool>>(new CommandHandler<ApproveInvoice, bool>((c, _) => new(c.Id > 0)))
             .Add<IQueryHandler<GetInvoice, string>>(new QueryHandler<GetInvoice, string>((q, _) => new($"invoice {q.Id}")))
-            .Add<IStreamQueryHandler<ListInvoices, int>>(new StreamQueryHandler<ListInvoices, int>((q, ct) => Streams.CountTo(q.Count, ct: ct)));
+            .Add<IStreamQueryHandler<ListInvoices, int>>(new StreamQueryHandler<ListInvoices, int>((q, cancellationToken) => Streams.CountTo(q.Count, cancellationToken: cancellationToken)));
         var catalog = new ActionCatalog([typeof(CreateInvoice), typeof(ApproveInvoice), typeof(GetInvoice), typeof(ListInvoices)]);
         _dispatcher = new ActionDispatcher(new Mediator(provider), catalog);
     }
@@ -38,7 +38,7 @@ public sealed class ActionDispatcherTests
     [Fact]
     public async Task DispatchAsync_Command_DeserializesWithWebDefaultsAndReturnsNull()
     {
-        var result = await _dispatcher.DispatchAsync("invoice.create", Json("""{ "customer": "Ana", "amount": 100 }"""), ct: Ct);
+        var result = await _dispatcher.DispatchAsync("invoice.create", Json("""{ "customer": "Ana", "amount": 100 }"""), cancellationToken: Ct);
 
         Assert.Null(result);
         Assert.Contains("created Ana 100", _log);
@@ -47,19 +47,19 @@ public sealed class ActionDispatcherTests
     [Fact]
     public async Task DispatchAsync_CommandWithResult_ReturnsResult()
     {
-        Assert.Equal(true, await _dispatcher.DispatchAsync("invoice.approve", Json("""{ "id": 7 }"""), ct: Ct));
+        Assert.Equal(true, await _dispatcher.DispatchAsync("invoice.approve", Json("""{ "id": 7 }"""), cancellationToken: Ct));
     }
 
     [Fact]
     public async Task DispatchAsync_Query_ReturnsResult()
     {
-        Assert.Equal("invoice 7", await _dispatcher.DispatchAsync("invoice.get", Json("""{ "id": 7 }"""), ct: Ct));
+        Assert.Equal("invoice 7", await _dispatcher.DispatchAsync("invoice.get", Json("""{ "id": 7 }"""), cancellationToken: Ct));
     }
 
     [Fact]
     public async Task StreamAsync_StreamQuery_StreamsResults()
     {
-        var results = await _dispatcher.StreamAsync("invoice.list", Json("""{ "count": 3 }"""), ct: Ct).ToListAsync(Ct);
+        var results = await _dispatcher.StreamAsync("invoice.list", Json("""{ "count": 3 }"""), cancellationToken: Ct).ToListAsync(Ct);
 
         Assert.Equal([1, 2, 3], results.Cast<int>());
     }
@@ -77,13 +77,13 @@ public sealed class ActionDispatcherTests
     [Fact]
     public async Task DispatchAsync_UndefinedArguments_AreTreatedAsEmptyObject()
     {
-        Assert.Equal("invoice 0", await _dispatcher.DispatchAsync("invoice.get", default, ct: Ct));
+        Assert.Equal("invoice 0", await _dispatcher.DispatchAsync("invoice.get", default, cancellationToken: Ct));
     }
 
     [Fact]
     public async Task DispatchAsync_RunsBehaviors()
     {
-        await _dispatcher.DispatchAsync("invoice.get", Json("""{ "id": 1 }"""), ct: Ct);
+        await _dispatcher.DispatchAsync("invoice.get", Json("""{ "id": 1 }"""), cancellationToken: Ct);
 
         Assert.Equal(["behavior>", "<behavior"], _log);
     }
@@ -91,17 +91,17 @@ public sealed class ActionDispatcherTests
     [Fact]
     public async Task UnknownAction_ThrowsWithoutNamingIt()
     {
-        var unknown = await Assert.ThrowsAsync<ActionNotFoundException>(async () => await _dispatcher.DispatchAsync("invoice.unknown", default, ct: Ct));
+        var unknown = await Assert.ThrowsAsync<ActionNotFoundException>(async () => await _dispatcher.DispatchAsync("invoice.unknown", default, cancellationToken: Ct));
 
         Assert.DoesNotContain("invoice", unknown.Message);
-        Assert.Throws<ActionNotFoundException>(() => _dispatcher.StreamAsync("invoice.unknown", default, ct: Ct));
+        Assert.Throws<ActionNotFoundException>(() => _dispatcher.StreamAsync("invoice.unknown", default, cancellationToken: Ct));
     }
 
     [Fact]
     public async Task DispatchAsync_InvalidArguments_ThrowsWithoutEchoingInput()
     {
         var exception = await Assert.ThrowsAsync<InvalidActionArgumentsException>(
-            async () => await _dispatcher.DispatchAsync("invoice.create", Json("""{ "amount": "secret-input" }"""), ct: Ct));
+            async () => await _dispatcher.DispatchAsync("invoice.create", Json("""{ "amount": "secret-input" }"""), cancellationToken: Ct));
 
         Assert.DoesNotContain("secret-input", exception.Message);
         Assert.IsType<JsonException>(exception.InnerException);
@@ -111,20 +111,20 @@ public sealed class ActionDispatcherTests
     public async Task DispatchAsync_NullArguments_Throws()
     {
         await Assert.ThrowsAsync<InvalidActionArgumentsException>(
-            async () => await _dispatcher.DispatchAsync("invoice.get", Json("null"), ct: Ct));
+            async () => await _dispatcher.DispatchAsync("invoice.get", Json("null"), cancellationToken: Ct));
     }
 
     [Fact]
     public void WrongMethodForKind_Throws()
     {
-        Assert.Throws<InvalidOperationException>(() => _dispatcher.DispatchAsync("invoice.list", Json("{}"), ct: Ct));
-        Assert.Throws<InvalidOperationException>(() => _dispatcher.StreamAsync("invoice.get", Json("{}"), ct: Ct));
+        Assert.Throws<InvalidOperationException>(() => _dispatcher.DispatchAsync("invoice.list", Json("{}"), cancellationToken: Ct));
+        Assert.Throws<InvalidOperationException>(() => _dispatcher.StreamAsync("invoice.get", Json("{}"), cancellationToken: Ct));
     }
 
     [Fact]
     public void NullName_Throws()
     {
-        Assert.Equal("name", Assert.Throws<ArgumentNullException>(() => _dispatcher.DispatchAsync(null!, default, ct: Ct)).ParamName);
+        Assert.Equal("name", Assert.Throws<ArgumentNullException>(() => _dispatcher.DispatchAsync(null!, default, cancellationToken: Ct)).ParamName);
     }
 
     [Fact]

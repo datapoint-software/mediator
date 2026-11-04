@@ -25,7 +25,7 @@ public interface IAuthorizationObserver
     /// Called after a command, query or stream query is authorized.
     /// </summary>
     /// <param name="authorization">What was authorized, for whom, and the outcome.</param>
-    /// <param name="ct">A token to cancel the operation.</param>
+    /// <param name="cancellationToken">A token to cancel the operation.</param>
     /// <returns>A task that completes when the observer is done. Await it only once.</returns>
-    ValueTask OnAuthorizedAsync(AuthorizationEvent authorization, CancellationToken ct = default);
+    ValueTask OnAuthorizedAsync(AuthorizationEvent authorization, CancellationToken cancellationToken = default);
 }

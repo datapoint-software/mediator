@@ -116,11 +116,11 @@ public sealed class TelemetryTests : IDisposable
             .Add<IQueryHandler<TracedQuery, int>>(new QueryHandler<TracedQuery, int>((_, _) => new(2)))
             .AddAll<IMessageHandler<TracedMessage>>(new MessageHandler<TracedMessage>((_, _) => default));
         var mediator = new Mediator(provider);
-        var ct = TestContext.Current.CancellationToken;
+        var cancellationToken = TestContext.Current.CancellationToken;
 
-        Assert.Equal(1, await mediator.SendAsync(new TracedResultCommand(), ct));
-        Assert.Equal(2, await mediator.QueryAsync(new TracedQuery(), ct));
-        await mediator.PublishAsync(new TracedMessage(), ct);
+        Assert.Equal(1, await mediator.SendAsync(new TracedResultCommand(), cancellationToken));
+        Assert.Equal(2, await mediator.QueryAsync(new TracedQuery(), cancellationToken));
+        await mediator.PublishAsync(new TracedMessage(), cancellationToken);
 
         Assert.Equal("send TracedResultCommand", Assert.Single(ActivitiesFor<TracedResultCommand>()).OperationName);
         Assert.Equal("query TracedQuery", Assert.Single(ActivitiesFor<TracedQuery>()).OperationName);
@@ -136,11 +136,11 @@ public sealed class TelemetryTests : IDisposable
             .Add<IQueryHandler<FailingQuery, int>>(new QueryHandler<FailingQuery, int>((_, _) => throw new InvalidOperationException()))
             .AddAll<IMessageHandler<FailingMessage>>(new MessageHandler<FailingMessage>((_, _) => throw new InvalidOperationException()));
         var mediator = new Mediator(provider);
-        var ct = TestContext.Current.CancellationToken;
+        var cancellationToken = TestContext.Current.CancellationToken;
 
-        await Assert.ThrowsAsync<InvalidOperationException>(async () => await mediator.SendAsync(new FailingResultCommand(), ct));
-        await Assert.ThrowsAsync<InvalidOperationException>(async () => await mediator.QueryAsync(new FailingQuery(), ct));
-        await Assert.ThrowsAsync<InvalidOperationException>(async () => await mediator.PublishAsync(new FailingMessage(), ct));
+        await Assert.ThrowsAsync<InvalidOperationException>(async () => await mediator.SendAsync(new FailingResultCommand(), cancellationToken));
+        await Assert.ThrowsAsync<InvalidOperationException>(async () => await mediator.QueryAsync(new FailingQuery(), cancellationToken));
+        await Assert.ThrowsAsync<InvalidOperationException>(async () => await mediator.PublishAsync(new FailingMessage(), cancellationToken));
 
         Assert.Equal(ActivityStatusCode.Error, Assert.Single(ActivitiesFor<FailingResultCommand>()).Status);
         Assert.Equal(ActivityStatusCode.Error, Assert.Single(ActivitiesFor<FailingQuery>()).Status);
@@ -151,7 +151,7 @@ public sealed class TelemetryTests : IDisposable
     public async Task StreamAsync_FailureDuringEnumeration_RecordsErrorType()
     {
         var provider = new FakeServiceProvider().Add<IStreamQueryHandler<FailingStream, int>>(
-            new StreamQueryHandler<FailingStream, int>((_, ct) => FailAfterOne(ct)));
+            new StreamQueryHandler<FailingStream, int>((_, cancellationToken) => FailAfterOne(cancellationToken)));
 
         await Assert.ThrowsAsync<InvalidOperationException>(async () =>
             await new Mediator(provider).StreamAsync(new FailingStream(), TestContext.Current.CancellationToken)
@@ -161,7 +161,7 @@ public sealed class TelemetryTests : IDisposable
         Assert.Equal(ActivityStatusCode.Error, activity.Status);
         Assert.Equal(typeof(InvalidOperationException).FullName, activity.GetTagItem("error.type"));
 
-        static async IAsyncEnumerable<int> FailAfterOne([EnumeratorCancellation] CancellationToken ct)
+        static async IAsyncEnumerable<int> FailAfterOne([EnumeratorCancellation] CancellationToken cancellationToken)
         {
             await Task.Yield();
             yield return 1;
@@ -173,7 +173,7 @@ public sealed class TelemetryTests : IDisposable
     public async Task StreamAsync_RecordsSpanCoveringEnumeration()
     {
         var provider = new FakeServiceProvider().Add<IStreamQueryHandler<TracedStream, int>>(
-            new StreamQueryHandler<TracedStream, int>((q, ct) => Streams.CountTo(q.Count, ct: ct)));
+            new StreamQueryHandler<TracedStream, int>((q, cancellationToken) => Streams.CountTo(q.Count, cancellationToken: cancellationToken)));
 
         var results = new Mediator(provider).StreamAsync(new TracedStream(3), TestContext.Current.CancellationToken);
         Assert.Empty(ActivitiesFor<TracedStream>());

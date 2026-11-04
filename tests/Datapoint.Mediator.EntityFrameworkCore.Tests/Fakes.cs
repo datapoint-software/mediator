@@ -62,7 +62,7 @@ public sealed record InvoicesChanged : IMessage;
 
 public sealed class CreateInvoiceHandler(AppDbContext db, Recorder recorder) : ICommandHandler<CreateInvoice, Guid>
 {
-    public ValueTask<Guid> HandleAsync(CreateInvoice command, CancellationToken ct = default)
+    public ValueTask<Guid> HandleAsync(CreateInvoice command, CancellationToken cancellationToken = default)
     {
         recorder.Log.Add($"create in transaction {db.Database.CurrentTransaction?.TransactionId}");
         var invoice = new Invoice { Id = Guid.NewGuid(), Amount = command.Amount };
@@ -73,7 +73,7 @@ public sealed class CreateInvoiceHandler(AppDbContext db, Recorder recorder) : I
 
 public sealed class CreateInvoiceThenFailHandler(AppDbContext db) : ICommandHandler<CreateInvoiceThenFail>
 {
-    public ValueTask HandleAsync(CreateInvoiceThenFail command, CancellationToken ct = default)
+    public ValueTask HandleAsync(CreateInvoiceThenFail command, CancellationToken cancellationToken = default)
     {
         db.Invoices.Add(new Invoice { Id = Guid.NewGuid(), Amount = command.Amount });
         throw new InvalidOperationException("handler failed");
@@ -83,27 +83,27 @@ public sealed class CreateInvoiceThenFailHandler(AppDbContext db) : ICommandHand
 public sealed class CreateInvoiceWithoutTransactionHandler(AppDbContext db, Recorder recorder)
     : ICommandHandler<CreateInvoiceWithoutTransaction>
 {
-    public async ValueTask HandleAsync(CreateInvoiceWithoutTransaction command, CancellationToken ct = default)
+    public async ValueTask HandleAsync(CreateInvoiceWithoutTransaction command, CancellationToken cancellationToken = default)
     {
         recorder.Log.Add($"transaction is null: {db.Database.CurrentTransaction is null}");
         db.Invoices.Add(new Invoice { Id = Guid.NewGuid(), Amount = command.Amount });
-        await db.SaveChangesAsync(ct);
+        await db.SaveChangesAsync(cancellationToken);
     }
 }
 
 public sealed class CreateTwoInvoicesHandler(AppDbContext db, IMediator mediator, Recorder recorder) : ICommandHandler<CreateTwoInvoices>
 {
-    public async ValueTask HandleAsync(CreateTwoInvoices command, CancellationToken ct = default)
+    public async ValueTask HandleAsync(CreateTwoInvoices command, CancellationToken cancellationToken = default)
     {
         recorder.Log.Add($"outer in transaction {db.Database.CurrentTransaction?.TransactionId}");
         db.Invoices.Add(new Invoice { Id = Guid.NewGuid(), Amount = 1 });
-        await mediator.SendAsync(new CreateInvoice(2), ct);
+        await mediator.SendAsync(new CreateInvoice(2), cancellationToken);
     }
 }
 
 public sealed class CreateInvoiceFailingOnceHandler(AppDbContext db, Recorder recorder) : ICommandHandler<CreateInvoiceFailingOnce>
 {
-    public ValueTask HandleAsync(CreateInvoiceFailingOnce command, CancellationToken ct = default)
+    public ValueTask HandleAsync(CreateInvoiceFailingOnce command, CancellationToken cancellationToken = default)
     {
         db.Invoices.Add(new Invoice { Id = Guid.NewGuid(), Amount = command.Amount });
 
@@ -118,16 +118,16 @@ public sealed class CreateInvoiceFailingOnceHandler(AppDbContext db, Recorder re
 
 public sealed class CountInvoicesHandler(AppDbContext db, Recorder recorder) : IQueryHandler<CountInvoices, int>
 {
-    public async ValueTask<int> HandleAsync(CountInvoices query, CancellationToken ct = default)
+    public async ValueTask<int> HandleAsync(CountInvoices query, CancellationToken cancellationToken = default)
     {
         recorder.Log.Add($"query transaction is null: {db.Database.CurrentTransaction is null}");
-        return await db.Invoices.CountAsync(ct);
+        return await db.Invoices.CountAsync(cancellationToken);
     }
 }
 
 public sealed class InvoicesChangedHandler(AppDbContext db, Recorder recorder) : IMessageHandler<InvoicesChanged>
 {
-    public ValueTask HandleAsync(InvoicesChanged message, CancellationToken ct = default)
+    public ValueTask HandleAsync(InvoicesChanged message, CancellationToken cancellationToken = default)
     {
         recorder.Log.Add($"message transaction is null: {db.Database.CurrentTransaction is null}");
         return default;
@@ -205,14 +205,14 @@ public sealed class SqlLog : DbTransactionInterceptor
 // Records what it's given, runs a marker statement in new transactions, and fails when told to.
 public sealed class RecordingInitializer(Recorder recorder, ITransactionContext context) : ITransactionInitializer<AppDbContext>
 {
-    public async ValueTask InitializeAsync(AppDbContext dbContext, TransactionInitialization transaction, CancellationToken ct = default)
+    public async ValueTask InitializeAsync(AppDbContext dbContext, TransactionInitialization transaction, CancellationToken cancellationToken = default)
     {
         recorder.Initializations.Add(transaction);
         recorder.Log.Add($"initialize {transaction.Request.GetType().Name} joined: {transaction.IsJoined} context active: {context.IsActive}");
 
         if (!transaction.IsJoined)
         {
-            await dbContext.Database.ExecuteSqlRawAsync("SELECT 'initialize'", ct);
+            await dbContext.Database.ExecuteSqlRawAsync("SELECT 'initialize'", cancellationToken);
         }
 
         if (recorder.FailInitializer)
@@ -252,16 +252,16 @@ public static class ContextText
 
 public sealed class ReadContextHandler(ITransactionContext context, AppDbContext db) : IQueryHandler<ReadContext, string>
 {
-    public async ValueTask<string> HandleAsync(ReadContext query, CancellationToken ct = default)
+    public async ValueTask<string> HandleAsync(ReadContext query, CancellationToken cancellationToken = default)
     {
-        await db.Database.ExecuteSqlRawAsync("SELECT 'handler'", ct);
+        await db.Database.ExecuteSqlRawAsync("SELECT 'handler'", cancellationToken);
         return ContextText.Of(context);
     }
 }
 
 public sealed class WriteFromQueryHandler(AppDbContext db) : IQueryHandler<WriteFromQuery, int>
 {
-    public ValueTask<int> HandleAsync(WriteFromQuery query, CancellationToken ct = default)
+    public ValueTask<int> HandleAsync(WriteFromQuery query, CancellationToken cancellationToken = default)
     {
         // A query must not change anything: this is never saved.
         db.Invoices.Add(new Invoice { Id = Guid.NewGuid(), Amount = 999 });
@@ -271,7 +271,7 @@ public sealed class WriteFromQueryHandler(AppDbContext db) : IQueryHandler<Write
 
 public sealed class WriteFromQueryThenFailHandler(AppDbContext db) : IQueryHandler<WriteFromQueryThenFail, int>
 {
-    public ValueTask<int> HandleAsync(WriteFromQueryThenFail query, CancellationToken ct = default)
+    public ValueTask<int> HandleAsync(WriteFromQueryThenFail query, CancellationToken cancellationToken = default)
     {
         // A failed query must not change anything either: this is never saved.
         db.Invoices.Add(new Invoice { Id = Guid.NewGuid(), Amount = 999 });
@@ -281,7 +281,7 @@ public sealed class WriteFromQueryThenFailHandler(AppDbContext db) : IQueryHandl
 
 public sealed class CountWithoutTransactionHandler(ITransactionContext context, Recorder recorder) : IQueryHandler<CountWithoutTransaction, int>
 {
-    public ValueTask<int> HandleAsync(CountWithoutTransaction query, CancellationToken ct = default)
+    public ValueTask<int> HandleAsync(CountWithoutTransaction query, CancellationToken cancellationToken = default)
     {
         recorder.Log.Add(ContextText.Of(context));
         return new(0);
@@ -290,9 +290,9 @@ public sealed class CountWithoutTransactionHandler(ITransactionContext context, 
 
 public sealed class StreamAmountsHandler(AppDbContext db, ITransactionContext context, Recorder recorder) : IStreamQueryHandler<StreamAmounts, int>
 {
-    public async IAsyncEnumerable<int> HandleAsync(StreamAmounts query, [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken ct = default)
+    public async IAsyncEnumerable<int> HandleAsync(StreamAmounts query, [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
-        await foreach (var amount in db.Invoices.OrderBy(i => i.Amount).Select(i => i.Amount).AsAsyncEnumerable().WithCancellation(ct))
+        await foreach (var amount in db.Invoices.OrderBy(i => i.Amount).Select(i => i.Amount).AsAsyncEnumerable().WithCancellation(cancellationToken))
         {
             await Task.Yield();
             recorder.Log.Add($"stream {ContextText.Of(context)}");
@@ -304,7 +304,7 @@ public sealed class StreamAmountsHandler(AppDbContext db, ITransactionContext co
 public sealed class StreamAmountsWithoutTransactionHandler(ITransactionContext context, Recorder recorder)
     : IStreamQueryHandler<StreamAmountsWithoutTransaction, int>
 {
-    public async IAsyncEnumerable<int> HandleAsync(StreamAmountsWithoutTransaction query, [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken ct = default)
+    public async IAsyncEnumerable<int> HandleAsync(StreamAmountsWithoutTransaction query, [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
         await Task.Yield();
         recorder.Log.Add($"stream {ContextText.Of(context)}");
@@ -314,7 +314,7 @@ public sealed class StreamAmountsWithoutTransactionHandler(ITransactionContext c
 
 public sealed class StreamThenFailHandler(AppDbContext db) : IStreamQueryHandler<StreamThenFail, int>
 {
-    public async IAsyncEnumerable<int> HandleAsync(StreamThenFail query, [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken ct = default)
+    public async IAsyncEnumerable<int> HandleAsync(StreamThenFail query, [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
         await Task.Yield();
         db.Invoices.Add(new Invoice { Id = Guid.NewGuid(), Amount = 999 });
@@ -325,19 +325,19 @@ public sealed class StreamThenFailHandler(AppDbContext db) : IStreamQueryHandler
 
 public sealed class SendNestedAndRecordHandler(IMediator mediator, ITransactionContext context, Recorder recorder) : ICommandHandler<SendNestedAndRecord>
 {
-    public async ValueTask HandleAsync(SendNestedAndRecord command, CancellationToken ct = default)
+    public async ValueTask HandleAsync(SendNestedAndRecord command, CancellationToken cancellationToken = default)
     {
         recorder.Log.Add($"outer before {ContextText.Of(context)}");
-        recorder.Log.Add($"nested {await mediator.QueryAsync(new ReadContext(), ct)}");
+        recorder.Log.Add($"nested {await mediator.QueryAsync(new ReadContext(), cancellationToken)}");
         recorder.Log.Add($"outer after {ContextText.Of(context)}");
     }
 }
 
 public sealed class StreamInsideCommandHandler(IMediator mediator, Recorder recorder) : ICommandHandler<StreamInsideCommand>
 {
-    public async ValueTask HandleAsync(StreamInsideCommand command, CancellationToken ct = default)
+    public async ValueTask HandleAsync(StreamInsideCommand command, CancellationToken cancellationToken = default)
     {
-        await foreach (var _ in mediator.StreamAsync(new StreamAmounts(), ct))
+        await foreach (var _ in mediator.StreamAsync(new StreamAmounts(), cancellationToken))
         {
         }
 
@@ -348,10 +348,10 @@ public sealed class StreamInsideCommandHandler(IMediator mediator, Recorder reco
 // Waits until another dispatch is also inside its transaction, then returns its own attempt id.
 public sealed class WaitForOtherHandler(ITransactionContext context, Gate gate) : ICommandHandler<WaitForOther, Guid>
 {
-    public async ValueTask<Guid> HandleAsync(WaitForOther command, CancellationToken ct = default)
+    public async ValueTask<Guid> HandleAsync(WaitForOther command, CancellationToken cancellationToken = default)
     {
         var mine = context.AttemptId;
-        await gate.ArriveAndWaitAsync(ct);
+        await gate.ArriveAndWaitAsync(cancellationToken);
         return mine == context.AttemptId ? mine : Guid.Empty;
     }
 }
@@ -361,14 +361,14 @@ public sealed class Gate(int parties)
     private readonly TaskCompletionSource _allArrived = new(TaskCreationOptions.RunContinuationsAsynchronously);
     private int _arrived;
 
-    public Task ArriveAndWaitAsync(CancellationToken ct)
+    public Task ArriveAndWaitAsync(CancellationToken cancellationToken)
     {
         if (Interlocked.Increment(ref _arrived) == parties)
         {
             _allArrived.SetResult();
         }
 
-        return _allArrived.Task.WaitAsync(ct);
+        return _allArrived.Task.WaitAsync(cancellationToken);
     }
 }
 
@@ -379,13 +379,13 @@ public sealed class RecordingAuthorizer(Recorder recorder, ITransactionContext c
     Datapoint.Mediator.Authorization.IAuthorizer<ReadContext>,
     Datapoint.Mediator.Authorization.IAuthorizer<StreamAmounts>
 {
-    public ValueTask<Datapoint.Mediator.Authorization.AuthorizationDecision> AuthorizeAsync(CreateInvoice action, System.Security.Claims.ClaimsPrincipal principal, CancellationToken ct = default) => Decide(action);
+    public ValueTask<Datapoint.Mediator.Authorization.AuthorizationDecision> AuthorizeAsync(CreateInvoice action, System.Security.Claims.ClaimsPrincipal principal, CancellationToken cancellationToken = default) => Decide(action);
 
-    public ValueTask<Datapoint.Mediator.Authorization.AuthorizationDecision> AuthorizeAsync(CreateInvoiceFailingOnce action, System.Security.Claims.ClaimsPrincipal principal, CancellationToken ct = default) => Decide(action);
+    public ValueTask<Datapoint.Mediator.Authorization.AuthorizationDecision> AuthorizeAsync(CreateInvoiceFailingOnce action, System.Security.Claims.ClaimsPrincipal principal, CancellationToken cancellationToken = default) => Decide(action);
 
-    public ValueTask<Datapoint.Mediator.Authorization.AuthorizationDecision> AuthorizeAsync(ReadContext action, System.Security.Claims.ClaimsPrincipal principal, CancellationToken ct = default) => Decide(action);
+    public ValueTask<Datapoint.Mediator.Authorization.AuthorizationDecision> AuthorizeAsync(ReadContext action, System.Security.Claims.ClaimsPrincipal principal, CancellationToken cancellationToken = default) => Decide(action);
 
-    public ValueTask<Datapoint.Mediator.Authorization.AuthorizationDecision> AuthorizeAsync(StreamAmounts action, System.Security.Claims.ClaimsPrincipal principal, CancellationToken ct = default) => Decide(action);
+    public ValueTask<Datapoint.Mediator.Authorization.AuthorizationDecision> AuthorizeAsync(StreamAmounts action, System.Security.Claims.ClaimsPrincipal principal, CancellationToken cancellationToken = default) => Decide(action);
 
     private ValueTask<Datapoint.Mediator.Authorization.AuthorizationDecision> Decide(object action)
     {
@@ -396,7 +396,7 @@ public sealed class RecordingAuthorizer(Recorder recorder, ITransactionContext c
 
 public sealed class RecordingObserver(Recorder recorder) : Datapoint.Mediator.Authorization.IAuthorizationObserver
 {
-    public ValueTask OnAuthorizedAsync(Datapoint.Mediator.Authorization.AuthorizationEvent authorization, CancellationToken ct = default)
+    public ValueTask OnAuthorizedAsync(Datapoint.Mediator.Authorization.AuthorizationEvent authorization, CancellationToken cancellationToken = default)
     {
         recorder.Log.Add($"observed {authorization.Outcome}");
         return default;
@@ -409,5 +409,5 @@ public sealed record AnonymousWithoutTransaction : ICommand;
 
 public sealed class AnonymousWithoutTransactionHandler : ICommandHandler<AnonymousWithoutTransaction>
 {
-    public ValueTask HandleAsync(AnonymousWithoutTransaction command, CancellationToken ct = default) => default;
+    public ValueTask HandleAsync(AnonymousWithoutTransaction command, CancellationToken cancellationToken = default) => default;
 }

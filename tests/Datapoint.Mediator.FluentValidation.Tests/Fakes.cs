@@ -50,11 +50,11 @@ public sealed class ListUsersValidator : AbstractValidator<ListUsers>
 public sealed class LoggingValidator : AbstractValidator<CreateUser>
 {
     public LoggingValidator(string name, TimeSpan delay, List<string> log, List<CancellationToken> tokens) =>
-        RuleFor(c => c).MustAsync(async (_, ct) =>
+        RuleFor(c => c).MustAsync(async (_, cancellationToken) =>
         {
-            await Task.Delay(delay, ct);
+            await Task.Delay(delay, cancellationToken);
             log.Add(name);
-            tokens.Add(ct);
+            tokens.Add(cancellationToken);
             return true;
         });
 }

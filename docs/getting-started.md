@@ -31,11 +31,11 @@ public sealed record CreateInvoice(string Customer, decimal Amount) : ICommand<G
 
 public sealed class CreateInvoiceHandler(InvoicingDbContext db) : ICommandHandler<CreateInvoice, Guid>
 {
-    public async ValueTask<Guid> HandleAsync(CreateInvoice command, CancellationToken ct = default)
+    public async ValueTask<Guid> HandleAsync(CreateInvoice command, CancellationToken cancellationToken = default)
     {
         var invoice = new Invoice { Id = Guid.CreateVersion7(), Customer = command.Customer, Amount = command.Amount };
         db.Invoices.Add(invoice);
-        await db.SaveChangesAsync(ct);
+        await db.SaveChangesAsync(cancellationToken);
         return invoice.Id;
     }
 }
@@ -50,8 +50,8 @@ builder.Services.AddMediator(o => o.AddHandlersFromAssemblyContaining<CreateInvo
 Send the command through `IMediator`, from anywhere with a DI scope, such as an endpoint or a controller:
 
 ```csharp
-app.MapPost("/invoices", async (CreateInvoice command, IMediator mediator, CancellationToken ct) =>
-    await mediator.SendAsync(command, ct));
+app.MapPost("/invoices", async (CreateInvoice command, IMediator mediator, CancellationToken cancellationToken) =>
+    await mediator.SendAsync(command, cancellationToken));
 ```
 
 The endpoint doesn't know which class handles `CreateInvoice`, and the handler doesn't know it was called from HTTP.
@@ -65,16 +65,16 @@ public sealed record GetInvoice(Guid Id) : IQuery<InvoiceView?>;
 
 public sealed class GetInvoiceHandler(InvoicingDbContext db) : IQueryHandler<GetInvoice, InvoiceView?>
 {
-    public async ValueTask<InvoiceView?> HandleAsync(GetInvoice query, CancellationToken ct = default) =>
+    public async ValueTask<InvoiceView?> HandleAsync(GetInvoice query, CancellationToken cancellationToken = default) =>
         await db.Invoices
             .Where(i => i.Id == query.Id)
             .Select(i => new InvoiceView(i.Id, i.Customer, i.Amount))
-            .SingleOrDefaultAsync(ct);
+            .SingleOrDefaultAsync(cancellationToken);
 }
 ```
 
 ```csharp
-var invoice = await mediator.QueryAsync(new GetInvoice(id), ct);
+var invoice = await mediator.QueryAsync(new GetInvoice(id), cancellationToken);
 ```
 
 `AddHandlersFromAssemblyContaining` already registered the new handler.

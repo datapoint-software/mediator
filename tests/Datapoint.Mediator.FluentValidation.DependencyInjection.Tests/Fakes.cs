@@ -14,7 +14,7 @@ public sealed class Recorder
 
 public sealed class CreateUserHandler(Recorder recorder) : ICommandHandler<CreateUser>
 {
-    public ValueTask HandleAsync(CreateUser command, CancellationToken ct = default)
+    public ValueTask HandleAsync(CreateUser command, CancellationToken cancellationToken = default)
     {
         recorder.Log.Add(command.Name);
         return default;

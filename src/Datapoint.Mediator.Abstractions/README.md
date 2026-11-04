@@ -9,7 +9,7 @@ public sealed record CreateInvoice(string Customer, decimal Amount) : ICommand<G
 
 public sealed class CreateInvoiceHandler : ICommandHandler<CreateInvoice, Guid>
 {
-    public ValueTask<Guid> HandleAsync(CreateInvoice command, CancellationToken ct = default) =>
+    public ValueTask<Guid> HandleAsync(CreateInvoice command, CancellationToken cancellationToken = default) =>
         new(Guid.CreateVersion7());
 }
 ```

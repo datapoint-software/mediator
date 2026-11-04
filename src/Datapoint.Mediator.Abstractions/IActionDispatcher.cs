@@ -30,7 +30,7 @@ public interface IActionDispatcher
     /// The action's arguments, as a JSON object. An undefined element is treated as an empty object.
     /// </param>
     /// <param name="options">The options to deserialize the arguments with, or <see langword="null"/>.</param>
-    /// <param name="ct">A token to cancel the operation.</param>
+    /// <param name="cancellationToken">A token to cancel the operation.</param>
     /// <returns>
     /// A task that completes with the action's result, or <see langword="null"/> for a command without a result. Await
     /// it only once.
@@ -42,7 +42,7 @@ public interface IActionDispatcher
         string name,
         JsonElement arguments,
         JsonSerializerOptions? options = null,
-        CancellationToken ct = default);
+        CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Dispatches a stream query by name.
@@ -52,7 +52,7 @@ public interface IActionDispatcher
     /// The action's arguments, as a JSON object. An undefined element is treated as an empty object.
     /// </param>
     /// <param name="options">The options to deserialize the arguments with, or <see langword="null"/>.</param>
-    /// <param name="ct">A token to cancel the enumeration.</param>
+    /// <param name="cancellationToken">A token to cancel the enumeration.</param>
     /// <returns>The query's results, produced as they are enumerated.</returns>
     /// <exception cref="ActionNotFoundException">No action that isn't hidden has that name.</exception>
     /// <exception cref="InvalidActionArgumentsException">The arguments don't match the action's type.</exception>
@@ -61,5 +61,5 @@ public interface IActionDispatcher
         string name,
         JsonElement arguments,
         JsonSerializerOptions? options = null,
-        CancellationToken ct = default);
+        CancellationToken cancellationToken = default);
 }

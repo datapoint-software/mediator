@@ -5,7 +5,7 @@ A [Datapoint.Mediator](https://www.nuget.org/packages/Datapoint.Mediator) behavi
 ```csharp
 public sealed class CreateInvoiceAuthorizer : IAuthorizer<CreateInvoice>
 {
-    public ValueTask<AuthorizationDecision> AuthorizeAsync(CreateInvoice action, ClaimsPrincipal principal, CancellationToken ct = default) =>
+    public ValueTask<AuthorizationDecision> AuthorizeAsync(CreateInvoice action, ClaimsPrincipal principal, CancellationToken cancellationToken = default) =>
         new(AuthorizationDecision.AllowIf(principal.IsInRole("Finance")));
 }
 ```

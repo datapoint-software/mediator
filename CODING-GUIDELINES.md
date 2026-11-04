@@ -71,7 +71,7 @@ The packages are libraries that other teams build on, so their public API follow
 Follow the [Task-based Asynchronous Pattern](https://learn.microsoft.com/dotnet/standard/asynchronous-programming-patterns/task-based-asynchronous-pattern-tap):
 
 - Return `ValueTask` or `ValueTask<T>` from asynchronous APIs ([ADR 0003](docs/adr/0003-valuetask-for-asynchronous-apis.md)). Await a `ValueTask` exactly once, and never store it ([`ValueTask` remarks](https://learn.microsoft.com/dotnet/api/system.threading.tasks.valuetask-1), [CA2012](https://learn.microsoft.com/dotnet/fundamentals/code-analysis/quality-rules/ca2012)).
-- Take a `CancellationToken` named `ct` as the last, optional parameter, and pass it to every call that accepts one.
+- Take a `CancellationToken` named `cancellationToken` as the last, optional parameter, and pass it to every call that accepts one.
 - In `src/`, end every `await` with `.ConfigureAwait(false)`, including `await using` and `await foreach`. Library code doesn't know whether the caller has a synchronization context, and continuing on it can deadlock or slow the caller ([CA2007](https://learn.microsoft.com/dotnet/fundamentals/code-analysis/quality-rules/ca2007)). Tests and samples are applications, so they don't need it.
 - Never block on asynchronous code with `.Result`, `.Wait()` or `GetAwaiter().GetResult()`. Never write `async void`.
 - Set an `AsyncLocal` value only inside an `async` method, so the caller gets its own value back ([ARCHITECTURE.md](ARCHITECTURE.md#authorization)).
@@ -154,10 +154,10 @@ These are deliberate. Keep them, unless a new decision record changes them.
 
 | Here | Microsoft's default | Why |
 |---|---|---|
-| `CancellationToken ct` | `cancellationToken` ([parameter naming](https://learn.microsoft.com/dotnet/standard/design-guidelines/naming-parameters)) | Shorter in the many `HandleAsync` signatures. Renaming it now would break callers that use named arguments. |
 | Public classes are `sealed` unless designed for inheritance | "Do not seal classes without a good reason" ([sealing](https://learn.microsoft.com/dotnet/standard/design-guidelines/sealing)) | Unsealing later is compatible, sealing later is a breaking change. So the safe default for a library that must stay stable is sealed. Sealed classes are also slightly faster to call. |
 | `ValueTask` for asynchronous APIs | `Task`, unless measurement shows `ValueTask` helps | Dispatch must not allocate ([ADR 0003](docs/adr/0003-valuetask-for-asynchronous-apis.md), [ADR 0006](docs/adr/0006-cached-generic-dispatchers.md)). |
 | Private static fields in `PascalCase` | `s_camelCase` in the .NET runtime and C# docs | The Framework Design Guidelines don't regulate private names, and the existing code is consistent. |
+| `IBehavior`'s `next` parameter | Avoid names that are keywords in other languages ([CA1716](https://learn.microsoft.com/dotnet/fundamentals/code-analysis/quality-rules/ca1716)) | ASP.NET Core middleware and other mediator libraries call this delegate `next`, and the rule only affects Visual Basic implementers ([ADR 0039](docs/adr/0039-public-names-follow-microsofts-rules.md)). |
 | Empty marker interfaces (`ICommand`, `IMessage`) | Avoid empty interfaces ([CA1040](https://learn.microsoft.com/dotnet/fundamentals/code-analysis/quality-rules/ca1040)) | They constrain generic methods at compile time, which is the case CA1040 allows. |
 | Test names with underscores | No underscores in identifiers ([CA1707](https://learn.microsoft.com/dotnet/fundamentals/code-analysis/quality-rules/ca1707)) | Test names are read as sentences, and Microsoft's testing guidance uses this pattern. |
 

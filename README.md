@@ -35,7 +35,7 @@ public sealed record CreateUser(string Name) : ICommand<Guid>;
 
 public sealed class CreateUserHandler : ICommandHandler<CreateUser, Guid>
 {
-    public ValueTask<Guid> HandleAsync(CreateUser command, CancellationToken ct = default) =>
+    public ValueTask<Guid> HandleAsync(CreateUser command, CancellationToken cancellationToken = default) =>
         new(Guid.NewGuid());
 }
 
@@ -43,7 +43,7 @@ public sealed class CreateUserHandler : ICommandHandler<CreateUser, Guid>
 services.AddMediator(options => options.AddHandlersFromAssemblyContaining<CreateUserHandler>());
 
 // Anywhere with a scoped IMediator
-var id = await mediator.SendAsync(new CreateUser("Ana"), ct);
+var id = await mediator.SendAsync(new CreateUser("Ana"), cancellationToken);
 ```
 
 ## Documentation
@@ -63,7 +63,7 @@ Name a command, query or stream query with `[Action]`, and any host can dispatch
 public sealed record CreateInvoice(string Customer, decimal Amount) : ICommand<Guid>;
 
 // In a host, with a scoped IActionDispatcher:
-var id = await dispatcher.DispatchAsync("invoice.create", arguments, ct: ct); // arguments: a JsonElement
+var id = await dispatcher.DispatchAsync("invoice.create", arguments, cancellationToken: cancellationToken); // arguments: a JsonElement
 ```
 
 - Every behaviour still runs, so actions dispatched by name are authorized and validated like any other.

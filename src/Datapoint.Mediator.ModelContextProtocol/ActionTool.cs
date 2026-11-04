@@ -107,12 +107,12 @@ internal sealed partial class ActionTool : McpServerTool
         }
     }
 
-    private async Task<JsonObject> StreamAsync(IActionDispatcher dispatcher, JsonElement arguments, CancellationToken ct)
+    private async Task<JsonObject> StreamAsync(IActionDispatcher dispatcher, JsonElement arguments, CancellationToken cancellationToken)
     {
         var items = new JsonArray();
         var truncated = false;
 
-        await foreach (var item in dispatcher.StreamAsync(_action.Name, arguments, _serializerOptions, ct).ConfigureAwait(false))
+        await foreach (var item in dispatcher.StreamAsync(_action.Name, arguments, _serializerOptions, cancellationToken).ConfigureAwait(false))
         {
             if (items.Count == _options.MaxStreamResults)
             {

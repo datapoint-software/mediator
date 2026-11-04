@@ -14,13 +14,13 @@ internal abstract class CommandDispatcher
             commandType,
             static type => (CommandDispatcher)Activator.CreateInstance(typeof(CommandDispatcher<>).MakeGenericType(type))!);
 
-    public abstract ValueTask DispatchAsync(ICommand command, IServiceProvider serviceProvider, CancellationToken ct);
+    public abstract ValueTask DispatchAsync(ICommand command, IServiceProvider serviceProvider, CancellationToken cancellationToken);
 }
 
 internal sealed class CommandDispatcher<TCommand> : CommandDispatcher
     where TCommand : ICommand
 {
-    public override ValueTask DispatchAsync(ICommand command, IServiceProvider serviceProvider, CancellationToken ct)
+    public override ValueTask DispatchAsync(ICommand command, IServiceProvider serviceProvider, CancellationToken cancellationToken)
     {
         var handler = serviceProvider.GetRequiredHandler<ICommandHandler<TCommand>>(typeof(TCommand));
         var typedCommand = (TCommand)command;
@@ -28,10 +28,10 @@ internal sealed class CommandDispatcher<TCommand> : CommandDispatcher
 
         if (behaviors.Length == 0)
         {
-            return handler.HandleAsync(typedCommand, ct);
+            return handler.HandleAsync(typedCommand, cancellationToken);
         }
 
-        return InvokePipelineAsync(behaviors, handler, command, typedCommand, ct);
+        return InvokePipelineAsync(behaviors, handler, command, typedCommand, cancellationToken);
     }
 
     // Kept separate from DispatchAsync, so the closures are only allocated when there are behaviours.
@@ -40,7 +40,7 @@ internal sealed class CommandDispatcher<TCommand> : CommandDispatcher
         ICommandHandler<TCommand> handler,
         ICommand command,
         TCommand typedCommand,
-        CancellationToken ct)
+        CancellationToken cancellationToken)
     {
         // Built from the innermost behaviour outwards, so the first registered behaviour runs first.
         Func<CancellationToken, ValueTask> next = c => handler.HandleAsync(typedCommand, c);
@@ -52,6 +52,6 @@ internal sealed class CommandDispatcher<TCommand> : CommandDispatcher
             next = c => behavior.HandleAsync(command, inner, c);
         }
 
-        return next(ct);
+        return next(cancellationToken);
     }
 }

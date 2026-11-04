@@ -21,12 +21,12 @@ public sealed record CountTo(int Count) : IStreamQuery<int>;
 
 public sealed class PingHandler : ICommandHandler<Ping>
 {
-    public ValueTask HandleAsync(Ping command, CancellationToken ct = default) => default;
+    public ValueTask HandleAsync(Ping command, CancellationToken cancellationToken = default) => default;
 }
 
 public sealed class ValidatedPingHandler : ICommandHandler<ValidatedPing>
 {
-    public ValueTask HandleAsync(ValidatedPing command, CancellationToken ct = default) => default;
+    public ValueTask HandleAsync(ValidatedPing command, CancellationToken cancellationToken = default) => default;
 }
 
 public sealed class ValidatedPingValidator : AbstractValidator<ValidatedPing>
@@ -36,17 +36,17 @@ public sealed class ValidatedPingValidator : AbstractValidator<ValidatedPing>
 
 public sealed class AddHandler : ICommandHandler<Add, int>
 {
-    public ValueTask<int> HandleAsync(Add command, CancellationToken ct = default) => new(command.A + command.B);
+    public ValueTask<int> HandleAsync(Add command, CancellationToken cancellationToken = default) => new(command.A + command.B);
 }
 
 public sealed class EchoHandler : IQueryHandler<Echo, string>
 {
-    public ValueTask<string> HandleAsync(Echo query, CancellationToken ct = default) => new(query.Value);
+    public ValueTask<string> HandleAsync(Echo query, CancellationToken cancellationToken = default) => new(query.Value);
 }
 
 public sealed class CountToHandler : IStreamQueryHandler<CountTo, int>
 {
-    public async IAsyncEnumerable<int> HandleAsync(CountTo query, [EnumeratorCancellation] CancellationToken ct = default)
+    public async IAsyncEnumerable<int> HandleAsync(CountTo query, [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
         await Task.CompletedTask;
 
@@ -59,28 +59,28 @@ public sealed class CountToHandler : IStreamQueryHandler<CountTo, int>
 
 public sealed class FirstNotifiedHandler : IMessageHandler<Notified>
 {
-    public ValueTask HandleAsync(Notified message, CancellationToken ct = default) => default;
+    public ValueTask HandleAsync(Notified message, CancellationToken cancellationToken = default) => default;
 }
 
 public sealed class SecondNotifiedHandler : IMessageHandler<Notified>
 {
-    public ValueTask HandleAsync(Notified message, CancellationToken ct = default) => default;
+    public ValueTask HandleAsync(Notified message, CancellationToken cancellationToken = default) => default;
 }
 
 public sealed class ThirdNotifiedHandler : IMessageHandler<Notified>
 {
-    public ValueTask HandleAsync(Notified message, CancellationToken ct = default) => default;
+    public ValueTask HandleAsync(Notified message, CancellationToken cancellationToken = default) => default;
 }
 
 // Two distinct types, because registering the same behaviour twice has no effect.
 public sealed class FirstPassThroughBehavior : IBehavior
 {
-    public ValueTask HandleAsync(ICommand command, Func<CancellationToken, ValueTask> next, CancellationToken ct = default) =>
-        next(ct);
+    public ValueTask HandleAsync(ICommand command, Func<CancellationToken, ValueTask> next, CancellationToken cancellationToken = default) =>
+        next(cancellationToken);
 }
 
 public sealed class SecondPassThroughBehavior : IBehavior
 {
-    public ValueTask HandleAsync(ICommand command, Func<CancellationToken, ValueTask> next, CancellationToken ct = default) =>
-        next(ct);
+    public ValueTask HandleAsync(ICommand command, Func<CancellationToken, ValueTask> next, CancellationToken cancellationToken = default) =>
+        next(cancellationToken);
 }

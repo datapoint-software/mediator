@@ -37,10 +37,10 @@ public sealed class TestAuthorizer<TAction>(string name, AuthorizationDecision d
 
     public List<(TAction Action, ClaimsPrincipal Principal, CancellationToken Token)> Calls { get; } = [];
 
-    public ValueTask<AuthorizationDecision> AuthorizeAsync(TAction action, ClaimsPrincipal principal, CancellationToken ct = default)
+    public ValueTask<AuthorizationDecision> AuthorizeAsync(TAction action, ClaimsPrincipal principal, CancellationToken cancellationToken = default)
     {
         log.Add(name);
-        Calls.Add((action, principal, ct));
+        Calls.Add((action, principal, cancellationToken));
         return new(decision);
     }
 }
@@ -48,7 +48,7 @@ public sealed class TestAuthorizer<TAction>(string name, AuthorizationDecision d
 // Returns null, as a careless implementation might.
 public sealed class NullAuthorizer<TAction> : IAuthorizer<TAction>
 {
-    public ValueTask<AuthorizationDecision> AuthorizeAsync(TAction action, ClaimsPrincipal principal, CancellationToken ct = default) =>
+    public ValueTask<AuthorizationDecision> AuthorizeAsync(TAction action, ClaimsPrincipal principal, CancellationToken cancellationToken = default) =>
         new((AuthorizationDecision)null!);
 }
 
@@ -73,7 +73,7 @@ public sealed class RecordingObserver(string name, List<string> log, Exception? 
 {
     public List<AuthorizationEvent> Events { get; } = [];
 
-    public ValueTask OnAuthorizedAsync(AuthorizationEvent authorization, CancellationToken ct = default)
+    public ValueTask OnAuthorizedAsync(AuthorizationEvent authorization, CancellationToken cancellationToken = default)
     {
         log.Add(name);
         Events.Add(authorization);
@@ -83,7 +83,7 @@ public sealed class RecordingObserver(string name, List<string> log, Exception? 
 
 public sealed class ThrowingAuthorizer<TAction>(Exception exception) : IAuthorizer<TAction>
 {
-    public ValueTask<AuthorizationDecision> AuthorizeAsync(TAction action, ClaimsPrincipal principal, CancellationToken ct = default) =>
+    public ValueTask<AuthorizationDecision> AuthorizeAsync(TAction action, ClaimsPrincipal principal, CancellationToken cancellationToken = default) =>
         ValueTask.FromException<AuthorizationDecision>(exception);
 }
 

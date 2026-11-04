@@ -68,10 +68,10 @@ public sealed class AddValidationBehaviorTests
         await using var scope = provider.CreateAsyncScope();
         var mediator = scope.ServiceProvider.GetRequiredService<IMediator>();
         var log = provider.GetRequiredService<Recorder>().Log;
-        var ct = TestContext.Current.CancellationToken;
+        var cancellationToken = TestContext.Current.CancellationToken;
 
-        await Assert.ThrowsAsync<ValidationException>(async () => await mediator.SendAsync(new CreateUser(""), ct));
-        await mediator.SendAsync(new CreateUser("Ana"), ct);
+        await Assert.ThrowsAsync<ValidationException>(async () => await mediator.SendAsync(new CreateUser(""), cancellationToken));
+        await mediator.SendAsync(new CreateUser("Ana"), cancellationToken);
 
         Assert.Equal(["Ana"], log);
     }

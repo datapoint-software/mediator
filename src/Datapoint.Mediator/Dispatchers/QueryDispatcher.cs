@@ -18,7 +18,7 @@ internal abstract class QueryDispatcher<TResult>
     public abstract ValueTask<TResult> DispatchAsync(
         IQuery<TResult> query,
         IServiceProvider serviceProvider,
-        CancellationToken ct);
+        CancellationToken cancellationToken);
 }
 
 internal sealed class QueryDispatcher<TQuery, TResult> : QueryDispatcher<TResult>
@@ -27,7 +27,7 @@ internal sealed class QueryDispatcher<TQuery, TResult> : QueryDispatcher<TResult
     public override ValueTask<TResult> DispatchAsync(
         IQuery<TResult> query,
         IServiceProvider serviceProvider,
-        CancellationToken ct)
+        CancellationToken cancellationToken)
     {
         var handler = serviceProvider.GetRequiredHandler<IQueryHandler<TQuery, TResult>>(typeof(TQuery));
         var typedQuery = (TQuery)query;
@@ -35,10 +35,10 @@ internal sealed class QueryDispatcher<TQuery, TResult> : QueryDispatcher<TResult
 
         if (behaviors.Length == 0)
         {
-            return handler.HandleAsync(typedQuery, ct);
+            return handler.HandleAsync(typedQuery, cancellationToken);
         }
 
-        return InvokePipelineAsync(behaviors, handler, query, typedQuery, ct);
+        return InvokePipelineAsync(behaviors, handler, query, typedQuery, cancellationToken);
     }
 
     // Kept separate from DispatchAsync, so the closures are only allocated when there are behaviours.
@@ -47,7 +47,7 @@ internal sealed class QueryDispatcher<TQuery, TResult> : QueryDispatcher<TResult
         IQueryHandler<TQuery, TResult> handler,
         IQuery<TResult> query,
         TQuery typedQuery,
-        CancellationToken ct)
+        CancellationToken cancellationToken)
     {
         // Built from the innermost behaviour outwards, so the first registered behaviour runs first.
         Func<CancellationToken, ValueTask<TResult>> next = c => handler.HandleAsync(typedQuery, c);
@@ -59,6 +59,6 @@ internal sealed class QueryDispatcher<TQuery, TResult> : QueryDispatcher<TResult
             next = c => behavior.HandleAsync(query, inner, c);
         }
 
-        return next(ct);
+        return next(cancellationToken);
     }
 }

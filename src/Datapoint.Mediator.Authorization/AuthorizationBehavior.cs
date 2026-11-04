@@ -89,8 +89,8 @@ public sealed class AuthorizationBehavior : IBehavior
     /// <inheritdoc/>
     /// <exception cref="AuthenticationRequiredException">There is no signed-in user.</exception>
     /// <exception cref="AccessDeniedException">The user may not run the command.</exception>
-    public ValueTask HandleAsync(ICommand command, Func<CancellationToken, ValueTask> next, CancellationToken ct = default) =>
-        IsAnonymous(command) ? HandleAnonymousAsync(next, ct) : AuthorizeThenHandleAsync(command, next, ct);
+    public ValueTask HandleAsync(ICommand command, Func<CancellationToken, ValueTask> next, CancellationToken cancellationToken = default) =>
+        IsAnonymous(command) ? HandleAnonymousAsync(next, cancellationToken) : AuthorizeThenHandleAsync(command, next, cancellationToken);
 
     /// <inheritdoc/>
     /// <exception cref="AuthenticationRequiredException">There is no signed-in user.</exception>
@@ -98,8 +98,8 @@ public sealed class AuthorizationBehavior : IBehavior
     public ValueTask<TResult> HandleAsync<TResult>(
         ICommand<TResult> command,
         Func<CancellationToken, ValueTask<TResult>> next,
-        CancellationToken ct = default) =>
-        IsAnonymous(command) ? HandleAnonymousAsync(next, ct) : AuthorizeThenHandleAsync(command, isCommand: true, next, ct);
+        CancellationToken cancellationToken = default) =>
+        IsAnonymous(command) ? HandleAnonymousAsync(next, cancellationToken) : AuthorizeThenHandleAsync(command, isCommand: true, next, cancellationToken);
 
     /// <inheritdoc/>
     /// <exception cref="AuthenticationRequiredException">There is no signed-in user.</exception>
@@ -107,8 +107,8 @@ public sealed class AuthorizationBehavior : IBehavior
     public ValueTask<TResult> HandleAsync<TResult>(
         IQuery<TResult> query,
         Func<CancellationToken, ValueTask<TResult>> next,
-        CancellationToken ct = default) =>
-        IsAnonymous(query) ? HandleAnonymousAsync(next, ct) : AuthorizeThenHandleAsync(query, isCommand: false, next, ct);
+        CancellationToken cancellationToken = default) =>
+        IsAnonymous(query) ? HandleAnonymousAsync(next, cancellationToken) : AuthorizeThenHandleAsync(query, isCommand: false, next, cancellationToken);
 
     /// <inheritdoc/>
     /// <exception cref="AuthenticationRequiredException">
@@ -120,10 +120,10 @@ public sealed class AuthorizationBehavior : IBehavior
     public IAsyncEnumerable<TResult> HandleAsync<TResult>(
         IStreamQuery<TResult> query,
         Func<CancellationToken, IAsyncEnumerable<TResult>> next,
-        CancellationToken ct = default) =>
+        CancellationToken cancellationToken = default) =>
         IsAnonymous(query)
-            ? AuthorizationContext.Result is null ? next(ct) : AuthorizeThenStreamAsync(null, next, ct)
-            : AuthorizeThenStreamAsync(query, next, ct);
+            ? AuthorizationContext.Result is null ? next(cancellationToken) : AuthorizeThenStreamAsync(null, next, cancellationToken)
+            : AuthorizeThenStreamAsync(query, next, cancellationToken);
 
     /// <summary>
     /// Runs the message handlers without the decision of the action that published the message: messages are not
@@ -131,61 +131,61 @@ public sealed class AuthorizationBehavior : IBehavior
     /// </summary>
     /// <param name="message">The message.</param>
     /// <param name="next">Runs the message handlers.</param>
-    /// <param name="ct">A token to cancel the operation.</param>
+    /// <param name="cancellationToken">A token to cancel the operation.</param>
     /// <returns>A task that completes when the message handlers have run.</returns>
-    public ValueTask HandleAsync(IMessage message, Func<CancellationToken, ValueTask> next, CancellationToken ct = default) =>
-        HandleAnonymousAsync(next, ct);
+    public ValueTask HandleAsync(IMessage message, Func<CancellationToken, ValueTask> next, CancellationToken cancellationToken = default) =>
+        HandleAnonymousAsync(next, cancellationToken);
 
     private static bool IsAnonymous(object action) => Authentication.IsAnonymous(action.GetType());
 
     // An anonymous action or a message, sent from an authorized action, must not see its decision.
-    private static ValueTask HandleAnonymousAsync(Func<CancellationToken, ValueTask> next, CancellationToken ct) =>
-        AuthorizationContext.Result is null ? next(ct) : HandleWithoutDecisionAsync(next, ct);
+    private static ValueTask HandleAnonymousAsync(Func<CancellationToken, ValueTask> next, CancellationToken cancellationToken) =>
+        AuthorizationContext.Result is null ? next(cancellationToken) : HandleWithoutDecisionAsync(next, cancellationToken);
 
-    private static ValueTask<TResult> HandleAnonymousAsync<TResult>(Func<CancellationToken, ValueTask<TResult>> next, CancellationToken ct) =>
-        AuthorizationContext.Result is null ? next(ct) : HandleWithoutDecisionAsync(next, ct);
+    private static ValueTask<TResult> HandleAnonymousAsync<TResult>(Func<CancellationToken, ValueTask<TResult>> next, CancellationToken cancellationToken) =>
+        AuthorizationContext.Result is null ? next(cancellationToken) : HandleWithoutDecisionAsync(next, cancellationToken);
 
     // The decision set in an async method flows into next, and is restored for the caller when the method returns.
-    private static async ValueTask HandleWithoutDecisionAsync(Func<CancellationToken, ValueTask> next, CancellationToken ct)
+    private static async ValueTask HandleWithoutDecisionAsync(Func<CancellationToken, ValueTask> next, CancellationToken cancellationToken)
     {
         AuthorizationContext.Result = null;
-        await next(ct).ConfigureAwait(false);
+        await next(cancellationToken).ConfigureAwait(false);
     }
 
     private static async ValueTask<TResult> HandleWithoutDecisionAsync<TResult>(
         Func<CancellationToken, ValueTask<TResult>> next,
-        CancellationToken ct)
+        CancellationToken cancellationToken)
     {
         AuthorizationContext.Result = null;
-        return await next(ct).ConfigureAwait(false);
+        return await next(cancellationToken).ConfigureAwait(false);
     }
 
-    private async ValueTask AuthorizeThenHandleAsync(object action, Func<CancellationToken, ValueTask> next, CancellationToken ct)
+    private async ValueTask AuthorizeThenHandleAsync(object action, Func<CancellationToken, ValueTask> next, CancellationToken cancellationToken)
     {
-        AuthorizationContext.Result = await AuthorizeAsync(action, isCommand: true, ct).ConfigureAwait(false);
-        await next(ct).ConfigureAwait(false);
+        AuthorizationContext.Result = await AuthorizeAsync(action, isCommand: true, cancellationToken).ConfigureAwait(false);
+        await next(cancellationToken).ConfigureAwait(false);
     }
 
     private async ValueTask<TResult> AuthorizeThenHandleAsync<TResult>(
         object action,
         bool isCommand,
         Func<CancellationToken, ValueTask<TResult>> next,
-        CancellationToken ct)
+        CancellationToken cancellationToken)
     {
-        AuthorizationContext.Result = await AuthorizeAsync(action, isCommand, ct).ConfigureAwait(false);
-        return await next(ct).ConfigureAwait(false);
+        AuthorizationContext.Result = await AuthorizeAsync(action, isCommand, cancellationToken).ConfigureAwait(false);
+        return await next(cancellationToken).ConfigureAwait(false);
     }
 
     // Authorizes the stream query when one is passed; an anonymous one streams without a decision.
     private async IAsyncEnumerable<TResult> AuthorizeThenStreamAsync<TResult>(
         object? action,
         Func<CancellationToken, IAsyncEnumerable<TResult>> next,
-        [EnumeratorCancellation] CancellationToken ct)
+        [EnumeratorCancellation] CancellationToken cancellationToken)
     {
-        var result = action is null ? null : await AuthorizeAsync(action, isCommand: false, ct).ConfigureAwait(false);
+        var result = action is null ? null : await AuthorizeAsync(action, isCommand: false, cancellationToken).ConfigureAwait(false);
 
         AuthorizationContext.Result = result;
-        await using var results = next(ct).ConfigureAwait(false).GetAsyncEnumerator();
+        await using var results = next(cancellationToken).ConfigureAwait(false).GetAsyncEnumerator();
 
         while (true)
         {
@@ -201,25 +201,25 @@ public sealed class AuthorizationBehavior : IBehavior
         }
     }
 
-    private async ValueTask<AuthorizationResult> AuthorizeAsync(object action, bool isCommand, CancellationToken ct)
+    private async ValueTask<AuthorizationResult> AuthorizeAsync(object action, bool isCommand, CancellationToken cancellationToken)
     {
         RequireTransaction(action, isCommand);
 
         var observers = Authentication.GetObservers(_serviceProvider);
-        var principal = await Authentication.RequirePrincipalAsync(_serviceProvider, action, observers, ct).ConfigureAwait(false);
+        var principal = await Authentication.RequirePrincipalAsync(_serviceProvider, action, observers, cancellationToken).ConfigureAwait(false);
         var decisions = new List<AuthorizerDecision>();
 
         try
         {
             await ActionAuthorization.Get(action.GetType())
-                .AuthorizeAsync(action, principal, _serviceProvider, decisions, ct)
+                .AuthorizeAsync(action, principal, _serviceProvider, decisions, cancellationToken)
                 .ConfigureAwait(false);
         }
         catch (Exception exception) when (observers.Length > 0)
         {
             // The authorizer's exception propagates unchanged, so a bug isn't hidden as a denial.
             var failed = new AuthorizationResult(action, decisions, failed: true);
-            await Authentication.ObserveAsync(observers, action, principal, AuthorizationOutcome.Failed, failed, exception, ct)
+            await Authentication.ObserveAsync(observers, action, principal, AuthorizationOutcome.Failed, failed, exception, cancellationToken)
                 .ConfigureAwait(false);
 
             throw;
@@ -227,7 +227,7 @@ public sealed class AuthorizationBehavior : IBehavior
 
         var result = new AuthorizationResult(action, decisions);
         var outcome = result.IsAllowed ? AuthorizationOutcome.Allowed : AuthorizationOutcome.Denied;
-        await Authentication.ObserveAsync(observers, action, principal, outcome, result, null, ct).ConfigureAwait(false);
+        await Authentication.ObserveAsync(observers, action, principal, outcome, result, null, cancellationToken).ConfigureAwait(false);
 
         // Fail closed: an action that nobody wrote a rule for is not allowed. The message never includes the details.
         if (decisions.Count == 0)

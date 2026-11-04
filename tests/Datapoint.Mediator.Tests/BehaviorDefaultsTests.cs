@@ -17,9 +17,9 @@ public sealed class BehaviorDefaultsTests
         using var cts = new CancellationTokenSource();
         CancellationToken? received = null;
 
-        await _behavior.HandleAsync(new Ping(), ct =>
+        await _behavior.HandleAsync(new Ping(), cancellationToken =>
         {
-            received = ct;
+            received = cancellationToken;
             return default;
         }, cts.Token);
 
@@ -32,9 +32,9 @@ public sealed class BehaviorDefaultsTests
         using var cts = new CancellationTokenSource();
         CancellationToken? received = null;
 
-        var result = await _behavior.HandleAsync(new Add(1, 2), ct =>
+        var result = await _behavior.HandleAsync(new Add(1, 2), cancellationToken =>
         {
-            received = ct;
+            received = cancellationToken;
             return new ValueTask<int>(42);
         }, cts.Token);
 
@@ -48,9 +48,9 @@ public sealed class BehaviorDefaultsTests
         using var cts = new CancellationTokenSource();
         CancellationToken? received = null;
 
-        var result = await _behavior.HandleAsync(new Echo("value"), ct =>
+        var result = await _behavior.HandleAsync(new Echo("value"), cancellationToken =>
         {
-            received = ct;
+            received = cancellationToken;
             return new ValueTask<string>("result");
         }, cts.Token);
 
@@ -64,9 +64,9 @@ public sealed class BehaviorDefaultsTests
         using var cts = new CancellationTokenSource();
         CancellationToken? received = null;
 
-        await _behavior.HandleAsync(new Notified(), ct =>
+        await _behavior.HandleAsync(new Notified(), cancellationToken =>
         {
-            received = ct;
+            received = cancellationToken;
             return default;
         }, cts.Token);
 
@@ -78,11 +78,11 @@ public sealed class BehaviorDefaultsTests
     {
         using var cts = new CancellationTokenSource();
         CancellationToken? received = null;
-        var expected = Streams.CountTo(1, ct: TestContext.Current.CancellationToken);
+        var expected = Streams.CountTo(1, cancellationToken: TestContext.Current.CancellationToken);
 
-        var result = _behavior.HandleAsync(new CountTo(1), ct =>
+        var result = _behavior.HandleAsync(new CountTo(1), cancellationToken =>
         {
-            received = ct;
+            received = cancellationToken;
             return expected;
         }, cts.Token);
 

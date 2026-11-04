@@ -51,7 +51,7 @@ public sealed class EndToEndTests
         await using var scope = provider.CreateAsyncScope();
         var dispatcher = scope.ServiceProvider.GetRequiredService<IActionDispatcher>();
 
-        await dispatcher.DispatchAsync("invoice.approve", JsonDocument.Parse("{ \"amount\": 500 }").RootElement, ct: TestContext.Current.CancellationToken);
+        await dispatcher.DispatchAsync("invoice.approve", JsonDocument.Parse("{ \"amount\": 500 }").RootElement, cancellationToken: TestContext.Current.CancellationToken);
 
         Assert.Equal(["approved 500"], provider.GetRequiredService<Recorder>().Log);
     }
@@ -64,7 +64,7 @@ public sealed class EndToEndTests
         var dispatcher = scope.ServiceProvider.GetRequiredService<IActionDispatcher>();
 
         await Assert.ThrowsAsync<AccessDeniedException>(
-            async () => await dispatcher.DispatchAsync("invoice.void", default, ct: TestContext.Current.CancellationToken));
+            async () => await dispatcher.DispatchAsync("invoice.void", default, cancellationToken: TestContext.Current.CancellationToken));
 
         Assert.Empty(provider.GetRequiredService<Recorder>().Log);
     }

@@ -15,10 +15,10 @@ public sealed class SendCommandTests
         var command = new Ping();
         Ping? receivedCommand = null;
         CancellationToken receivedToken = default;
-        var provider = new FakeServiceProvider().Add<ICommandHandler<Ping>>(new CommandHandler<Ping>((c, ct) =>
+        var provider = new FakeServiceProvider().Add<ICommandHandler<Ping>>(new CommandHandler<Ping>((c, cancellationToken) =>
         {
             receivedCommand = c;
-            receivedToken = ct;
+            receivedToken = cancellationToken;
             return default;
         }));
 

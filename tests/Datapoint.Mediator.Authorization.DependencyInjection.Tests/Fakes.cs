@@ -24,7 +24,7 @@ public sealed class Recorder
 
 public sealed class ApproveInvoiceHandler(Recorder recorder) : ICommandHandler<ApproveInvoice>
 {
-    public ValueTask HandleAsync(ApproveInvoice command, CancellationToken ct = default)
+    public ValueTask HandleAsync(ApproveInvoice command, CancellationToken cancellationToken = default)
     {
         recorder.Log.Add($"approved {command.Amount}");
         return default;
@@ -33,7 +33,7 @@ public sealed class ApproveInvoiceHandler(Recorder recorder) : ICommandHandler<A
 
 public sealed class VoidInvoiceHandler(Recorder recorder) : ICommandHandler<VoidInvoice>
 {
-    public ValueTask HandleAsync(VoidInvoice command, CancellationToken ct = default)
+    public ValueTask HandleAsync(VoidInvoice command, CancellationToken cancellationToken = default)
     {
         recorder.Log.Add("voided");
         return default;
@@ -43,41 +43,41 @@ public sealed class VoidInvoiceHandler(Recorder recorder) : ICommandHandler<Void
 // Declared out of name order on purpose, to check that scanning sorts them.
 public sealed class ZetaApproveAuthorizer : IAuthorizer<ApproveInvoice>
 {
-    public ValueTask<AuthorizationDecision> AuthorizeAsync(ApproveInvoice action, ClaimsPrincipal principal, CancellationToken ct = default) =>
+    public ValueTask<AuthorizationDecision> AuthorizeAsync(ApproveInvoice action, ClaimsPrincipal principal, CancellationToken cancellationToken = default) =>
         new(AuthorizationDecision.AllowIf(principal.IsInRole("Finance")));
 }
 
 internal sealed class AlphaApproveAuthorizer : IAuthorizer<ApproveInvoice>
 {
-    public ValueTask<AuthorizationDecision> AuthorizeAsync(ApproveInvoice action, ClaimsPrincipal principal, CancellationToken ct = default) =>
+    public ValueTask<AuthorizationDecision> AuthorizeAsync(ApproveInvoice action, ClaimsPrincipal principal, CancellationToken cancellationToken = default) =>
         new(AuthorizationDecision.AllowIf(action.Amount <= 1000));
 }
 
 public sealed class InvoiceAuthorizer : IAuthorizer<ApproveInvoice>, IAuthorizer<ArchiveInvoice>
 {
-    public ValueTask<AuthorizationDecision> AuthorizeAsync(ApproveInvoice action, ClaimsPrincipal principal, CancellationToken ct = default) => new(AuthorizationDecision.Allow());
+    public ValueTask<AuthorizationDecision> AuthorizeAsync(ApproveInvoice action, ClaimsPrincipal principal, CancellationToken cancellationToken = default) => new(AuthorizationDecision.Allow());
 
-    public ValueTask<AuthorizationDecision> AuthorizeAsync(ArchiveInvoice action, ClaimsPrincipal principal, CancellationToken ct = default) => new(AuthorizationDecision.Allow());
+    public ValueTask<AuthorizationDecision> AuthorizeAsync(ArchiveInvoice action, ClaimsPrincipal principal, CancellationToken cancellationToken = default) => new(AuthorizationDecision.Allow());
 }
 
 public abstract class AbstractAuthorizer : IAuthorizer<ArchiveInvoice>
 {
-    public abstract ValueTask<AuthorizationDecision> AuthorizeAsync(ArchiveInvoice action, ClaimsPrincipal principal, CancellationToken ct = default);
+    public abstract ValueTask<AuthorizationDecision> AuthorizeAsync(ArchiveInvoice action, ClaimsPrincipal principal, CancellationToken cancellationToken = default);
 }
 
 public sealed class GenericAuthorizer<T> : IAuthorizer<T>
 {
-    public ValueTask<AuthorizationDecision> AuthorizeAsync(T action, ClaimsPrincipal principal, CancellationToken ct = default) => new(AuthorizationDecision.Allow());
+    public ValueTask<AuthorizationDecision> AuthorizeAsync(T action, ClaimsPrincipal principal, CancellationToken cancellationToken = default) => new(AuthorizationDecision.Allow());
 }
 
 public sealed class OtherBehavior : IBehavior;
 
 public sealed class AuditObserver : IAuthorizationObserver
 {
-    public ValueTask OnAuthorizedAsync(AuthorizationEvent authorization, CancellationToken ct = default) => default;
+    public ValueTask OnAuthorizedAsync(AuthorizationEvent authorization, CancellationToken cancellationToken = default) => default;
 }
 
 public sealed class MetricsObserver : IAuthorizationObserver
 {
-    public ValueTask OnAuthorizedAsync(AuthorizationEvent authorization, CancellationToken ct = default) => default;
+    public ValueTask OnAuthorizedAsync(AuthorizationEvent authorization, CancellationToken cancellationToken = default) => default;
 }

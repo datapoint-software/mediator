@@ -102,7 +102,7 @@ public sealed class TransactionBehavior<TDbContext> : IBehavior
     /// A transaction that the mediator didn't begin is active, and <see cref="TransactionBehaviorOptions.ForeignTransactions"/>
     /// is <see cref="ForeignTransactions.Throw"/>.
     /// </exception>
-    public async ValueTask HandleAsync(ICommand command, Func<CancellationToken, ValueTask> next, CancellationToken ct = default) =>
+    public async ValueTask HandleAsync(ICommand command, Func<CancellationToken, ValueTask> next, CancellationToken cancellationToken = default) =>
         await RunAsync<bool>(
             command,
             readOnly: false,
@@ -111,7 +111,7 @@ public sealed class TransactionBehavior<TDbContext> : IBehavior
                 await next(c).ConfigureAwait(false);
                 return true;
             },
-            ct).ConfigureAwait(false);
+            cancellationToken).ConfigureAwait(false);
 
     /// <inheritdoc/>
     /// <exception cref="InvalidOperationException">
@@ -121,8 +121,8 @@ public sealed class TransactionBehavior<TDbContext> : IBehavior
     public ValueTask<TResult> HandleAsync<TResult>(
         ICommand<TResult> command,
         Func<CancellationToken, ValueTask<TResult>> next,
-        CancellationToken ct = default) =>
-        RunAsync(command, readOnly: false, next, ct);
+        CancellationToken cancellationToken = default) =>
+        RunAsync(command, readOnly: false, next, cancellationToken);
 
     /// <inheritdoc/>
     /// <exception cref="InvalidOperationException">
@@ -132,8 +132,8 @@ public sealed class TransactionBehavior<TDbContext> : IBehavior
     public ValueTask<TResult> HandleAsync<TResult>(
         IQuery<TResult> query,
         Func<CancellationToken, ValueTask<TResult>> next,
-        CancellationToken ct = default) =>
-        _options.Queries == QueryTransactions.None ? next(ct) : RunAsync(query, readOnly: true, next, ct);
+        CancellationToken cancellationToken = default) =>
+        _options.Queries == QueryTransactions.None ? next(cancellationToken) : RunAsync(query, readOnly: true, next, cancellationToken);
 
     /// <inheritdoc/>
     /// <exception cref="InvalidOperationException">
@@ -144,10 +144,10 @@ public sealed class TransactionBehavior<TDbContext> : IBehavior
     public IAsyncEnumerable<TResult> HandleAsync<TResult>(
         IStreamQuery<TResult> query,
         Func<CancellationToken, IAsyncEnumerable<TResult>> next,
-        CancellationToken ct = default) =>
+        CancellationToken cancellationToken = default) =>
         _options.Queries == QueryTransactions.None || IsNonTransactional(query) && _dbContext.Database.CurrentTransaction is null
-            ? next(ct)
-            : StreamAsync(query, next, ct);
+            ? next(cancellationToken)
+            : StreamAsync(query, next, cancellationToken);
 
     private static bool IsNonTransactional(object request) =>
         NonTransactionalRequests.GetOrAdd(
@@ -158,14 +158,14 @@ public sealed class TransactionBehavior<TDbContext> : IBehavior
         object request,
         bool readOnly,
         Func<CancellationToken, ValueTask<TResult>> next,
-        CancellationToken ct)
+        CancellationToken cancellationToken)
     {
         if (_dbContext.Database.CurrentTransaction is not null)
         {
-            return JoinAsync(request, next, ct);
+            return JoinAsync(request, next, cancellationToken);
         }
 
-        return IsNonTransactional(request) ? next(ct) : RunInTransactionAsync(request, readOnly, next, ct);
+        return IsNonTransactional(request) ? next(cancellationToken) : RunInTransactionAsync(request, readOnly, next, cancellationToken);
     }
 
     // The transaction is the mediator's when the current state was set for this context instance.
@@ -191,25 +191,25 @@ public sealed class TransactionBehavior<TDbContext> : IBehavior
     private async ValueTask<TResult> JoinAsync<TResult>(
         object request,
         Func<CancellationToken, ValueTask<TResult>> next,
-        CancellationToken ct)
+        CancellationToken cancellationToken)
     {
         // A foreign transaction is joined as it is: its owner saves and commits it.
         if (OwnState() is not { } outer)
         {
-            return await next(ct).ConfigureAwait(false);
+            return await next(cancellationToken).ConfigureAwait(false);
         }
 
         var state = outer with { IsJoined = true };
         TransactionContext.State = state;
-        await InitializeAsync(request, state, ct).ConfigureAwait(false);
-        return await next(ct).ConfigureAwait(false);
+        await InitializeAsync(request, state, cancellationToken).ConfigureAwait(false);
+        return await next(cancellationToken).ConfigureAwait(false);
     }
 
     private async ValueTask<TResult> RunInTransactionAsync<TResult>(
         object request,
         bool readOnly,
         Func<CancellationToken, ValueTask<TResult>> next,
-        CancellationToken ct)
+        CancellationToken cancellationToken)
     {
         var attempt = 0;
         var strategy = _dbContext.Database.CreateExecutionStrategy();
@@ -253,13 +253,13 @@ public sealed class TransactionBehavior<TDbContext> : IBehavior
                     }
                 }
             },
-            ct).ConfigureAwait(false);
+            cancellationToken).ConfigureAwait(false);
     }
 
     private async IAsyncEnumerable<TResult> StreamAsync<TResult>(
         object query,
         Func<CancellationToken, IAsyncEnumerable<TResult>> next,
-        [EnumeratorCancellation] CancellationToken ct)
+        [EnumeratorCancellation] CancellationToken cancellationToken)
     {
         TransactionState? state;
         IDbContextTransaction? transaction = null;
@@ -271,7 +271,7 @@ public sealed class TransactionBehavior<TDbContext> : IBehavior
             if (state is not null)
             {
                 TransactionContext.State = state;
-                await InitializeAsync(query, state, ct).ConfigureAwait(false);
+                await InitializeAsync(query, state, cancellationToken).ConfigureAwait(false);
             }
         }
         else
@@ -285,7 +285,7 @@ public sealed class TransactionBehavior<TDbContext> : IBehavior
                     "retries, or mark the stream query [NonTransactional].");
             }
 
-            transaction = await BeginAsync(readOnly: true, ct).ConfigureAwait(false);
+            transaction = await BeginAsync(readOnly: true, cancellationToken).ConfigureAwait(false);
             state = new TransactionState(_dbContext, IsReadOnly: true, IsJoined: false, Attempt: 1, Guid.CreateVersion7());
             TransactionContext.State = state;
         }
@@ -297,10 +297,10 @@ public sealed class TransactionBehavior<TDbContext> : IBehavior
             {
                 if (transaction is not null)
                 {
-                    await PrepareAsync(query, state!, ct).ConfigureAwait(false);
+                    await PrepareAsync(query, state!, cancellationToken).ConfigureAwait(false);
                 }
 
-                await foreach (var result in WithStateAsync(state, next(ct)).ConfigureAwait(false))
+                await foreach (var result in WithStateAsync(state, next(cancellationToken)).ConfigureAwait(false))
                 {
                     yield return result;
                 }
@@ -344,27 +344,27 @@ public sealed class TransactionBehavior<TDbContext> : IBehavior
         }
     }
 
-    private async ValueTask<IDbContextTransaction> BeginAsync(bool readOnly, CancellationToken ct)
+    private async ValueTask<IDbContextTransaction> BeginAsync(bool readOnly, CancellationToken cancellationToken)
     {
         var isolationLevel = readOnly ? _options.QueryIsolationLevel : _options.IsolationLevel;
 
         return isolationLevel == IsolationLevel.Unspecified
-            ? await _dbContext.Database.BeginTransactionAsync(ct).ConfigureAwait(false)
-            : await _dbContext.Database.BeginTransactionAsync(isolationLevel, ct).ConfigureAwait(false);
+            ? await _dbContext.Database.BeginTransactionAsync(cancellationToken).ConfigureAwait(false)
+            : await _dbContext.Database.BeginTransactionAsync(isolationLevel, cancellationToken).ConfigureAwait(false);
     }
 
     // Runs the read-only statement first, then the initializers, in a transaction the behaviour began.
-    private async ValueTask PrepareAsync(object request, TransactionState state, CancellationToken ct)
+    private async ValueTask PrepareAsync(object request, TransactionState state, CancellationToken cancellationToken)
     {
         if (state.IsReadOnly && _options.ReadOnlyStatement is { } statement)
         {
-            await _dbContext.Database.ExecuteSqlRawAsync(statement, ct).ConfigureAwait(false);
+            await _dbContext.Database.ExecuteSqlRawAsync(statement, cancellationToken).ConfigureAwait(false);
         }
 
-        await InitializeAsync(request, state, ct).ConfigureAwait(false);
+        await InitializeAsync(request, state, cancellationToken).ConfigureAwait(false);
     }
 
-    private async ValueTask InitializeAsync(object request, TransactionState state, CancellationToken ct)
+    private async ValueTask InitializeAsync(object request, TransactionState state, CancellationToken cancellationToken)
     {
         if (_initializers.Length == 0)
         {
@@ -375,7 +375,7 @@ public sealed class TransactionBehavior<TDbContext> : IBehavior
 
         foreach (var initializer in _initializers)
         {
-            await initializer.InitializeAsync(_dbContext, initialization, ct).ConfigureAwait(false);
+            await initializer.InitializeAsync(_dbContext, initialization, cancellationToken).ConfigureAwait(false);
         }
     }
 
