@@ -236,33 +236,37 @@ public sealed class TransactionBehavior<TDbContext> : IBehavior
                     _dbContext.ChangeTracker.Clear();
                 }
 
-                await using var transaction = await BeginAsync(readOnly, c).ConfigureAwait(false);
-                var state = new TransactionState(_dbContext, readOnly, IsJoined: false, attempt, Guid.CreateVersion7());
-                TransactionContext.State = state;
-                await PrepareAsync(request, state, c).ConfigureAwait(false);
+                var transaction = await BeginAsync(readOnly, c).ConfigureAwait(false);
 
-                try
+                await using (transaction.ConfigureAwait(false))
                 {
-                    var result = await next(c).ConfigureAwait(false);
+                    var state = new TransactionState(_dbContext, readOnly, IsJoined: false, attempt, Guid.CreateVersion7());
+                    TransactionContext.State = state;
+                    await PrepareAsync(request, state, c).ConfigureAwait(false);
 
-                    if (readOnly)
+                    try
                     {
-                        await transaction.RollbackAsync(c).ConfigureAwait(false);
-                    }
-                    else
-                    {
-                        await _dbContext.SaveChangesAsync(c).ConfigureAwait(false);
-                        await transaction.CommitAsync(c).ConfigureAwait(false);
-                    }
+                        var result = await next(c).ConfigureAwait(false);
 
-                    return result;
-                }
-                finally
-                {
-                    // Also when the query fails: disposing the transaction rolls it back, but the tracker keeps the changes.
-                    if (readOnly)
+                        if (readOnly)
+                        {
+                            await transaction.RollbackAsync(c).ConfigureAwait(false);
+                        }
+                        else
+                        {
+                            await _dbContext.SaveChangesAsync(c).ConfigureAwait(false);
+                            await transaction.CommitAsync(c).ConfigureAwait(false);
+                        }
+
+                        return result;
+                    }
+                    finally
                     {
-                        DiscardChanges();
+                        // Also when the query fails: disposing the transaction rolls it back, but the tracker keeps the changes.
+                        if (readOnly)
+                        {
+                            DiscardChanges();
+                        }
                     }
                 }
             },

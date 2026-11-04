@@ -191,28 +191,31 @@ public sealed class ServiceProviderMediator : IMediator
         [EnumeratorCancellation] CancellationToken cancellationToken)
     {
         using var scope = MediatorTelemetry.Start(MediatorTelemetry.Stream, queryType);
-        await using var enumerator = results.GetAsyncEnumerator(cancellationToken);
+        var enumerator = results.GetAsyncEnumerator(cancellationToken);
 
-        while (true)
+        await using (enumerator.ConfigureAwait(false))
         {
-            TResult current;
-
-            try
+            while (true)
             {
-                if (!await enumerator.MoveNextAsync().ConfigureAwait(false))
+                TResult current;
+
+                try
                 {
-                    break;
+                    if (!await enumerator.MoveNextAsync().ConfigureAwait(false))
+                    {
+                        break;
+                    }
+
+                    current = enumerator.Current;
+                }
+                catch (Exception exception)
+                {
+                    scope.Fail(exception);
+                    throw;
                 }
 
-                current = enumerator.Current;
+                yield return current;
             }
-            catch (Exception exception)
-            {
-                scope.Fail(exception);
-                throw;
-            }
-
-            yield return current;
         }
     }
 }
