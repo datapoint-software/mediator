@@ -80,14 +80,17 @@ Compare the `Allocated` column before and after your change.
 - The bump comes from the commits since the last release: `fix` is a patch, `feat` is a minor, and any breaking change (`!` or a `BREAKING CHANGE` footer) is a major.
 - Adding a target framework is a minor bump. Dropping one is a major bump. The packages target `net10.0` only.
 - Versions come from git tags through [MinVer](https://github.com/adamralph/minver). Tags have no prefix: `4.0.0-beta.1`, not `v4.0.0-beta.1`. Untagged builds get a pre-release version such as `4.0.0-beta.1.3`.
-- The series is `4.0.0-alpha.N`, then `4.0.0-beta.N`. `4.0.0` is released once the packages have been used in a real project. Versions `3.0.0` and below were private releases and can never be reused.
+- The series is `4.0.0-alpha.N`, then `4.0.0-beta.N`, then `4.0.0-rc.N`, then `4.0.0` ([ADR 0036](docs/adr/0036-release-candidates-freeze-the-api.md)). Versions `3.0.0` and below were private releases and can never be reused.
+  - A beta becomes `rc.1` once a real project has run it in production for 14 days without needing a breaking change.
+  - Release candidates take only fixes and documentation that don't change the public API. A breaking change or new public API goes back to a new `beta.N`, and the 14 days start again.
+  - `4.0.0` is released from a release candidate that has run in production for 14 days without needing a change to the public API.
 
 ## Releasing
 
 `CHANGELOG.md` follows [Keep a Changelog 1.1.0](https://keepachangelog.com/en/1.1.0/), and is generated from the commits by git-cliff, configured in `cliff.toml`. It lists `feat`, `fix`, `perf` and `docs` commits, and breaking changes of any type.
 
 1. Move the entries from each `PublicAPI.Unshipped.txt` to its `PublicAPI.Shipped.txt`, dropping `*REMOVED*` lines together with the shipped lines they remove.
-2. Add the version's section to the changelog, and review it:
+2. Add the version's section to the changelog, and review it. For a release candidate and for `4.0.0`, add a line saying which packages were used in production:
 
    ```bash
    git cliff --unreleased --tag <version> --prepend CHANGELOG.md
@@ -102,6 +105,8 @@ Compare the `Allocated` column before and after your change.
    ```
 
 5. The `Release` workflow builds, tests and packs, then waits for approval in the `nuget` environment. After approval, it publishes to nuget.org with Trusted Publishing, then waits, for up to an hour, until nuget.org lists every package and a new project referencing all of them restores. Only then does it create the GitHub release with the same notes, so announce the version only once the release exists: before that, consumers' restores can fail with NU1102, and NuGet's HTTP cache keeps that answer for about 30 minutes.
+
+6. After `4.0.0-rc.1` is published, set `PackageValidationBaselineVersion` to `4.0.0-rc.1` in `src/Directory.Build.props`, so CI fails any change that breaks binary compatibility. After `4.0.0` is published, set it to `4.0.0`.
 
 A published version is permanent: it can be unlisted, but never replaced.
 

@@ -58,7 +58,7 @@ Assume the contributor is a junior developer. Your job is to help them reach sou
 
 - Update `PublicAPI.Unshipped.txt` in the same commit as any public API change. Removing or changing a shipped line is a breaking change.
 - Say when a change is breaking, before making it. During the `4.0.0` pre-releases, breaking changes are allowed but must be visible in review. After `4.0.0`, they need a new major version.
-- Follow the [versioning](CONTRIBUTING.md#versioning) and [releasing](CONTRIBUTING.md#releasing) steps in CONTRIBUTING.md. The next releases are `4.0.0-beta.N`; release `4.0.0` once the packages have been used in a real project.
+- Follow the [versioning](CONTRIBUTING.md#versioning) and [releasing](CONTRIBUTING.md#releasing) steps in CONTRIBUTING.md. The next releases are `4.0.0-beta.N`, then `4.0.0-rc.N`, then `4.0.0`, following the entry and exit rules in [ADR 0036](docs/adr/0036-release-candidates-freeze-the-api.md).
 
 ### Documentation
 

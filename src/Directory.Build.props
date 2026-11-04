@@ -54,8 +54,9 @@
 
   <!--
     Fails the pack when a package is not binary compatible with its baseline.
-    Pre-releases may break the API, so there is no baseline yet. Once 4.0.0 is released, set
-    PackageValidationBaselineVersion to 4.0.0 here, and clear it in the .csproj of any package first released later.
+    Betas may break the API, so there is no baseline yet. After 4.0.0-rc.1 is published, set
+    PackageValidationBaselineVersion to 4.0.0-rc.1 here, and to 4.0.0 once 4.0.0 is published (ADR 0036).
+    Clear it in the .csproj of any package first released later.
   -->
   <PropertyGroup>
     <EnablePackageValidation>true</EnablePackageValidation>

@@ -1,6 +1,6 @@
 # 15. 4.0.0 is the first public version, versioned with MinVer
 
-- **Status:** Accepted
+- **Status:** Superseded by [0036](0036-release-candidates-freeze-the-api.md)
 - **Date:** 2026-10-31
 
 ## Context
