@@ -59,9 +59,11 @@ $ invoicing invoices list --json '{"tenantId":"6f1c..."}'
 
 The CLI never sends the property. The host must set it: an API the CLI calls overwrites it, and a CLI that runs the actions itself sets it in a [decorator of `IActionDispatcher`](../actions.md#filling-the-value). Hiding it is presentation only.
 
-Numbers, dates and times are parsed the same way on every machine, whatever its language, so scripts behave the same everywhere ([ADR 0017](../adr/0017-cli-parses-with-the-invariant-culture.md)):
+Numbers, dates and times are parsed the same way on every machine, whatever its language, so scripts behave the same everywhere ([ADR 0038](../adr/0038-cli-parse-errors-name-the-expected-format.md)):
 - numbers use a dot as the decimal separator, with no thousands separators: `--amount 42.5`, never `42,5` or `1,000`;
 - dates and times use ISO 8601: `--day 2026-11-01`, `--notify-at 2026-11-01T09:30:00+00:00`.
+
+A value that can't be parsed exits with code 1, and the message says what the option expects, never the value given: "Option '--amount' expects a number, with '.' as the decimal separator and no thousands separators." System.CommandLine's own syntax errors, such as an unrecognised argument, still repeat what was typed.
 
 ## Output
 

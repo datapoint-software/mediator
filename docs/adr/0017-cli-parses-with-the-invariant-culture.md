@@ -1,6 +1,6 @@
 # 17. The CLI parses numbers and dates with the invariant culture
 
-- **Status:** Accepted
+- **Status:** Superseded by [0038](0038-cli-parse-errors-name-the-expected-format.md)
 - **Date:** 2026-11-01
 
 ## Context

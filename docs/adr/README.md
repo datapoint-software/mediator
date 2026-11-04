@@ -22,7 +22,7 @@ Each record follows [Michael Nygard's format](https://cognitect.com/blog/2011/11
 | [0014](0014-one-principal-accessor.md) | One `IPrincipalAccessor` per application | Accepted |
 | [0015](0015-versioning.md) | 4.0.0 is the first public version, versioned with MinVer | Superseded by [0036](0036-release-candidates-freeze-the-api.md) |
 | [0016](0016-full-line-coverage.md) | 100% line coverage, enforced in CI | Accepted |
-| [0017](0017-cli-parses-with-the-invariant-culture.md) | The CLI parses numbers and dates with the invariant culture | Accepted |
+| [0017](0017-cli-parses-with-the-invariant-culture.md) | The CLI parses numbers and dates with the invariant culture | Superseded by [0038](0038-cli-parse-errors-name-the-expected-format.md) |
 | [0018](0018-authorizers-return-decisions.md) | Authorizers return decisions with details | Superseded by [0025](0025-decisions-bound-to-their-request.md) |
 | [0019](0019-decisions-are-available-and-observed.md) | Authorization decisions are available to the dispatch, and observed | Superseded by [0025](0025-decisions-bound-to-their-request.md) |
 | [0020](0020-commands-authorized-inside-their-transaction.md) | Commands and queries can be authorized inside their transaction | Accepted |
@@ -43,5 +43,6 @@ Each record follows [Michael Nygard's format](https://cognitect.com/blog/2011/11
 | [0035](0035-mcp-errors-are-tool-results.md) | MCP errors are tool results, with optional structured content | Superseded by [0037](0037-mcp-never-rethrows.md) |
 | [0036](0036-release-candidates-freeze-the-api.md) | Release candidates freeze the API before 4.0.0 | Accepted |
 | [0037](0037-mcp-never-rethrows.md) | MCP errors are tool results, and nothing is rethrown to the SDK | Accepted |
+| [0038](0038-cli-parse-errors-name-the-expected-format.md) | The CLI parses with the invariant culture, and its parse errors name the expected format | Accepted |
 
 To add a record, copy the structure of an existing one, use the next number, and add it to this table.

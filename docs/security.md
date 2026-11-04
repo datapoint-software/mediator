@@ -41,7 +41,7 @@ These hold whatever your configuration, and are covered by the library's tests:
 - An action with no authorizer is denied.
 - An action a host doesn't offer fails there like an unknown one, so it can't be discovered.
 - An action that no host offers, or that has no description, fails at startup.
-- The host adapters never echo the caller's input, or the message of an exception they don't recognise.
+- The host adapters never echo the caller's input, or the message of an exception they don't recognise. The one exception is System.CommandLine's own syntax errors, such as an unrecognised argument, written before any action runs ([ADR 0038](adr/0038-cli-parse-errors-name-the-expected-format.md)).
 - Telemetry never records exception messages, requests or results.
 - Invalid action configurations, such as a message marked as an action, fail at startup.
 

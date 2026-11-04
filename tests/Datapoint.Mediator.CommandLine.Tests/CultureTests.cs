@@ -42,7 +42,9 @@ public sealed class CultureTests : IDisposable
         var (exitCode, _, error) = await cli.RunAsync("invoices", "create", "--customer", "Ana", "--amount", "42,5");
 
         Assert.Equal(ActionExitCodes.InvalidCommandLine, exitCode);
-        Assert.Contains("Cannot parse argument '42,5' for option '--amount' as expected type 'System.Decimal'.", error);
+        Assert.Contains("Option '--amount' expects a number, with '.' as the decimal separator and no thousands separators.", error);
+        Assert.DoesNotContain("42,5", error);
+        Assert.DoesNotContain("System.", error);
         Assert.Empty(cli.Recorder.Log);
     }
 
@@ -54,7 +56,9 @@ public sealed class CultureTests : IDisposable
         var (exitCode, _, error) = await cli.RunAsync("invoices", "archive", "--id", "1,000");
 
         Assert.Equal(ActionExitCodes.InvalidCommandLine, exitCode);
-        Assert.Contains("Cannot parse argument '1,000' for option '--id' as expected type 'System.Int32'.", error);
+        Assert.Contains("Option '--id' expects a whole number, with no thousands separators.", error);
+        Assert.DoesNotContain("1,000", error);
+        Assert.DoesNotContain("System.", error);
         Assert.Empty(cli.Recorder.Log);
     }
 
@@ -89,7 +93,8 @@ public sealed class CultureTests : IDisposable
         var (exitCode, _, error) = await cli.RunAsync("reports", "schedule", "--day", "2026-11-01", "--threshold", "0,75");
 
         Assert.Equal(ActionExitCodes.InvalidCommandLine, exitCode);
-        Assert.Contains("for option '--threshold'", error);
+        Assert.Contains("Option '--threshold' expects a number", error);
+        Assert.DoesNotContain("0,75", error);
         Assert.Empty(cli.Recorder.Log);
     }
 
@@ -101,6 +106,8 @@ public sealed class CultureTests : IDisposable
         var (exitCode, _, error) = await cli.RunAsync("reports", "schedule", "--day", "tomorrow");
 
         Assert.Equal(ActionExitCodes.InvalidCommandLine, exitCode);
-        Assert.Contains("Cannot parse argument 'tomorrow' for option '--day' as expected type 'System.DateOnly'.", error);
+        Assert.Contains("Option '--day' has a value that isn't valid. Write dates and times in ISO 8601, such as 2026-11-01.", error);
+        Assert.DoesNotContain("tomorrow", error);
+        Assert.DoesNotContain("System.", error);
     }
 }

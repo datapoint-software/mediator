@@ -122,11 +122,20 @@ internal sealed partial class ActionCommand
             return;
         }
 
-        var createParser = Implements(valueType, typeof(INumberBase<>)) ? CreateNumberParserMethod : CreateParserMethod;
+        var isNumber = Implements(valueType, typeof(INumberBase<>));
+        var createParser = isNumber ? CreateNumberParserMethod : CreateParserMethod;
         var parser = createParser.MakeGenericMethod(valueType).Invoke(null, null);
         var useParser = underlyingType is null ? UseParserMethod : UseNullableParserMethod;
-        useParser.MakeGenericMethod(valueType).Invoke(null, [option, parser]);
+        useParser.MakeGenericMethod(valueType).Invoke(null, [option, parser, InvalidValueMessage(option.Name, valueType, isNumber)]);
     }
+
+    // Says what the option expects, never the value given or a .NET type name (ADR 0038).
+    private static string InvalidValueMessage(string optionName, Type valueType, bool isNumber) =>
+        !isNumber
+            ? $"Option '{optionName}' has a value that isn't valid. Write dates and times in ISO 8601, such as 2026-11-01."
+            : Implements(valueType, typeof(IFloatingPoint<>))
+                ? $"Option '{optionName}' expects a number, with '.' as the decimal separator and no thousands separators."
+                : $"Option '{optionName}' expects a whole number, with no thousands separators.";
 
     private delegate bool Parser<T>(string token, out T value);
 
@@ -147,24 +156,22 @@ internal sealed partial class ActionCommand
         return (string token, out T value) => T.TryParse(token, styles, CultureInfo.InvariantCulture, out value!);
     }
 
-    private static void UseParser<T>(Option<T> option, Parser<T> parser)
+    private static void UseParser<T>(Option<T> option, Parser<T> parser, string invalidMessage)
         where T : struct =>
-        option.CustomParser = result => TryParse(result, option.Name, parser, out var value) ? value : default;
+        option.CustomParser = result => TryParse(result, parser, invalidMessage, out var value) ? value : default;
 
-    private static void UseNullableParser<T>(Option<T?> option, Parser<T> parser)
+    private static void UseNullableParser<T>(Option<T?> option, Parser<T> parser, string invalidMessage)
         where T : struct =>
-        option.CustomParser = result => TryParse(result, option.Name, parser, out var value) ? value : null;
+        option.CustomParser = result => TryParse(result, parser, invalidMessage, out var value) ? value : null;
 
-    private static bool TryParse<T>(ArgumentResult result, string optionName, Parser<T> parser, out T value)
+    private static bool TryParse<T>(ArgumentResult result, Parser<T> parser, string invalidMessage, out T value)
     {
-        var token = result.Tokens[0].Value;
-
-        if (parser(token, out value))
+        if (parser(result.Tokens[0].Value, out value))
         {
             return true;
         }
 
-        result.AddError($"Cannot parse argument '{token}' for option '{optionName}' as expected type '{typeof(T)}'.");
+        result.AddError(invalidMessage);
         return false;
     }
 
