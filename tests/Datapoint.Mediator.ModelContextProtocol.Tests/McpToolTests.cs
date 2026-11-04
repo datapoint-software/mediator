@@ -193,6 +193,57 @@ public sealed class McpToolTests
         Assert.DoesNotContain("secret internal detail", Text(result));
     }
 
+    // The MCP SDK sends an McpException's message to the client, so the adapter must not hand one to it.
+    [Fact]
+    public async Task CallTool_McpExceptionFromTheHandler_ReportsGenericErrorWithoutLeakingDetails()
+    {
+        await using var mcp = await McpHarness.StartAsync(configureMediator: o => o.AddHandler<ForwardedReportHandler>());
+
+        var result = await mcp.Client.CallToolAsync("reports_forward", cancellationToken: Ct);
+
+        Assert.True(result.IsError);
+        Assert.Equal("An unexpected error occurred.", Text(result));
+    }
+
+    [Fact]
+    public async Task CallTool_ErrorMessageThatThrows_ReportsGenericErrorWithoutLeakingDetails()
+    {
+        await using var mcp = await McpHarness.StartAsync(
+            o => o.ErrorMessage = _ => throw new global::ModelContextProtocol.McpException("secret internal detail"));
+
+        var failed = await mcp.Client.CallToolAsync("reports_fail", cancellationToken: Ct);
+        var rejected = await mcp.Client.CallToolAsync("reports_reject", cancellationToken: Ct);
+
+        Assert.True(failed.IsError);
+        Assert.Equal("An unexpected error occurred.", Text(failed));
+        Assert.True(rejected.IsError);
+        Assert.Equal("The arguments for action 'reports.reject' are not valid.", Text(rejected));
+    }
+
+    [Fact]
+    public async Task CallTool_ErrorContentThatThrows_ReportsGenericErrorWithoutLeakingDetails()
+    {
+        await using var mcp = await McpHarness.StartAsync(
+            o => o.ErrorContent = _ => throw new global::ModelContextProtocol.McpException("secret internal detail"));
+
+        var result = await mcp.Client.CallToolAsync("reports_fail", cancellationToken: Ct);
+
+        Assert.True(result.IsError);
+        Assert.Equal("An unexpected error occurred.", Text(result));
+    }
+
+    [Fact]
+    public async Task CallTool_ErrorContentThatFailsToSerialize_ReportsGenericErrorWithoutLeakingDetails()
+    {
+        await using var mcp = await McpHarness.StartAsync(o => o.ErrorContent = _ => new UnserializableContent());
+
+        var result = await mcp.Client.CallToolAsync("reports_fail", cancellationToken: Ct);
+
+        Assert.True(result.IsError);
+        Assert.Null(result.StructuredContent);
+        Assert.Equal("An unexpected error occurred.", Text(result));
+    }
+
     [Fact]
     public async Task CallTool_UnexpectedException_UsesErrorMessageWhenProvided()
     {
@@ -411,4 +462,9 @@ public sealed class McpToolTests
             return found is not null;
         }
     }
+}
+
+public sealed class UnserializableContent
+{
+    public string Code => throw new global::ModelContextProtocol.McpException("secret internal detail");
 }

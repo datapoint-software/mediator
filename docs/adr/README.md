@@ -40,7 +40,8 @@ Each record follows [Michael Nygard's format](https://cognitect.com/blog/2011/11
 | [0032](0032-actions-declare-the-adapters-that-offer-them.md) | Actions declare the adapters that offer them | Accepted |
 | [0033](0033-argument-errors-give-a-reason.md) | Argument errors give a reason | Accepted |
 | [0034](0034-hooks-word-every-known-error.md) | Error hooks word every known error | Accepted |
-| [0035](0035-mcp-errors-are-tool-results.md) | MCP errors are tool results, with optional structured content | Accepted |
+| [0035](0035-mcp-errors-are-tool-results.md) | MCP errors are tool results, with optional structured content | Superseded by [0037](0037-mcp-never-rethrows.md) |
 | [0036](0036-release-candidates-freeze-the-api.md) | Release candidates freeze the API before 4.0.0 | Accepted |
+| [0037](0037-mcp-never-rethrows.md) | MCP errors are tool results, and nothing is rethrown to the SDK | Accepted |
 
 To add a record, copy the structure of an existing one, use the next number, and add it to this table.

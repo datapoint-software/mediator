@@ -1,6 +1,6 @@
 # 35. MCP errors are tool results, with optional structured content
 
-- **Status:** Accepted
+- **Status:** Superseded by [0037](0037-mcp-never-rethrows.md)
 - **Date:** 2026-11-03
 
 ## Context

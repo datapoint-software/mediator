@@ -18,6 +18,8 @@ namespace Datapoint.Mediator.ModelContextProtocol;
 // Offers one action as an MCP tool. Calls are dispatched by name, so every behaviour runs.
 internal sealed partial class ActionTool : McpServerTool
 {
+    private const string UnexpectedError = "An unexpected error occurred.";
+
     private readonly ActionDescriptor _action;
     private readonly MediatorMcpOptions _options;
     private readonly JsonSerializerOptions _serializerOptions;
@@ -101,12 +103,7 @@ internal sealed partial class ActionTool : McpServerTool
         }
         catch (Exception exception) when (exception is not OperationCanceledException)
         {
-            if (ErrorResult(exception) is { } error)
-            {
-                return error;
-            }
-
-            throw;
+            return ErrorResult(exception);
         }
     }
 
@@ -196,19 +193,45 @@ internal sealed partial class ActionTool : McpServerTool
 
     // Errors are returned as results, not thrown, so the MCP SDK doesn't prefix their text. Content from the app's hook
     // is sent both as structured content and as its JSON text, as MCP recommends for clients that only read text.
-    private CallToolResult? ErrorResult(Exception exception)
+    // Nothing is ever rethrown, because the SDK sends an McpException's message to the agent.
+    private CallToolResult ErrorResult(Exception exception)
     {
-        if (_options.ErrorContent?.Invoke(exception) is { } content)
+        if (CallHook(() => _options.ErrorContent?.Invoke(exception)) is { } content)
         {
-            var structured = JsonSerializer.SerializeToElement(content, content.GetType(), _serializerOptions);
-
-            // Thrown from the catch block, so the MCP SDK reports a generic error without this message.
-            return structured.ValueKind == JsonValueKind.Object
+            // Content that isn't a JSON object is a bug in the hook, not something to show the agent.
+            return Serialize(content) is { ValueKind: JsonValueKind.Object } structured
                 ? Error(structured.GetRawText(), structured)
-                : throw new InvalidOperationException("MediatorMcpOptions.ErrorContent must return a value that serializes to a JSON object.");
+                : Error(UnexpectedError);
         }
 
-        return SafeMessage(exception) is { } message ? Error(message) : null;
+        return Error(SafeMessage(exception) ?? UnexpectedError);
+    }
+
+    // An exception from the app's hook is treated as if the hook had returned null, because nothing about it is safe to
+    // show the agent.
+    private static T? CallHook<T>(Func<T?> hook)
+        where T : class
+    {
+        try
+        {
+            return hook();
+        }
+        catch (Exception)
+        {
+            return null;
+        }
+    }
+
+    private JsonElement? Serialize(object content)
+    {
+        try
+        {
+            return JsonSerializer.SerializeToElement(content, content.GetType(), _serializerOptions);
+        }
+        catch (Exception)
+        {
+            return null;
+        }
     }
 
     private static CallToolResult Error(string text, JsonElement? structured = null) =>
@@ -220,18 +243,21 @@ internal sealed partial class ActionTool : McpServerTool
         };
 
     // Only messages known to be safe reach the agent. Invalid arguments and authorization failures go to the app's hook
-    // first, so it can report them with its own codes. Anything else is rethrown, and the MCP SDK reports a generic
-    // error without the exception's message.
-    private string? SafeMessage(Exception exception) =>
-        exception switch
+    // first, so it can report them with its own codes. Anything else gets null, and a generic error.
+    private string? SafeMessage(Exception exception)
+    {
+        var message = CallHook(() => _options.ErrorMessage?.Invoke(exception));
+
+        return exception switch
         {
-            InvalidActionArgumentsException invalid => _options.ErrorMessage?.Invoke(exception) ?? InvalidArguments(invalid),
+            InvalidActionArgumentsException invalid => message ?? InvalidArguments(invalid),
             _ when exception.GetType().FullName == "Datapoint.Mediator.Authorization.AuthenticationRequiredException" =>
-                _options.ErrorMessage?.Invoke(exception) ?? "Authentication is required.",
+                message ?? "Authentication is required.",
             _ when exception.GetType().FullName == "Datapoint.Mediator.Authorization.AccessDeniedException" =>
-                _options.ErrorMessage?.Invoke(exception) ?? "Access is denied.",
-            _ => _options.ErrorMessage?.Invoke(exception),
+                message ?? "Access is denied.",
+            _ => message,
         };
+    }
 
     // Built from the field and the reason only, never from the exception's message. A field that doesn't look like a path of property
     // names, which an app's own exception could carry, is left out.

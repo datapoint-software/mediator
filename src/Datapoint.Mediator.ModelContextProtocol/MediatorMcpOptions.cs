@@ -53,6 +53,9 @@ public sealed class MediatorMcpOptions
     /// such as a role or who owns a resource.
     /// </para>
     /// <para>
+    /// If the function throws, its exception is ignored, as if it had returned <see langword="null"/>.
+    /// </para>
+    /// <para>
     /// The messages Mediator writes itself never contain argument values, .NET type names, stack traces or paths. They
     /// are meant for developers and agents, not for display in a user interface.
     /// </para>
@@ -67,8 +70,9 @@ public sealed class MediatorMcpOptions
     /// <para>
     /// The value is serialized with <see cref="SerializerOptions"/> and must serialize to a JSON object, such as an
     /// anonymous object with an error code and field errors. It's returned as the error result's structured content,
-    /// and its JSON as the result's text, so agents can read it either way. Any other value is reported as a generic
-    /// error.
+    /// and its JSON as the result's text, so agents can read it either way. Any other value, or a value that fails
+    /// to serialize, is reported as a generic error. If the function throws, its exception is ignored, as if it had
+    /// returned <see langword="null"/>.
     /// </para>
     /// <para>
     /// It receives the same exceptions as <see cref="ErrorMessage"/>, follows the same rules, and can't be set together

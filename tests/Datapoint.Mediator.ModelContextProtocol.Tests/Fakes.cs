@@ -133,3 +133,14 @@ public sealed class DenyWithStepUp<TAction> : IAuthorizer<TAction>
     public ValueTask<AuthorizationDecision> AuthorizeAsync(TAction action, ClaimsPrincipal principal, CancellationToken ct = default) =>
         new(AuthorizationDecision.Deny("TOP-SECRET", new StepUpRequiredException()));
 }
+
+// Calls another MCP server, whose error reaches the handler as an McpException.
+[ModelContextProtocol]
+[Action("reports.forward", "A test action.")]
+public sealed record ForwardedReport : ICommand;
+
+public sealed class ForwardedReportHandler : ICommandHandler<ForwardedReport>
+{
+    public ValueTask HandleAsync(ForwardedReport command, CancellationToken ct = default) =>
+        throw new global::ModelContextProtocol.McpException("secret internal detail");
+}
