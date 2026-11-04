@@ -100,36 +100,3 @@ public sealed class TransactionBehaviorOptions
                 value,
                 $"TransactionBehaviorOptions.{property} must be one of {string.Join(", ", Enum.GetNames<T>())}.");
 }
-
-/// <summary>
-/// Whether <see cref="TransactionBehavior{TDbContext}"/> runs queries and stream queries in transactions.
-/// </summary>
-public enum QueryTransactions
-{
-    /// <summary>
-    /// Queries and stream queries don't run in transactions of their own.
-    /// </summary>
-    None = 0,
-
-    /// <summary>
-    /// Queries and stream queries run in read-only transactions, which are always rolled back and never saved.
-    /// </summary>
-    ReadOnly = 1,
-}
-
-/// <summary>
-/// What <see cref="TransactionBehavior{TDbContext}"/> does with a transaction that the mediator didn't begin.
-/// </summary>
-public enum ForeignTransactions
-{
-    /// <summary>
-    /// The request joins the transaction, and whoever began it saves and commits it. The behaviour doesn't save, and
-    /// applies no isolation level, initializers, read-only mode or retries.
-    /// </summary>
-    Join = 0,
-
-    /// <summary>
-    /// The request fails with an <see cref="InvalidOperationException"/>, so every transaction is begun by the mediator.
-    /// </summary>
-    Throw = 1,
-}
