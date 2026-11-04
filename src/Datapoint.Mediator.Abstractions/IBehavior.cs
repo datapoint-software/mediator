@@ -22,11 +22,19 @@ public interface IBehavior
     /// <param name="next">Invokes the next behaviour in the pipeline, or the command's handler.</param>
     /// <param name="cancellationToken">A token to cancel the operation.</param>
     /// <returns>A task that completes when the command is handled. Await it only once.</returns>
+    /// <exception cref="ArgumentNullException">
+    /// <paramref name="command"/> or <paramref name="next"/> is <see langword="null"/>.
+    /// </exception>
     ValueTask HandleAsync(
         ICommand command,
         Func<CancellationToken, ValueTask> next,
-        CancellationToken cancellationToken = default) =>
-        next(cancellationToken);
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(command);
+        ArgumentNullException.ThrowIfNull(next);
+
+        return next(cancellationToken);
+    }
 
     /// <summary>
     /// Handles a command that produces a result.
@@ -36,11 +44,19 @@ public interface IBehavior
     /// <param name="next">Invokes the next behaviour in the pipeline, or the command's handler.</param>
     /// <param name="cancellationToken">A token to cancel the operation.</param>
     /// <returns>A task that completes with the command's result. Await it only once.</returns>
+    /// <exception cref="ArgumentNullException">
+    /// <paramref name="command"/> or <paramref name="next"/> is <see langword="null"/>.
+    /// </exception>
     ValueTask<TResult> HandleAsync<TResult>(
         ICommand<TResult> command,
         Func<CancellationToken, ValueTask<TResult>> next,
-        CancellationToken cancellationToken = default) =>
-        next(cancellationToken);
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(command);
+        ArgumentNullException.ThrowIfNull(next);
+
+        return next(cancellationToken);
+    }
 
     /// <summary>
     /// Handles a query.
@@ -50,11 +66,19 @@ public interface IBehavior
     /// <param name="next">Invokes the next behaviour in the pipeline, or the query's handler.</param>
     /// <param name="cancellationToken">A token to cancel the operation.</param>
     /// <returns>A task that completes with the query's result. Await it only once.</returns>
+    /// <exception cref="ArgumentNullException">
+    /// <paramref name="query"/> or <paramref name="next"/> is <see langword="null"/>.
+    /// </exception>
     ValueTask<TResult> HandleAsync<TResult>(
         IQuery<TResult> query,
         Func<CancellationToken, ValueTask<TResult>> next,
-        CancellationToken cancellationToken = default) =>
-        next(cancellationToken);
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(query);
+        ArgumentNullException.ThrowIfNull(next);
+
+        return next(cancellationToken);
+    }
 
     /// <summary>
     /// Handles a stream query.
@@ -68,11 +92,19 @@ public interface IBehavior
     /// <param name="next">Invokes the next behaviour in the pipeline, or the stream query's handler.</param>
     /// <param name="cancellationToken">A token to cancel the enumeration.</param>
     /// <returns>The query's results.</returns>
+    /// <exception cref="ArgumentNullException">
+    /// <paramref name="query"/> or <paramref name="next"/> is <see langword="null"/>.
+    /// </exception>
     IAsyncEnumerable<TResult> HandleAsync<TResult>(
         IStreamQuery<TResult> query,
         Func<CancellationToken, IAsyncEnumerable<TResult>> next,
-        CancellationToken cancellationToken = default) =>
-        next(cancellationToken);
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(query);
+        ArgumentNullException.ThrowIfNull(next);
+
+        return next(cancellationToken);
+    }
 
     /// <summary>
     /// Handles a message being published.
@@ -84,9 +116,17 @@ public interface IBehavior
     /// <param name="next">Invokes the next behaviour in the pipeline, or all of the message's handlers.</param>
     /// <param name="cancellationToken">A token to cancel the operation.</param>
     /// <returns>A task that completes when every handler has handled the message. Await it only once.</returns>
+    /// <exception cref="ArgumentNullException">
+    /// <paramref name="message"/> or <paramref name="next"/> is <see langword="null"/>.
+    /// </exception>
     ValueTask HandleAsync(
         IMessage message,
         Func<CancellationToken, ValueTask> next,
-        CancellationToken cancellationToken = default) =>
-        next(cancellationToken);
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(message);
+        ArgumentNullException.ThrowIfNull(next);
+
+        return next(cancellationToken);
+    }
 }

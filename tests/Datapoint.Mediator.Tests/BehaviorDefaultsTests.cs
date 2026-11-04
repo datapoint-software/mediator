@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using Datapoint.Mediator.Tests.Fakes;
+using Datapoint.Mediator.Tests.Shared;
 using Xunit;
 
 namespace Datapoint.Mediator.Tests;
@@ -88,6 +89,14 @@ public sealed class BehaviorDefaultsTests
 
         Assert.Same(expected, result);
         Assert.Equal(cts.Token, received);
+    }
+
+    [Fact]
+    public void NullArguments_AreRefused()
+    {
+        BehaviorArguments.AssertNullsAreRefused(_behavior, new Ping(), new Add(1, 2), new Echo("value"), new CountTo(1));
+        BehaviorArguments.AssertRefused("message", () => _behavior.HandleAsync((IMessage)null!, _ => default));
+        BehaviorArguments.AssertRefused("next", () => _behavior.HandleAsync(new Notified(), null!));
     }
 
     private sealed class PassThroughBehavior : IBehavior;
