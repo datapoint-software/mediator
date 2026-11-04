@@ -13,4 +13,9 @@
     <ProjectReference Include="..\Datapoint.Mediator.Authorization\Datapoint.Mediator.Authorization.csproj" />
   </ItemGroup>
 
+  <!-- Shared with the other packages as source: see src/Shared. -->
+  <ItemGroup>
+    <Compile Include="..\Shared\PrincipalAccessorRegistration.cs" Link="Shared\PrincipalAccessorRegistration.cs" />
+  </ItemGroup>
+
 </Project>

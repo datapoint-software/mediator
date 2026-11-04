@@ -1,8 +1,8 @@
 using System;
 using System.Collections.Generic;
-using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Reflection;
+using Datapoint.Mediator;
 using Datapoint.Mediator.Authorization;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 
@@ -52,7 +52,7 @@ public static class AuthorizerServiceCollectionExtensions
         ArgumentNullException.ThrowIfNull(services);
         ArgumentNullException.ThrowIfNull(assembly);
 
-        var authorizerTypes = GetLoadableTypes(assembly)
+        var authorizerTypes = AssemblyTypes.GetLoadable(assembly)
             .Where(type => type is { IsClass: true, IsAbstract: false, ContainsGenericParameters: false })
             .OrderBy(type => type.FullName, StringComparer.Ordinal);
 
@@ -94,19 +94,4 @@ public static class AuthorizerServiceCollectionExtensions
         this IServiceCollection services,
         ServiceLifetime lifetime) =>
         services.AddAuthorizersFromAssembly(typeof(T).Assembly, lifetime);
-
-    // Excluded from coverage: ReflectionTypeLoadException only occurs when an assembly references a dependency that is
-    // missing at runtime, which a test can only reproduce with a deliberately broken build.
-    [ExcludeFromCodeCoverage(Justification = "Requires an assembly with a missing dependency.")]
-    private static IEnumerable<Type> GetLoadableTypes(Assembly assembly)
-    {
-        try
-        {
-            return assembly.GetTypes();
-        }
-        catch (ReflectionTypeLoadException exception)
-        {
-            return exception.Types.Where(type => type is not null)!;
-        }
-    }
 }

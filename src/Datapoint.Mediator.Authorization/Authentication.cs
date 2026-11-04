@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
-using System.Linq;
 using System.Security.Claims;
 using System.Threading;
 using System.Threading.Tasks;
@@ -14,7 +13,7 @@ internal static class Authentication
     private static readonly ConcurrentDictionary<Type, bool> AnonymousActions = new();
 
     public static bool IsAnonymous(Type actionType) =>
-        AnonymousActions.GetOrAdd(actionType, static type => type.IsDefined(typeof(AllowAnonymousAccessAttribute), inherit: false));
+        AnonymousActions.GetOrAdd(actionType, static type => AnonymousAccess.IsAllowed(type));
 
     // Returns the authenticated user, or observes the failure and throws AuthenticationRequiredException.
     public static async ValueTask<ClaimsPrincipal> RequirePrincipalAsync(
@@ -43,13 +42,7 @@ internal static class Authentication
     }
 
     public static IAuthorizationObserver[] GetObservers(IServiceProvider serviceProvider) =>
-        // Containers other than Microsoft's may return null or a non-array enumerable.
-        serviceProvider.GetService(typeof(IEnumerable<IAuthorizationObserver>)) switch
-        {
-            IAuthorizationObserver[] array => array,
-            IEnumerable<IAuthorizationObserver> enumerable => enumerable.ToArray(),
-            _ => [],
-        };
+        Services.GetAll<IAuthorizationObserver>(serviceProvider, typeof(IEnumerable<IAuthorizationObserver>));
 
     // Every observer runs, in order. If one throws, the action doesn't run: it can't be audited.
     public static async ValueTask ObserveAsync(

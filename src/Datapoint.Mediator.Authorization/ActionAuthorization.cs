@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
-using System.Linq;
 using System.Security.Claims;
 using System.Threading;
 using System.Threading.Tasks;
@@ -37,13 +36,7 @@ internal sealed class ActionAuthorization<TAction> : ActionAuthorization
         List<AuthorizerDecision> decisions,
         CancellationToken cancellationToken)
     {
-        // Containers other than Microsoft's may return null or a non-array enumerable.
-        var authorizers = serviceProvider.GetService(typeof(IEnumerable<IAuthorizer<TAction>>)) switch
-        {
-            IAuthorizer<TAction>[] array => array,
-            IEnumerable<IAuthorizer<TAction>> enumerable => enumerable.ToArray(),
-            _ => [],
-        };
+        var authorizers = Services.GetAll<IAuthorizer<TAction>>(serviceProvider, typeof(IEnumerable<IAuthorizer<TAction>>));
 
         var typedAction = (TAction)action;
 

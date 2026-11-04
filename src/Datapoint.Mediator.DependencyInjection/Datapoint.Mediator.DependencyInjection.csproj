@@ -12,4 +12,9 @@
     <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" />
   </ItemGroup>
 
+  <!-- Shared with the other packages as source: see src/Shared. -->
+  <ItemGroup>
+    <Compile Include="..\Shared\AssemblyTypes.cs" Link="Shared\AssemblyTypes.cs" />
+  </ItemGroup>
+
 </Project>

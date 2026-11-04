@@ -13,4 +13,9 @@
     <PackageReference Include="FluentValidation" />
   </ItemGroup>
 
+  <!-- Shared with the other packages as source: see src/Shared. -->
+  <ItemGroup>
+    <Compile Include="..\Shared\Services.cs" Link="Shared\Services.cs" />
+  </ItemGroup>
+
 </Project>

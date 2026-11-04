@@ -106,7 +106,7 @@ public static class AuthorizationMediatorOptionsExtensions
     {
         var refused = context.RequestTypes
             .Where(type => requirement == TransactionRequirement.CommandsAndQueries || IsCommand(type))
-            .Where(type => !type.IsDefined(typeof(AllowAnonymousAccessAttribute), inherit: false))
+            .Where(type => !AnonymousAccess.IsAllowed(type))
             .Where(type => type.GetCustomAttributes(inherit: false).Any(a => a.GetType().FullName == NonTransactionalAttributeName))
             .Select(type => $"'{type}'")
             .ToArray();

@@ -10,4 +10,11 @@
     <ProjectReference Include="..\Datapoint.Mediator.DependencyInjection\Datapoint.Mediator.DependencyInjection.csproj" />
   </ItemGroup>
 
+  <!-- Shared with the other packages as source: see src/Shared. -->
+  <ItemGroup>
+    <Compile Include="..\Shared\AnonymousAccess.cs" Link="Shared\AnonymousAccess.cs" />
+    <Compile Include="..\Shared\AssemblyTypes.cs" Link="Shared\AssemblyTypes.cs" />
+    <Compile Include="..\Shared\PrincipalAccessorRegistration.cs" Link="Shared\PrincipalAccessorRegistration.cs" />
+  </ItemGroup>
+
 </Project>

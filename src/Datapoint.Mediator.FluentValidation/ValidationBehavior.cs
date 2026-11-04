@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
-using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
@@ -120,13 +119,7 @@ public sealed class ValidationBehavior : IBehavior
             action.GetType(),
             static type => typeof(IEnumerable<>).MakeGenericType(typeof(IValidator<>).MakeGenericType(type)));
 
-        // Containers other than Microsoft's may return null or a non-array enumerable.
-        return _serviceProvider.GetService(validatorsType) switch
-        {
-            IValidator[] array => array,
-            IEnumerable<IValidator> enumerable => enumerable.ToArray(),
-            _ => [],
-        };
+        return Services.GetAll<IValidator>(_serviceProvider, validatorsType);
     }
 
     private static async ValueTask ValidateThenHandleAsync(

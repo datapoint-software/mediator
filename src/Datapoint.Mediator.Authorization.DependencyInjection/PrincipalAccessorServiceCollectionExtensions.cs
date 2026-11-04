@@ -29,21 +29,12 @@ public static class PrincipalAccessorServiceCollectionExtensions
     {
         ArgumentNullException.ThrowIfNull(services);
 
-        foreach (var descriptor in services)
+        if (PrincipalAccessorRegistration.IsRegistered(
+            services,
+            descriptor => descriptor.ImplementationInstance is FixedPrincipalAccessor existing && existing.Principal == principal,
+            $"a {nameof(FixedPrincipalAccessor)}"))
         {
-            if (descriptor.ServiceType != typeof(IPrincipalAccessor) || descriptor.IsKeyedService)
-            {
-                continue;
-            }
-
-            if (descriptor.ImplementationInstance is FixedPrincipalAccessor existing && existing.Principal == principal)
-            {
-                return services;
-            }
-
-            throw new InvalidOperationException(
-                $"Cannot register a {nameof(FixedPrincipalAccessor)}, because another {nameof(IPrincipalAccessor)} is " +
-                "already registered. Register only one.");
+            return services;
         }
 
         services.AddSingleton<IPrincipalAccessor>(new FixedPrincipalAccessor(principal));

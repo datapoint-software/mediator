@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Reflection;
 using Microsoft.Extensions.DependencyInjection;
@@ -241,7 +240,7 @@ public sealed class MediatorOptions
     {
         ArgumentNullException.ThrowIfNull(assembly);
 
-        var handlerTypes = GetLoadableTypes(assembly)
+        var handlerTypes = AssemblyTypes.GetLoadable(assembly)
             .Where(type => type is { IsClass: true, IsAbstract: false, ContainsGenericParameters: false })
             .Where(type => HandlerInterfaces.Of(type).Count > 0)
             .OrderBy(type => type.FullName, StringComparer.Ordinal);
@@ -283,21 +282,6 @@ public sealed class MediatorOptions
         if (!type.IsClass || type.IsAbstract || type.ContainsGenericParameters)
         {
             throw new ArgumentException($"'{type}' must be a concrete, non-generic class.", paramName);
-        }
-    }
-
-    // Excluded from coverage: ReflectionTypeLoadException only occurs when an assembly references a dependency that is
-    // missing at runtime, which a test can only reproduce with a deliberately broken build.
-    [ExcludeFromCodeCoverage(Justification = "Requires an assembly with a missing dependency.")]
-    private static IEnumerable<Type> GetLoadableTypes(Assembly assembly)
-    {
-        try
-        {
-            return assembly.GetTypes();
-        }
-        catch (ReflectionTypeLoadException exception)
-        {
-            return exception.Types.Where(type => type is not null)!;
         }
     }
 

@@ -9,4 +9,10 @@
     <ProjectReference Include="..\Datapoint.Mediator.Abstractions\Datapoint.Mediator.Abstractions.csproj" />
   </ItemGroup>
 
+  <!-- Shared with the other packages as source: see src/Shared. -->
+  <ItemGroup>
+    <Compile Include="..\Shared\AnonymousAccess.cs" Link="Shared\AnonymousAccess.cs" />
+    <Compile Include="..\Shared\Services.cs" Link="Shared\Services.cs" />
+  </ItemGroup>
+
 </Project>

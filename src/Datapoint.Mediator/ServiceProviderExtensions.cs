@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
 
 namespace Datapoint.Mediator;
 
@@ -11,12 +10,7 @@ internal static class ServiceProviderExtensions
         serviceProvider.GetService(typeof(T)) as T ?? throw HandlerNotFound(typeof(T), actionType);
 
     public static T[] GetAll<T>(this IServiceProvider serviceProvider) =>
-        serviceProvider.GetService(typeof(IEnumerable<T>)) switch
-        {
-            T[] array => array,
-            IEnumerable<T> enumerable => enumerable.ToArray(),
-            _ => [],
-        };
+        Services.GetAll<T>(serviceProvider, typeof(IEnumerable<T>));
 
     private static InvalidOperationException HandlerNotFound(Type handlerType, Type actionType) =>
         new($"No handler is registered for '{actionType}'. Register an implementation of '{handlerType}'.");

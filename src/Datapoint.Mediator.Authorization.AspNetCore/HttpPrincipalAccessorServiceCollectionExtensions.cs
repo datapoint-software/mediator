@@ -25,21 +25,12 @@ public static class HttpPrincipalAccessorServiceCollectionExtensions
     {
         ArgumentNullException.ThrowIfNull(services);
 
-        foreach (var descriptor in services)
+        if (PrincipalAccessorRegistration.IsRegistered(
+            services,
+            descriptor => descriptor.ImplementationType == typeof(HttpPrincipalAccessor),
+            $"the {nameof(HttpPrincipalAccessor)}"))
         {
-            if (descriptor.ServiceType != typeof(IPrincipalAccessor) || descriptor.IsKeyedService)
-            {
-                continue;
-            }
-
-            if (descriptor.ImplementationType == typeof(HttpPrincipalAccessor))
-            {
-                return services;
-            }
-
-            throw new InvalidOperationException(
-                $"Cannot register the {nameof(HttpPrincipalAccessor)}, because another {nameof(IPrincipalAccessor)} is " +
-                "already registered. Register only one.");
+            return services;
         }
 
         services.AddHttpContextAccessor();

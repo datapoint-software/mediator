@@ -53,6 +53,8 @@ All package names start with `Datapoint.Mediator.`, except the implementation, w
 | `CommandLine` | `AddMediatorActions`: one command per action. | System.CommandLine |
 | `ModelContextProtocol` | `WithMediatorActions`: one MCP tool per action. | ModelContextProtocol SDK |
 
+`src/Shared/` isn't a project. It holds internal helpers that several packages need, compiled into each of them as linked source (`<Compile Include … Link>`), so a rule is written once without adding a public type or a package reference. Each file says which packages link it. Coverage is measured per assembly, so each package's tests must cover every line of the files it links.
+
 Outside `src/`:
 - `tests/` has one test project per package, plus `DependencyInjection.Tests.Fixtures`, an assembly for scanning tests.
 - `benchmarks/` measures dispatch with BenchmarkDotNet.
