@@ -38,9 +38,10 @@ public static class MediatorCommandExtensions
     /// <remarks>
     /// <para>
     /// Each dot in an action's name starts a subcommand, so <c>invoices.create</c> becomes <c>invoices create</c>.
-    /// Each public property of the action becomes a typed option, such as <c>--customer</c>, which is required unless
-    /// it's nullable or has a default value, and is described by a <see cref="ComponentModel.DescriptionAttribute"/>
-    /// on the property or record parameter. A <c>--json</c> option accepts all the arguments as JSON instead, for
+    /// Each property the JSON serializer can set becomes a typed option, named after the .NET property, such as
+    /// <c>--customer</c>, which is required unless it's nullable or has a default value, and is described by a
+    /// <see cref="ComponentModel.DescriptionAttribute"/> on the property or record parameter. Its value is sent under the
+    /// property's JSON name, and properties the serializer ignores get no option. A <c>--json</c> option accepts all the arguments as JSON instead, for
     /// actions with nested objects or collections.
     /// </para>
     /// <para>

@@ -35,9 +35,9 @@ invoicing
 
 ## Options
 
-Each public property of the action becomes a typed option:
+Each property the JSON serializer can set becomes a typed option. The options follow the action's JSON contract, like `--json` does: a property marked `[JsonIgnore]`, or a read-only property, gets no option, and a property marked `[JsonPropertyName]` is sent under that name.
 
-- **Name:** the property's name in kebab case, such as `--customer`.
+- **Name:** the property's .NET name in kebab case, such as `--customer`, whatever the JSON name or naming policy.
 - **Type:** checked by System.CommandLine, so `--amount abc` fails before the action runs.
 - **Required** unless the property is nullable, or its record parameter has a default value. Required options say "(required)" in the help.
 - **Help text:** `[Description]` from `System.ComponentModel`, on the property or the record parameter.

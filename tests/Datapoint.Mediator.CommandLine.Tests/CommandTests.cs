@@ -1,4 +1,5 @@
 using System;
+using System.Text.Json;
 using System.CommandLine;
 using System.Linq;
 using System.Security.Claims;
@@ -16,7 +17,7 @@ public sealed class CommandTests
     {
         await using var cli = new Cli();
 
-        Assert.Equal(["invoices", "ping", "reports"], cli.Root.Subcommands.Select(c => c.Name).Order(StringComparer.Ordinal));
+        Assert.Equal(["invoices", "ping", "reports", "tags"], cli.Root.Subcommands.Select(c => c.Name).Order(StringComparer.Ordinal));
         var invoices = cli.Root.Subcommands.Single(c => c.Name == "invoices");
         Assert.Equal(["archive", "create", "get", "list", "ship"], invoices.Subcommands.Select(c => c.Name).Order(StringComparer.Ordinal));
     }
@@ -66,6 +67,46 @@ public sealed class CommandTests
         Assert.Contains("--amount", output);
         Assert.Contains("--notes", output);
         Assert.Contains("--json", output);
+    }
+
+    [Fact]
+    public async Task RenamedProperty_IsSentUnderItsJsonName()
+    {
+        await using var cli = new Cli();
+
+        var (exitCode, _, _) = await cli.RunAsync("tags", "apply", "--invoice-id", "7", "--label", "red");
+
+        Assert.Equal(ActionExitCodes.Success, exitCode);
+        Assert.Equal(["tag 7 red -"], cli.Recorder.Log);
+    }
+
+    [Fact]
+    public async Task IgnoredAndReadOnlyProperties_GetNoOption()
+    {
+        await using var cli = new Cli();
+
+        var (_, output, _) = await cli.RunAsync("tags", "apply", "--help");
+
+        Assert.Contains("--invoice-id", output);
+        Assert.DoesNotContain("--internal", output);
+        Assert.DoesNotContain("--summary", output);
+    }
+
+    // The serializer applies DictionaryKeyPolicy to dictionary keys, never to an object's properties.
+    [Fact]
+    public async Task DictionaryKeyPolicy_IsNotAppliedToTheArguments()
+    {
+        var options = new JsonSerializerOptions(JsonSerializerOptions.Web)
+        {
+            PropertyNameCaseInsensitive = false,
+            DictionaryKeyPolicy = JsonNamingPolicy.SnakeCaseLower,
+        };
+        await using var cli = new Cli(o => o.SerializerOptions = options);
+
+        var (exitCode, _, _) = await cli.RunAsync("tags", "apply", "--invoice-id", "7", "--label", "red");
+
+        Assert.Equal(ActionExitCodes.Success, exitCode);
+        Assert.Equal(["tag 7 red -"], cli.Recorder.Log);
     }
 
     [Fact]

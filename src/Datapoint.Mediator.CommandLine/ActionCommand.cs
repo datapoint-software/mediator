@@ -8,6 +8,8 @@ using System.Linq;
 using System.Numerics;
 using System.Reflection;
 using System.Text.Json;
+using System.Text.Json.Nodes;
+using System.Text.Json.Serialization.Metadata;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
@@ -27,7 +29,7 @@ internal sealed partial class ActionCommand
     private readonly IServiceProvider _services;
     private readonly MediatorCommandLineOptions _options;
     private readonly JsonSerializerOptions _serializerOptions;
-    private readonly List<(string JsonName, Option Option, bool Required)> _properties = [];
+    private readonly List<(JsonPropertyInfo Property, Option Option, bool Required)> _properties = [];
     private readonly HashSet<string> _hostProvided;
     private readonly Option<string> _json = new("--json")
     {
@@ -49,34 +51,18 @@ internal sealed partial class ActionCommand
     private Command Build(string name)
     {
         var command = new Command(name, _action.Description);
-        var nullability = new NullabilityInfoContext();
-        var parameters = _action.ActionType.GetConstructors()
-            .SelectMany(constructor => constructor.GetParameters())
-            .GroupBy(parameter => parameter.Name!, StringComparer.OrdinalIgnoreCase)
-            .ToDictionary(group => group.Key, group => group.First(), StringComparer.OrdinalIgnoreCase);
 
-        foreach (var property in _action.ActionType.GetProperties(BindingFlags.Public | BindingFlags.Instance))
+        // The serializer's contract, so options follow [JsonPropertyName] and [JsonIgnore] like the --json arguments do.
+        foreach (var property in _serializerOptions.GetTypeInfo(_action.ActionType).Properties)
         {
-            // Host-provided properties get no option, so the user can never believe they chose the value.
-            if (property.GetIndexParameters().Length > 0 || _action.HostProvidedProperties.Any(p => p.Name == property.Name))
+            // Only what the serializer can set gets an option. Host-provided properties get none, so the user can never
+            // believe they chose the value.
+            if ((property.Set is null && property.AssociatedParameter is null) || _hostProvided.Contains(property.Name))
             {
                 continue;
             }
 
-            parameters.TryGetValue(property.Name, out var parameter);
-            var required = !IsNullable(property, nullability) && parameter?.HasDefaultValue != true;
-            var description = property.GetCustomAttribute<DescriptionAttribute>()?.Description
-                ?? parameter?.GetCustomAttribute<DescriptionAttribute>()?.Description;
-
-            var option = (Option)Activator.CreateInstance(
-                typeof(Option<>).MakeGenericType(property.PropertyType),
-                $"--{JsonNamingPolicy.KebabCaseLower.ConvertName(property.Name)}",
-                Array.Empty<string>())!;
-            option.Description = required ? $"{description} (required)".TrimStart() : description;
-            UseInvariantCulture(option, property.PropertyType);
-
-            command.Options.Add(option);
-            _properties.Add((_serializerOptions.PropertyNamingPolicy?.ConvertName(property.Name) ?? property.Name, option, required));
+            command.Options.Add(CreateOption(property));
         }
 
         command.Options.Add(_json);
@@ -106,6 +92,32 @@ internal sealed partial class ActionCommand
         command.SetAction(RunAsync);
         return command;
     }
+
+    // Named after the .NET member, so the options don't change with the app's naming policy. The value is sent under the
+    // contract's name, without the DictionaryKeyPolicy, which the serializer doesn't apply to properties.
+    private Option CreateOption(JsonPropertyInfo property)
+    {
+        var parameter = property.AssociatedParameter;
+        var memberName = (property.AttributeProvider as MemberInfo)?.Name ?? property.Name;
+        var nullable = property.IsGetNullable || property.IsSetNullable || parameter?.IsNullable == true;
+        var required = !nullable && parameter?.HasDefaultValue != true;
+        var description = Description(property.AttributeProvider) ?? Description(parameter?.AttributeProvider);
+
+        var option = (Option)Activator.CreateInstance(
+            typeof(Option<>).MakeGenericType(property.PropertyType),
+            $"--{JsonNamingPolicy.KebabCaseLower.ConvertName(memberName)}",
+            Array.Empty<string>())!;
+        option.Description = required ? $"{description} (required)".TrimStart() : description;
+        UseInvariantCulture(option, property.PropertyType);
+
+        _properties.Add((property, option, required));
+        return option;
+    }
+
+    private static string? Description(ICustomAttributeProvider? provider) =>
+        provider?.GetCustomAttributes(typeof(DescriptionAttribute), inherit: true) is [DescriptionAttribute attribute, ..]
+            ? attribute.Description
+            : null;
 
     // System.CommandLine parses with the current culture, so "42.5" would be refused, or misread, on a machine set to a
     // language that writes "42,5". Values are parsed with the invariant culture instead, like the JSON output and --json.
@@ -212,12 +224,6 @@ internal sealed partial class ActionCommand
         return null;
     }
 
-    private static bool IsNullable(PropertyInfo property, NullabilityInfoContext nullability) =>
-        property.PropertyType.IsValueType
-            ? Nullable.GetUnderlyingType(property.PropertyType) is not null
-            : nullability.Create(property).WriteState is NullabilityState.Nullable
-              || nullability.Create(property).ReadState is NullabilityState.Nullable;
-
     // Everything that can fail runs inside the try, including resolving the dispatcher and disposing the scope, so no
     // exception reaches System.CommandLine's default handler, which would print its message and stack trace.
     private async Task<int> RunAsync(ParseResult parseResult, CancellationToken cancellationToken)
@@ -262,17 +268,17 @@ internal sealed partial class ActionCommand
         }
         else
         {
-            var values = new Dictionary<string, object?>();
+            var values = new JsonObject();
 
-            foreach (var (jsonName, option, _) in _properties)
+            foreach (var (property, option, _) in _properties)
             {
                 if (parseResult.GetResult(option) is { } result)
                 {
-                    values[jsonName] = result.GetValueOrDefault<object?>();
+                    values[property.Name] = JsonSerializer.SerializeToNode(result.GetValueOrDefault<object?>(), property.PropertyType, _serializerOptions);
                 }
             }
 
-            arguments = JsonSerializer.SerializeToElement(values, _serializerOptions);
+            arguments = JsonSerializer.SerializeToElement(values, JsonSerializerOptions.Default);
         }
 
         // One DI scope per invocation, like a request in an API.

@@ -5,6 +5,7 @@ using System.Globalization;
 using System.Runtime.CompilerServices;
 using System.Security.Claims;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 using System.Threading;
 using System.Threading.Tasks;
 using Datapoint.Mediator.Authorization;
@@ -57,6 +58,31 @@ public sealed record ScheduleReport(DateOnly Day, double? Threshold = null, Date
 [ModelContextProtocol]
 [Action("invoices.export", "A test action.")]
 public sealed record ExportInvoices : ICommand;
+
+// The options follow the serializer's contract: renamed, ignored and read-only properties.
+[CommandLine]
+[Action("tags.apply", "A test action.")]
+public sealed record ApplyTag : ICommand
+{
+    [JsonPropertyName("invoice")]
+    public int InvoiceId { get; init; }
+
+    public required string Label { get; init; }
+
+    [JsonIgnore]
+    public string? Internal { get; init; }
+
+    public string Summary => $"{InvoiceId} {Label}";
+}
+
+public sealed class ApplyTagHandler(Recorder recorder) : ICommandHandler<ApplyTag>
+{
+    public ValueTask HandleAsync(ApplyTag command, CancellationToken cancellationToken = default)
+    {
+        recorder.Log.Add($"tag {command.InvoiceId} {command.Label} {command.Internal ?? "-"}");
+        return default;
+    }
+}
 
 public sealed class Recorder
 {
