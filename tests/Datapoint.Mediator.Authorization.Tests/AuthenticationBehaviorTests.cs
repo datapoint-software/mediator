@@ -5,6 +5,7 @@ using System.Runtime.CompilerServices;
 using System.Security.Claims;
 using System.Threading;
 using System.Threading.Tasks;
+using Datapoint.Mediator.Tests.Shared;
 using Microsoft.Extensions.DependencyInjection;
 using Xunit;
 
@@ -21,6 +22,14 @@ public sealed class AuthenticationBehaviorTests
     public void Constructor_NullServiceProvider_Throws()
     {
         Assert.Equal("serviceProvider", Assert.Throws<ArgumentNullException>(() => new AuthenticationBehavior(null!)).ParamName);
+    }
+
+    [Fact]
+    public void HandleAsync_NullArguments_Throw()
+    {
+        var behavior = new AuthenticationBehavior(new ServiceCollection().BuildServiceProvider());
+
+        BehaviorArguments.AssertNullsAreRefused(behavior, new DeleteInvoice(1), new CreateInvoice(), new GetInvoice(), new ListInvoices());
     }
 
     [Fact]

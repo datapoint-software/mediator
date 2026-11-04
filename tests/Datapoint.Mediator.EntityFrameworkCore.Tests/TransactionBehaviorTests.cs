@@ -1,6 +1,7 @@
 using System;
 using System.Linq;
 using System.Threading.Tasks;
+using Datapoint.Mediator.Tests.Shared;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
@@ -34,6 +35,15 @@ public sealed class TransactionBehaviorTests : IAsyncLifetime
         var exception = Assert.Throws<ArgumentNullException>(() => new TransactionBehavior<AppDbContext>(null!));
 
         Assert.Equal("dbContext", exception.ParamName);
+    }
+
+    [Fact]
+    public async Task HandleAsync_NullArguments_Throw()
+    {
+        await using var scope = _provider.CreateAsyncScope();
+        var behavior = new TransactionBehavior<AppDbContext>(scope.ServiceProvider.GetRequiredService<AppDbContext>());
+
+        BehaviorArguments.AssertNullsAreRefused(behavior, new CreateTwoInvoices(), new CreateInvoice(1), new CountInvoices(), new StreamAmounts());
     }
 
     [Fact]

@@ -89,26 +89,50 @@ public sealed class AuthorizationBehavior : IBehavior
     /// <inheritdoc/>
     /// <exception cref="AuthenticationRequiredException">There is no signed-in user.</exception>
     /// <exception cref="AccessDeniedException">The user may not run the command.</exception>
-    public ValueTask HandleAsync(ICommand command, Func<CancellationToken, ValueTask> next, CancellationToken cancellationToken = default) =>
-        IsAnonymous(command) ? HandleAnonymousAsync(next, cancellationToken) : AuthorizeThenHandleAsync(command, next, cancellationToken);
+    /// <exception cref="ArgumentNullException">
+    /// <paramref name="command"/> or <paramref name="next"/> is <see langword="null"/>.
+    /// </exception>
+    public ValueTask HandleAsync(ICommand command, Func<CancellationToken, ValueTask> next, CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(command);
+        ArgumentNullException.ThrowIfNull(next);
+
+        return IsAnonymous(command) ? HandleAnonymousAsync(next, cancellationToken) : AuthorizeThenHandleAsync(command, next, cancellationToken);
+    }
 
     /// <inheritdoc/>
     /// <exception cref="AuthenticationRequiredException">There is no signed-in user.</exception>
     /// <exception cref="AccessDeniedException">The user may not run the command.</exception>
+    /// <exception cref="ArgumentNullException">
+    /// <paramref name="command"/> or <paramref name="next"/> is <see langword="null"/>.
+    /// </exception>
     public ValueTask<TResult> HandleAsync<TResult>(
         ICommand<TResult> command,
         Func<CancellationToken, ValueTask<TResult>> next,
-        CancellationToken cancellationToken = default) =>
-        IsAnonymous(command) ? HandleAnonymousAsync(next, cancellationToken) : AuthorizeThenHandleAsync(command, isCommand: true, next, cancellationToken);
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(command);
+        ArgumentNullException.ThrowIfNull(next);
+
+        return IsAnonymous(command) ? HandleAnonymousAsync(next, cancellationToken) : AuthorizeThenHandleAsync(command, isCommand: true, next, cancellationToken);
+    }
 
     /// <inheritdoc/>
     /// <exception cref="AuthenticationRequiredException">There is no signed-in user.</exception>
     /// <exception cref="AccessDeniedException">The user may not run the query.</exception>
+    /// <exception cref="ArgumentNullException">
+    /// <paramref name="query"/> or <paramref name="next"/> is <see langword="null"/>.
+    /// </exception>
     public ValueTask<TResult> HandleAsync<TResult>(
         IQuery<TResult> query,
         Func<CancellationToken, ValueTask<TResult>> next,
-        CancellationToken cancellationToken = default) =>
-        IsAnonymous(query) ? HandleAnonymousAsync(next, cancellationToken) : AuthorizeThenHandleAsync(query, isCommand: false, next, cancellationToken);
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(query);
+        ArgumentNullException.ThrowIfNull(next);
+
+        return IsAnonymous(query) ? HandleAnonymousAsync(next, cancellationToken) : AuthorizeThenHandleAsync(query, isCommand: false, next, cancellationToken);
+    }
 
     /// <inheritdoc/>
     /// <exception cref="AuthenticationRequiredException">
@@ -117,13 +141,21 @@ public sealed class AuthorizationBehavior : IBehavior
     /// <exception cref="AccessDeniedException">
     /// The user may not run the stream query. Thrown when the results are first enumerated.
     /// </exception>
+    /// <exception cref="ArgumentNullException">
+    /// <paramref name="query"/> or <paramref name="next"/> is <see langword="null"/>.
+    /// </exception>
     public IAsyncEnumerable<TResult> HandleAsync<TResult>(
         IStreamQuery<TResult> query,
         Func<CancellationToken, IAsyncEnumerable<TResult>> next,
-        CancellationToken cancellationToken = default) =>
-        IsAnonymous(query)
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(query);
+        ArgumentNullException.ThrowIfNull(next);
+
+        return IsAnonymous(query)
             ? AuthorizationContext.Result is null ? next(cancellationToken) : AuthorizeThenStreamAsync(null, next, cancellationToken)
             : AuthorizeThenStreamAsync(query, next, cancellationToken);
+    }
 
     /// <summary>
     /// Runs the message handlers without the decision of the action that published the message: messages are not
@@ -133,8 +165,16 @@ public sealed class AuthorizationBehavior : IBehavior
     /// <param name="next">Runs the message handlers.</param>
     /// <param name="cancellationToken">A token to cancel the operation.</param>
     /// <returns>A task that completes when the message handlers have run.</returns>
-    public ValueTask HandleAsync(IMessage message, Func<CancellationToken, ValueTask> next, CancellationToken cancellationToken = default) =>
-        HandleAnonymousAsync(next, cancellationToken);
+    /// <exception cref="ArgumentNullException">
+    /// <paramref name="message"/> or <paramref name="next"/> is <see langword="null"/>.
+    /// </exception>
+    public ValueTask HandleAsync(IMessage message, Func<CancellationToken, ValueTask> next, CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(message);
+        ArgumentNullException.ThrowIfNull(next);
+
+        return HandleAnonymousAsync(next, cancellationToken);
+    }
 
     private static bool IsAnonymous(object action) => Authentication.IsAnonymous(action.GetType());
 

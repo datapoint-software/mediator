@@ -115,7 +115,79 @@ public sealed class TransactionBehavior<TDbContext> : IBehavior
     /// A transaction that the mediator didn't begin is active, and <see cref="TransactionBehaviorOptions.ForeignTransactions"/>
     /// is <see cref="ForeignTransactions.Throw"/>.
     /// </exception>
-    public async ValueTask HandleAsync(ICommand command, Func<CancellationToken, ValueTask> next, CancellationToken cancellationToken = default) =>
+    /// <exception cref="ArgumentNullException">
+    /// <paramref name="command"/> or <paramref name="next"/> is <see langword="null"/>.
+    /// </exception>
+    public ValueTask HandleAsync(ICommand command, Func<CancellationToken, ValueTask> next, CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(command);
+        ArgumentNullException.ThrowIfNull(next);
+
+        return RunCommandAsync(command, next, cancellationToken);
+    }
+
+    /// <inheritdoc/>
+    /// <exception cref="InvalidOperationException">
+    /// A transaction that the mediator didn't begin is active, and <see cref="TransactionBehaviorOptions.ForeignTransactions"/>
+    /// is <see cref="ForeignTransactions.Throw"/>.
+    /// </exception>
+    /// <exception cref="ArgumentNullException">
+    /// <paramref name="command"/> or <paramref name="next"/> is <see langword="null"/>.
+    /// </exception>
+    public ValueTask<TResult> HandleAsync<TResult>(
+        ICommand<TResult> command,
+        Func<CancellationToken, ValueTask<TResult>> next,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(command);
+        ArgumentNullException.ThrowIfNull(next);
+
+        return RunAsync(command, readOnly: false, next, cancellationToken);
+    }
+
+    /// <inheritdoc/>
+    /// <exception cref="InvalidOperationException">
+    /// A transaction that the mediator didn't begin is active, and <see cref="TransactionBehaviorOptions.ForeignTransactions"/>
+    /// is <see cref="ForeignTransactions.Throw"/>.
+    /// </exception>
+    /// <exception cref="ArgumentNullException">
+    /// <paramref name="query"/> or <paramref name="next"/> is <see langword="null"/>.
+    /// </exception>
+    public ValueTask<TResult> HandleAsync<TResult>(
+        IQuery<TResult> query,
+        Func<CancellationToken, ValueTask<TResult>> next,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(query);
+        ArgumentNullException.ThrowIfNull(next);
+
+        return _options.Queries == QueryTransactions.None ? next(cancellationToken) : RunAsync(query, readOnly: true, next, cancellationToken);
+    }
+
+    /// <inheritdoc/>
+    /// <exception cref="InvalidOperationException">
+    /// The context's execution strategy retries on failure, or a transaction that the mediator didn't begin is active
+    /// and <see cref="TransactionBehaviorOptions.ForeignTransactions"/> is <see cref="ForeignTransactions.Throw"/>.
+    /// Thrown when the results are first enumerated.
+    /// </exception>
+    /// <exception cref="ArgumentNullException">
+    /// <paramref name="query"/> or <paramref name="next"/> is <see langword="null"/>.
+    /// </exception>
+    public IAsyncEnumerable<TResult> HandleAsync<TResult>(
+        IStreamQuery<TResult> query,
+        Func<CancellationToken, IAsyncEnumerable<TResult>> next,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(query);
+        ArgumentNullException.ThrowIfNull(next);
+
+        return _options.Queries == QueryTransactions.None || IsNonTransactional(query) && _dbContext.Database.CurrentTransaction is null
+            ? next(cancellationToken)
+            : StreamAsync(query, next, cancellationToken);
+    }
+
+    // A command without a result runs as one with a result that's ignored, so both share RunAsync.
+    private async ValueTask RunCommandAsync(ICommand command, Func<CancellationToken, ValueTask> next, CancellationToken cancellationToken) =>
         await RunAsync<bool>(
             command,
             readOnly: false,
@@ -125,42 +197,6 @@ public sealed class TransactionBehavior<TDbContext> : IBehavior
                 return true;
             },
             cancellationToken).ConfigureAwait(false);
-
-    /// <inheritdoc/>
-    /// <exception cref="InvalidOperationException">
-    /// A transaction that the mediator didn't begin is active, and <see cref="TransactionBehaviorOptions.ForeignTransactions"/>
-    /// is <see cref="ForeignTransactions.Throw"/>.
-    /// </exception>
-    public ValueTask<TResult> HandleAsync<TResult>(
-        ICommand<TResult> command,
-        Func<CancellationToken, ValueTask<TResult>> next,
-        CancellationToken cancellationToken = default) =>
-        RunAsync(command, readOnly: false, next, cancellationToken);
-
-    /// <inheritdoc/>
-    /// <exception cref="InvalidOperationException">
-    /// A transaction that the mediator didn't begin is active, and <see cref="TransactionBehaviorOptions.ForeignTransactions"/>
-    /// is <see cref="ForeignTransactions.Throw"/>.
-    /// </exception>
-    public ValueTask<TResult> HandleAsync<TResult>(
-        IQuery<TResult> query,
-        Func<CancellationToken, ValueTask<TResult>> next,
-        CancellationToken cancellationToken = default) =>
-        _options.Queries == QueryTransactions.None ? next(cancellationToken) : RunAsync(query, readOnly: true, next, cancellationToken);
-
-    /// <inheritdoc/>
-    /// <exception cref="InvalidOperationException">
-    /// The context's execution strategy retries on failure, or a transaction that the mediator didn't begin is active
-    /// and <see cref="TransactionBehaviorOptions.ForeignTransactions"/> is <see cref="ForeignTransactions.Throw"/>.
-    /// Thrown when the results are first enumerated.
-    /// </exception>
-    public IAsyncEnumerable<TResult> HandleAsync<TResult>(
-        IStreamQuery<TResult> query,
-        Func<CancellationToken, IAsyncEnumerable<TResult>> next,
-        CancellationToken cancellationToken = default) =>
-        _options.Queries == QueryTransactions.None || IsNonTransactional(query) && _dbContext.Database.CurrentTransaction is null
-            ? next(cancellationToken)
-            : StreamAsync(query, next, cancellationToken);
 
     private static bool IsNonTransactional(object request) =>
         NonTransactionalRequests.GetOrAdd(
@@ -307,26 +343,31 @@ public sealed class TransactionBehavior<TDbContext> : IBehavior
             TransactionContext.State = state;
         }
 
-        // Disposing an uncommitted transaction rolls it back, when the enumeration completes, fails or is stopped.
-        await using (transaction)
+        try
         {
-            try
+            if (transaction is not null)
             {
-                if (transaction is not null)
-                {
-                    await PrepareAsync(query, state!, cancellationToken).ConfigureAwait(false);
-                }
-
-                await foreach (var result in WithStateAsync(state, next(cancellationToken)).ConfigureAwait(false))
-                {
-                    yield return result;
-                }
+                await PrepareAsync(query, state!, cancellationToken).ConfigureAwait(false);
             }
-            finally
+
+            await foreach (var result in WithStateAsync(state, next(cancellationToken)).ConfigureAwait(false))
             {
-                if (transaction is not null)
+                yield return result;
+            }
+        }
+        finally
+        {
+            // Disposing an uncommitted transaction rolls it back, when the enumeration completes, fails or is stopped.
+            // It's disposed here rather than with await using, because it's null when the query doesn't begin one.
+            if (transaction is not null)
+            {
+                try
                 {
                     DiscardChanges();
+                }
+                finally
+                {
+                    await transaction.DisposeAsync().ConfigureAwait(false);
                 }
             }
         }

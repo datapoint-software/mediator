@@ -40,34 +40,66 @@ public sealed class AuthenticationBehavior : IBehavior
 
     /// <inheritdoc/>
     /// <exception cref="AuthenticationRequiredException">There is no signed-in user.</exception>
-    public ValueTask HandleAsync(ICommand command, Func<CancellationToken, ValueTask> next, CancellationToken cancellationToken = default) =>
-        Authentication.IsAnonymous(command.GetType()) ? next(cancellationToken) : AuthenticateThenHandleAsync(command, next, cancellationToken);
+    /// <exception cref="ArgumentNullException">
+    /// <paramref name="command"/> or <paramref name="next"/> is <see langword="null"/>.
+    /// </exception>
+    public ValueTask HandleAsync(ICommand command, Func<CancellationToken, ValueTask> next, CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(command);
+        ArgumentNullException.ThrowIfNull(next);
+
+        return Authentication.IsAnonymous(command.GetType()) ? next(cancellationToken) : AuthenticateThenHandleAsync(command, next, cancellationToken);
+    }
 
     /// <inheritdoc/>
     /// <exception cref="AuthenticationRequiredException">There is no signed-in user.</exception>
+    /// <exception cref="ArgumentNullException">
+    /// <paramref name="command"/> or <paramref name="next"/> is <see langword="null"/>.
+    /// </exception>
     public ValueTask<TResult> HandleAsync<TResult>(
         ICommand<TResult> command,
         Func<CancellationToken, ValueTask<TResult>> next,
-        CancellationToken cancellationToken = default) =>
-        Authentication.IsAnonymous(command.GetType()) ? next(cancellationToken) : AuthenticateThenHandleAsync(command, next, cancellationToken);
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(command);
+        ArgumentNullException.ThrowIfNull(next);
+
+        return Authentication.IsAnonymous(command.GetType()) ? next(cancellationToken) : AuthenticateThenHandleAsync(command, next, cancellationToken);
+    }
 
     /// <inheritdoc/>
     /// <exception cref="AuthenticationRequiredException">There is no signed-in user.</exception>
+    /// <exception cref="ArgumentNullException">
+    /// <paramref name="query"/> or <paramref name="next"/> is <see langword="null"/>.
+    /// </exception>
     public ValueTask<TResult> HandleAsync<TResult>(
         IQuery<TResult> query,
         Func<CancellationToken, ValueTask<TResult>> next,
-        CancellationToken cancellationToken = default) =>
-        Authentication.IsAnonymous(query.GetType()) ? next(cancellationToken) : AuthenticateThenHandleAsync(query, next, cancellationToken);
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(query);
+        ArgumentNullException.ThrowIfNull(next);
+
+        return Authentication.IsAnonymous(query.GetType()) ? next(cancellationToken) : AuthenticateThenHandleAsync(query, next, cancellationToken);
+    }
 
     /// <inheritdoc/>
     /// <exception cref="AuthenticationRequiredException">
     /// There is no signed-in user. Thrown when the results are first enumerated.
     /// </exception>
+    /// <exception cref="ArgumentNullException">
+    /// <paramref name="query"/> or <paramref name="next"/> is <see langword="null"/>.
+    /// </exception>
     public IAsyncEnumerable<TResult> HandleAsync<TResult>(
         IStreamQuery<TResult> query,
         Func<CancellationToken, IAsyncEnumerable<TResult>> next,
-        CancellationToken cancellationToken = default) =>
-        Authentication.IsAnonymous(query.GetType()) ? next(cancellationToken) : AuthenticateThenStreamAsync(query, next, cancellationToken);
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(query);
+        ArgumentNullException.ThrowIfNull(next);
+
+        return Authentication.IsAnonymous(query.GetType()) ? next(cancellationToken) : AuthenticateThenStreamAsync(query, next, cancellationToken);
+    }
 
     private async ValueTask AuthenticateThenHandleAsync(object action, Func<CancellationToken, ValueTask> next, CancellationToken cancellationToken)
     {

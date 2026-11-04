@@ -4,6 +4,7 @@ using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
+using Datapoint.Mediator.Tests.Shared;
 using FluentValidation;
 using Microsoft.Extensions.DependencyInjection;
 using Xunit;
@@ -22,6 +23,14 @@ public sealed class ValidationBehaviorTests
         var exception = Assert.Throws<ArgumentNullException>(() => new ValidationBehavior(null!));
 
         Assert.Equal("serviceProvider", exception.ParamName);
+    }
+
+    [Fact]
+    public void HandleAsync_NullArguments_Throw()
+    {
+        var behavior = new ValidationBehavior(new ServiceCollection().BuildServiceProvider());
+
+        BehaviorArguments.AssertNullsAreRefused(behavior, ValidUser, new AddNumbers(1, 2), new FindUser("Ana"), new ListUsers(""));
     }
 
     [Fact]

@@ -5,6 +5,7 @@ using System.Runtime.CompilerServices;
 using System.Security.Claims;
 using System.Threading;
 using System.Threading.Tasks;
+using Datapoint.Mediator.Tests.Shared;
 using Microsoft.Extensions.DependencyInjection;
 using Xunit;
 
@@ -21,6 +22,16 @@ public sealed class AuthorizationBehaviorTests
         var exception = Assert.Throws<ArgumentNullException>(() => new AuthorizationBehavior(null!));
 
         Assert.Equal("serviceProvider", exception.ParamName);
+    }
+
+    [Fact]
+    public void HandleAsync_NullArguments_Throw()
+    {
+        var behavior = new AuthorizationBehavior(new ServiceCollection().BuildServiceProvider());
+
+        BehaviorArguments.AssertNullsAreRefused(behavior, new DeleteInvoice(1), new CreateInvoice(), new GetPrices(), new ListPrices());
+        BehaviorArguments.AssertRefused("message", () => behavior.HandleAsync((IMessage)null!, _ => default));
+        BehaviorArguments.AssertRefused("next", () => behavior.HandleAsync(new InvoiceCreated(), null!));
     }
 
     [Fact]

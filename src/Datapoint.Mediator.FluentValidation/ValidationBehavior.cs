@@ -51,41 +51,65 @@ public sealed class ValidationBehavior : IBehavior
 
     /// <inheritdoc/>
     /// <exception cref="ValidationException">The command is not valid.</exception>
+    /// <exception cref="ArgumentNullException">
+    /// <paramref name="command"/> or <paramref name="next"/> is <see langword="null"/>.
+    /// </exception>
     public ValueTask HandleAsync(ICommand command, Func<CancellationToken, ValueTask> next, CancellationToken cancellationToken = default)
     {
+        ArgumentNullException.ThrowIfNull(command);
+        ArgumentNullException.ThrowIfNull(next);
+
         var validators = GetValidators(command);
         return validators.Length == 0 ? next(cancellationToken) : ValidateThenHandleAsync(command, validators, next, cancellationToken);
     }
 
     /// <inheritdoc/>
     /// <exception cref="ValidationException">The command is not valid.</exception>
+    /// <exception cref="ArgumentNullException">
+    /// <paramref name="command"/> or <paramref name="next"/> is <see langword="null"/>.
+    /// </exception>
     public ValueTask<TResult> HandleAsync<TResult>(
         ICommand<TResult> command,
         Func<CancellationToken, ValueTask<TResult>> next,
         CancellationToken cancellationToken = default)
     {
+        ArgumentNullException.ThrowIfNull(command);
+        ArgumentNullException.ThrowIfNull(next);
+
         var validators = GetValidators(command);
         return validators.Length == 0 ? next(cancellationToken) : ValidateThenHandleAsync(command, validators, next, cancellationToken);
     }
 
     /// <inheritdoc/>
     /// <exception cref="ValidationException">The query is not valid.</exception>
+    /// <exception cref="ArgumentNullException">
+    /// <paramref name="query"/> or <paramref name="next"/> is <see langword="null"/>.
+    /// </exception>
     public ValueTask<TResult> HandleAsync<TResult>(
         IQuery<TResult> query,
         Func<CancellationToken, ValueTask<TResult>> next,
         CancellationToken cancellationToken = default)
     {
+        ArgumentNullException.ThrowIfNull(query);
+        ArgumentNullException.ThrowIfNull(next);
+
         var validators = GetValidators(query);
         return validators.Length == 0 ? next(cancellationToken) : ValidateThenHandleAsync(query, validators, next, cancellationToken);
     }
 
     /// <inheritdoc/>
     /// <exception cref="ValidationException">The stream query is not valid. Thrown when the results are first enumerated.</exception>
+    /// <exception cref="ArgumentNullException">
+    /// <paramref name="query"/> or <paramref name="next"/> is <see langword="null"/>.
+    /// </exception>
     public IAsyncEnumerable<TResult> HandleAsync<TResult>(
         IStreamQuery<TResult> query,
         Func<CancellationToken, IAsyncEnumerable<TResult>> next,
         CancellationToken cancellationToken = default)
     {
+        ArgumentNullException.ThrowIfNull(query);
+        ArgumentNullException.ThrowIfNull(next);
+
         var validators = GetValidators(query);
         return validators.Length == 0 ? next(cancellationToken) : ValidateThenStreamAsync(query, validators, next, cancellationToken);
     }

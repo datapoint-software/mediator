@@ -5,6 +5,10 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Include="..\Shared\BehaviorArguments.cs" Link="Shared\BehaviorArguments.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\..\src\Datapoint.Mediator.Authorization\Datapoint.Mediator.Authorization.csproj" />
   </ItemGroup>
 
