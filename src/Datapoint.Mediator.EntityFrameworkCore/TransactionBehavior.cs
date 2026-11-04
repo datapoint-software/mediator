@@ -242,16 +242,27 @@ public sealed class TransactionBehavior<TDbContext> : IBehavior
         Func<CancellationToken, ValueTask<TResult>> next,
         CancellationToken cancellationToken)
     {
-        // A foreign transaction is joined as it is: its owner saves and commits it.
+        if (Join() is { } state)
+        {
+            await InitializeAsync(request, state, cancellationToken).ConfigureAwait(false);
+        }
+
+        return await next(cancellationToken).ConfigureAwait(false);
+    }
+
+    // Joins the mediator's current transaction, and returns its state. A foreign transaction is joined as it is, with no
+    // state: its owner saves and commits it. Not async, because a value set in an async method's AsyncLocal is reset when
+    // it returns.
+    private TransactionState? Join()
+    {
         if (OwnState() is not { } outer)
         {
-            return await next(cancellationToken).ConfigureAwait(false);
+            return null;
         }
 
         var state = outer with { IsJoined = true };
         TransactionContext.State = state;
-        await InitializeAsync(request, state, cancellationToken).ConfigureAwait(false);
-        return await next(cancellationToken).ConfigureAwait(false);
+        return state;
     }
 
     private async ValueTask<TResult> RunInTransactionAsync<TResult>(
@@ -314,62 +325,58 @@ public sealed class TransactionBehavior<TDbContext> : IBehavior
         Func<CancellationToken, IAsyncEnumerable<TResult>> next,
         [EnumeratorCancellation] CancellationToken cancellationToken)
     {
-        TransactionState? state;
-        IDbContextTransaction? transaction = null;
-
         if (_dbContext.Database.CurrentTransaction is not null)
         {
-            state = OwnState() is { } outer ? outer with { IsJoined = true } : null;
+            var joined = Join();
 
-            if (state is not null)
+            if (joined is not null)
             {
-                TransactionContext.State = state;
-                await InitializeAsync(query, state, cancellationToken).ConfigureAwait(false);
-            }
-        }
-        else
-        {
-            // EF Core refuses queries in a transaction outside the strategy, and returned results can't be retried.
-            if (_dbContext.Database.CreateExecutionStrategy().RetriesOnFailure)
-            {
-                throw new InvalidOperationException(
-                    $"The stream query '{query.GetType()}' can't run in a transaction, because the execution strategy of " +
-                    $"'{typeof(TDbContext)}' retries on failure. Use a query that returns a list, or a context without " +
-                    "retries, or mark the stream query [NonTransactional].");
+                await InitializeAsync(query, joined, cancellationToken).ConfigureAwait(false);
             }
 
-            transaction = await BeginAsync(readOnly: true, cancellationToken).ConfigureAwait(false);
-            state = new TransactionState(_dbContext, IsReadOnly: true, IsJoined: false, Attempt: 1, Guid.CreateVersion7());
-            TransactionContext.State = state;
-        }
-
-        try
-        {
-            if (transaction is not null)
-            {
-                await PrepareAsync(query, state!, cancellationToken).ConfigureAwait(false);
-            }
-
-            await foreach (var result in WithStateAsync(state, next(cancellationToken)).ConfigureAwait(false))
+            await foreach (var result in WithStateAsync(joined, next(cancellationToken)).ConfigureAwait(false))
             {
                 yield return result;
             }
+
+            yield break;
         }
-        finally
+
+        EnsureStreamCanBeginTransaction(query);
+
+        var transaction = await BeginAsync(readOnly: true, cancellationToken).ConfigureAwait(false);
+
+        // Disposing an uncommitted transaction rolls it back, when the enumeration completes, fails or is stopped.
+        await using (transaction.ConfigureAwait(false))
         {
-            // Disposing an uncommitted transaction rolls it back, when the enumeration completes, fails or is stopped.
-            // It's disposed here rather than with await using, because it's null when the query doesn't begin one.
-            if (transaction is not null)
+            var state = new TransactionState(_dbContext, IsReadOnly: true, IsJoined: false, Attempt: 1, Guid.CreateVersion7());
+            TransactionContext.State = state;
+
+            try
             {
-                try
+                await PrepareAsync(query, state, cancellationToken).ConfigureAwait(false);
+
+                await foreach (var result in WithStateAsync(state, next(cancellationToken)).ConfigureAwait(false))
                 {
-                    DiscardChanges();
-                }
-                finally
-                {
-                    await transaction.DisposeAsync().ConfigureAwait(false);
+                    yield return result;
                 }
             }
+            finally
+            {
+                DiscardChanges();
+            }
+        }
+    }
+
+    // EF Core refuses queries in a transaction outside the strategy, and returned results can't be retried.
+    private void EnsureStreamCanBeginTransaction(object query)
+    {
+        if (_dbContext.Database.CreateExecutionStrategy().RetriesOnFailure)
+        {
+            throw new InvalidOperationException(
+                $"The stream query '{query.GetType()}' can't run in a transaction, because the execution strategy of " +
+                $"'{typeof(TDbContext)}' retries on failure. Use a query that returns a list, or a context without " +
+                "retries, or mark the stream query [NonTransactional].");
         }
     }
 

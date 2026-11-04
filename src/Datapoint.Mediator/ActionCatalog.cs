@@ -48,25 +48,7 @@ public sealed partial class ActionCatalog : IActionCatalog
                 continue;
             }
 
-            if (typeof(IMessage).IsAssignableFrom(type))
-            {
-                throw new InvalidOperationException(
-                    $"'{type}' is a message, so it can't be an action: messages are published without authorization.");
-            }
-
-            if (attribute.Name.Length > MaxNameLength || !NamePattern().IsMatch(attribute.Name))
-            {
-                throw new InvalidOperationException(
-                    $"'{attribute.Name}' on '{type}' is not a valid action name. Use up to {MaxNameLength} lowercase " +
-                    "letters and digits, separated by single dots or hyphens, such as 'invoices.create'.");
-            }
-
-            if (string.IsNullOrWhiteSpace(attribute.Description))
-            {
-                throw new InvalidOperationException(
-                    $"'{attribute.Name}' on '{type}' has no description. Describe what the action does, because hosts " +
-                    "show it to callers as the OpenAPI summary, in CLI help and as the MCP tool's description.");
-            }
+            Validate(type, attribute);
 
             if (named.TryGetValue(attribute.Name, out var other))
             {
@@ -84,14 +66,7 @@ public sealed partial class ActionCatalog : IActionCatalog
             }
         }
 
-        // Listed together, so every action can be fixed in one pass.
-        if (unoffered.Count > 0)
-        {
-            throw new InvalidOperationException(
-                $"No host adapter offers {string.Join(", ", unoffered.Select(type => $"'{type}'"))}. Mark each action " +
-                "with the adapters that offer it, such as [Api], [CommandLine] or [ModelContextProtocol]. Code that " +
-                "only your application runs doesn't need [Action]: send it through IMediator.");
-        }
+        EnsureOffered(unoffered);
 
         _actions = actions.ToFrozenDictionary(action => action.Name, StringComparer.Ordinal);
         Actions = [.. actions.OrderBy(action => action.Name, StringComparer.Ordinal)];
@@ -105,6 +80,41 @@ public sealed partial class ActionCatalog : IActionCatalog
     {
         ArgumentNullException.ThrowIfNull(name);
         return _actions.TryGetValue(name, out action);
+    }
+
+    private static void Validate(Type type, ActionAttribute attribute)
+    {
+        if (typeof(IMessage).IsAssignableFrom(type))
+        {
+            throw new InvalidOperationException(
+                $"'{type}' is a message, so it can't be an action: messages are published without authorization.");
+        }
+
+        if (attribute.Name.Length > MaxNameLength || !NamePattern().IsMatch(attribute.Name))
+        {
+            throw new InvalidOperationException(
+                $"'{attribute.Name}' on '{type}' is not a valid action name. Use up to {MaxNameLength} lowercase " +
+                "letters and digits, separated by single dots or hyphens, such as 'invoices.create'.");
+        }
+
+        if (string.IsNullOrWhiteSpace(attribute.Description))
+        {
+            throw new InvalidOperationException(
+                $"'{attribute.Name}' on '{type}' has no description. Describe what the action does, because hosts " +
+                "show it to callers as the OpenAPI summary, in CLI help and as the MCP tool's description.");
+        }
+    }
+
+    // Listed together, so every action can be fixed in one pass.
+    private static void EnsureOffered(List<Type> unoffered)
+    {
+        if (unoffered.Count > 0)
+        {
+            throw new InvalidOperationException(
+                $"No host adapter offers {string.Join(", ", unoffered.Select(type => $"'{type}'"))}. Mark each action " +
+                "with the adapters that offer it, such as [Api], [CommandLine] or [ModelContextProtocol]. Code that " +
+                "only your application runs doesn't need [Action]: send it through IMediator.");
+        }
     }
 
     private static (ActionKind Kind, Type? ResultType) GetKind(Type type)

@@ -16,8 +16,6 @@ internal static class ArgumentField
 {
     public static string? Find(JsonException exception, JsonElement arguments, JsonTypeInfo typeInfo, out InvalidActionArgumentReason? reason)
     {
-        reason = null;
-
         // System.Text.Json sets the path on every exception it throws while deserializing, starting with "$".
         var segments = Parse(exception.Path ?? "$", out var complete);
         var field = new StringBuilder();
@@ -26,7 +24,7 @@ internal static class ArgumentField
         foreach (var segment in segments)
         {
             // Dictionaries, polymorphic types and custom converters: the next segment isn't in the contract.
-            if (segment.Name is null ? typeInfo.Kind != JsonTypeInfoKind.Enumerable : !IsPlainObject(typeInfo))
+            if (!CanStepInto(typeInfo, segment))
             {
                 complete = false;
                 break;
@@ -34,42 +32,17 @@ internal static class ArgumentField
 
             if (segment.Name is null)
             {
-                field.Append('[').Append(segment.Index.ToString(CultureInfo.InvariantCulture)).Append(']');
-                typeInfo = typeInfo.Options.GetTypeInfo(typeInfo.ElementType!);
-                element = element is { ValueKind: JsonValueKind.Array } array && segment.Index < array.GetArrayLength()
-                    ? array[segment.Index]
-                    : null;
+                StepIntoItem(segment.Index, field, ref typeInfo, ref element);
             }
-            else
+            else if (!TryStepIntoProperty(segment.Name, field, ref typeInfo, ref element))
             {
                 // A name the contract doesn't have is an unknown property, which the caller named.
-                if (FindProperty(typeInfo, segment.Name) is not { } property)
-                {
-                    return null;
-                }
-
-                Append(field, property.Name);
-                typeInfo = typeInfo.Options.GetTypeInfo(property.PropertyType);
-                element = element is { ValueKind: JsonValueKind.Object } json && json.TryGetProperty(segment.Name, out var value)
-                    ? value
-                    : null;
+                reason = null;
+                return null;
             }
         }
 
-        // A missing required property is reported at the object that lacks it.
-        if (complete && IsPlainObject(typeInfo) && element is { ValueKind: JsonValueKind.Object } target
-            && FindMissingRequired(typeInfo, target) is { } missing)
-        {
-            Append(field, missing.Name);
-            reason = InvalidActionArgumentReason.Missing;
-        }
-        else
-        {
-            // Only a complete walk reaches the value that failed. Otherwise, the element is the value's container.
-            reason = complete && element is { ValueKind: JsonValueKind.Null }
-                ? InvalidActionArgumentReason.Null
-                : InvalidActionArgumentReason.Invalid;
-        }
+        reason = GetReason(complete, field, typeInfo, element);
 
         if (field.Length == 0)
         {
@@ -78,6 +51,62 @@ internal static class ArgumentField
         }
 
         return field.ToString();
+    }
+
+    private static bool CanStepInto(JsonTypeInfo typeInfo, Segment segment)
+    {
+        if (segment.Name is null)
+        {
+            return typeInfo.Kind == JsonTypeInfoKind.Enumerable;
+        }
+
+        return IsPlainObject(typeInfo);
+    }
+
+    private static void StepIntoItem(int index, StringBuilder field, ref JsonTypeInfo typeInfo, ref JsonElement? element)
+    {
+        field.Append('[').Append(index.ToString(CultureInfo.InvariantCulture)).Append(']');
+
+        // An enumerable's contract always has an element type.
+        typeInfo = typeInfo.Options.GetTypeInfo(typeInfo.ElementType!);
+
+        // The path comes from the JSON being read, so the item is there. Null is only a safeguard.
+        element = element is { ValueKind: JsonValueKind.Array } array && index < array.GetArrayLength() ? array[index] : null;
+    }
+
+    private static bool TryStepIntoProperty(string name, StringBuilder field, ref JsonTypeInfo typeInfo, ref JsonElement? element)
+    {
+        if (FindProperty(typeInfo, name) is not { } property)
+        {
+            return false;
+        }
+
+        Append(field, property.Name);
+        typeInfo = typeInfo.Options.GetTypeInfo(property.PropertyType);
+
+        // The path comes from the JSON being read, so the property is there. Null is only a safeguard.
+        element = element is { ValueKind: JsonValueKind.Object } json && json.TryGetProperty(name, out var value) ? value : null;
+
+        return true;
+    }
+
+    // A missing required property is reported at the object that lacks it, and its name is added to the field. Only a
+    // complete walk reaches the value that failed. Otherwise, the element is the value's container.
+    private static InvalidActionArgumentReason GetReason(bool complete, StringBuilder field, JsonTypeInfo typeInfo, JsonElement? element)
+    {
+        if (!complete)
+        {
+            return InvalidActionArgumentReason.Invalid;
+        }
+
+        if (IsPlainObject(typeInfo) && element is { ValueKind: JsonValueKind.Object } target
+            && FindMissingRequired(typeInfo, target) is { } missing)
+        {
+            Append(field, missing.Name);
+            return InvalidActionArgumentReason.Missing;
+        }
+
+        return element is { ValueKind: JsonValueKind.Null } ? InvalidActionArgumentReason.Null : InvalidActionArgumentReason.Invalid;
     }
 
     private static void Append(StringBuilder field, string name)
@@ -119,38 +148,67 @@ internal static class ArgumentField
     private static List<Segment> Parse(string path, out bool complete)
     {
         var segments = new List<Segment>();
-        var i = 1;
-        int end;
+        var position = 1;
 
-        while (i < path.Length)
+        while (position < path.Length)
         {
-            if (path[i] == '.')
-            {
-                end = path.IndexOfAny(['.', '['], i + 1);
-                end = end < 0 ? path.Length : end;
-                segments.Add(new Segment(path[(i + 1)..end], 0));
-                i = end;
-            }
-            else if (path.AsSpan(i).StartsWith("['", StringComparison.Ordinal) && (end = path.IndexOf("']", i + 2, StringComparison.Ordinal)) >= 0)
-            {
-                segments.Add(new Segment(path[(i + 2)..end], 0));
-                i = end + 2;
-            }
-            else if (path[i] == '[' && (end = path.IndexOf(']', i + 1)) >= 0
-                && int.TryParse(path.AsSpan(i + 1, end - i - 1), NumberStyles.None, CultureInfo.InvariantCulture, out var index))
-            {
-                segments.Add(new Segment(null, index));
-                i = end + 1;
-            }
-            else
+            if (!TryParseSegment(path, ref position, out var segment))
             {
                 complete = false;
                 return segments;
             }
+
+            segments.Add(segment);
         }
 
         complete = true;
         return segments;
+    }
+
+    // Reads the segment at position, and moves position past it.
+    private static bool TryParseSegment(string path, ref int position, out Segment segment)
+    {
+        int end;
+
+        if (path[position] == '.')
+        {
+            end = path.IndexOfAny(['.', '['], position + 1);
+
+            if (end < 0)
+            {
+                end = path.Length;
+            }
+
+            segment = new Segment(path[(position + 1)..end], 0);
+            position = end;
+            return true;
+        }
+
+        if (path.AsSpan(position).StartsWith("['", StringComparison.Ordinal))
+        {
+            end = path.IndexOf("']", position + 2, StringComparison.Ordinal);
+
+            if (end >= 0)
+            {
+                segment = new Segment(path[(position + 2)..end], 0);
+                position = end + 2;
+                return true;
+            }
+        }
+        else if (path[position] == '[')
+        {
+            end = path.IndexOf(']', position + 1);
+
+            if (end >= 0 && int.TryParse(path.AsSpan(position + 1, end - position - 1), NumberStyles.None, CultureInfo.InvariantCulture, out var index))
+            {
+                segment = new Segment(null, index);
+                position = end + 1;
+                return true;
+            }
+        }
+
+        segment = default;
+        return false;
     }
 
     // A property name, or an array index when Name is null.

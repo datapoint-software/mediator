@@ -4,6 +4,7 @@ using System.CommandLine;
 using System.CommandLine.Parsing;
 using System.ComponentModel;
 using System.Globalization;
+using System.IO;
 using System.Linq;
 using System.Numerics;
 using System.Reflection;
@@ -54,42 +55,50 @@ internal sealed class ActionCommand
         // The serializer's contract, so options follow [JsonPropertyName] and [JsonIgnore] like the --json arguments do.
         foreach (var property in _serializerOptions.GetTypeInfo(_action.ActionType).Properties)
         {
-            // Only what the serializer can set gets an option. Host-provided properties get none, so the user can never
-            // believe they chose the value.
-            if ((property.Set is null && property.AssociatedParameter is null) || _hostProvided.Contains(property.Name))
+            if (HasOption(property))
             {
-                continue;
+                command.Options.Add(CreateOption(property));
             }
-
-            command.Options.Add(CreateOption(property));
         }
 
         command.Options.Add(_json);
-
-        // Required options are checked here rather than by System.CommandLine, because --json can replace them.
-        command.Validators.Add(result =>
-        {
-            var usesJson = result.GetResult(_json) is not null;
-            var usesOptions = _properties.Any(p => result.GetResult(p.Option) is not null);
-
-            if (usesJson && usesOptions)
-            {
-                result.AddError("Use either --json or the individual options, not both.");
-            }
-            else if (!usesJson)
-            {
-                foreach (var (_, option, required) in _properties)
-                {
-                    if (required && result.GetResult(option) is null)
-                    {
-                        result.AddError($"Option '{option.Name}' is required.");
-                    }
-                }
-            }
-        });
-
+        command.Validators.Add(ValidateOptions);
         command.SetAction(RunAsync);
         return command;
+    }
+
+    // Only what the serializer can set gets an option. Host-provided properties get none, so the user can never believe
+    // they chose the value.
+    private bool HasOption(JsonPropertyInfo property)
+    {
+        var settable = property.Set is not null || property.AssociatedParameter is not null;
+        return settable && !_hostProvided.Contains(property.Name);
+    }
+
+    // Required options are checked here rather than by System.CommandLine, because --json can replace them.
+    private void ValidateOptions(CommandResult result)
+    {
+        var usesJson = result.GetResult(_json) is not null;
+        var usesOptions = _properties.Any(p => result.GetResult(p.Option) is not null);
+
+        if (usesJson && usesOptions)
+        {
+            result.AddError("Use either --json or the individual options, not both.");
+            return;
+        }
+
+        if (usesJson)
+        {
+            return;
+        }
+
+        foreach (var (_, option, required) in _properties)
+        {
+            if (required && result.GetResult(option) is null)
+            {
+                result.AddError($"Option '{option.Name}' is required.");
+            }
+        }
     }
 
     // Named after the .NET member, so the options don't change with the app's naming policy. The value is sent under the
@@ -106,12 +115,15 @@ internal sealed class ActionCommand
             typeof(Option<>).MakeGenericType(property.PropertyType),
             $"--{JsonNamingPolicy.KebabCaseLower.ConvertName(memberName)}",
             Array.Empty<string>())!;
-        option.Description = required ? $"{description} (required)".TrimStart() : description;
+        option.Description = required ? RequiredDescription(description) : description;
         UseInvariantCulture(option, property.PropertyType);
 
         _properties.Add((property, option, required));
         return option;
     }
+
+    private static string RequiredDescription(string? description) =>
+        description is null ? "(required)" : $"{description} (required)";
 
     private static string? Description(ICustomAttributeProvider? provider) =>
         provider?.GetCustomAttributes(typeof(DescriptionAttribute), inherit: true) is [DescriptionAttribute attribute, ..]
@@ -204,43 +216,19 @@ internal sealed class ActionCommand
 
     private async Task<int> DispatchAsync(ParseResult parseResult, CancellationToken cancellationToken)
     {
-        var output = parseResult.InvocationConfiguration.Output;
-        var error = parseResult.InvocationConfiguration.Error;
         JsonElement arguments;
 
         if (parseResult.GetValue(_json) is { } json)
         {
-            try
+            if (ReadJson(json, out arguments) is { } message)
             {
-                using var document = JsonDocument.Parse(json);
-                arguments = document.RootElement.Clone();
-            }
-            catch (JsonException)
-            {
-                await error.WriteLineAsync("The --json value is not valid JSON.").ConfigureAwait(false);
-                return ActionExitCodes.InvalidArguments;
-            }
-
-            // Checked before the dispatcher is resolved, so a decorator of the dispatcher can still set the value.
-            if (HostProvidedNames.FindIn(_hostProvided, arguments) is { } name)
-            {
-                await error.WriteLineAsync(AdapterMessages.HostProvided(name)).ConfigureAwait(false);
+                await parseResult.InvocationConfiguration.Error.WriteLineAsync(message).ConfigureAwait(false);
                 return ActionExitCodes.InvalidArguments;
             }
         }
         else
         {
-            var values = new JsonObject();
-
-            foreach (var (property, option, _) in _properties)
-            {
-                if (parseResult.GetResult(option) is { } result)
-                {
-                    values[property.Name] = JsonSerializer.SerializeToNode(result.GetValueOrDefault<object?>(), property.PropertyType, _serializerOptions);
-                }
-            }
-
-            arguments = JsonSerializer.SerializeToElement(values, JsonSerializerOptions.Default);
+            arguments = ReadOptions(parseResult);
         }
 
         // One DI scope per invocation, like a request in an API.
@@ -249,27 +237,76 @@ internal sealed class ActionCommand
         await using (scope.ConfigureAwait(false))
         {
             var dispatcher = scope.ServiceProvider.GetRequiredService<IActionDispatcher>();
-
-            if (_action.Kind == ActionKind.StreamQuery)
-            {
-                // JSON Lines: one result per line, written as it arrives.
-                await foreach (var item in dispatcher.StreamAsync(_action.Name, arguments, _serializerOptions, cancellationToken).ConfigureAwait(false))
-                {
-                    await output.WriteLineAsync(JsonSerializer.Serialize(item, _serializerOptions)).ConfigureAwait(false);
-                }
-            }
-            else
-            {
-                var result = await dispatcher.DispatchAsync(_action.Name, arguments, _serializerOptions, cancellationToken).ConfigureAwait(false);
-
-                if (_action.Kind != ActionKind.Command)
-                {
-                    await output.WriteLineAsync(JsonSerializer.Serialize(result, _serializerOptions)).ConfigureAwait(false);
-                }
-            }
+            await WriteResultsAsync(dispatcher, arguments, parseResult.InvocationConfiguration.Output, cancellationToken).ConfigureAwait(false);
         }
 
         return ActionExitCodes.Success;
+    }
+
+    // Returns the message to print when the --json value can't be used, or null when it can.
+    private string? ReadJson(string json, out JsonElement arguments)
+    {
+        try
+        {
+            using var document = JsonDocument.Parse(json);
+            arguments = document.RootElement.Clone();
+        }
+        catch (JsonException)
+        {
+            arguments = default;
+            return "The --json value is not valid JSON.";
+        }
+
+        // Checked before the dispatcher is resolved, so a decorator of the dispatcher can still set the value.
+        if (HostProvidedNames.FindIn(_hostProvided, arguments) is { } name)
+        {
+            return AdapterMessages.HostProvided(name);
+        }
+
+        return null;
+    }
+
+    private JsonElement ReadOptions(ParseResult parseResult)
+    {
+        var values = new JsonObject();
+
+        foreach (var (property, option, _) in _properties)
+        {
+            if (parseResult.GetResult(option) is { } result)
+            {
+                var value = result.GetValueOrDefault<object?>();
+                values[property.Name] = JsonSerializer.SerializeToNode(value, property.PropertyType, _serializerOptions);
+            }
+        }
+
+        return JsonSerializer.SerializeToElement(values, JsonSerializerOptions.Default);
+    }
+
+    private async Task WriteResultsAsync(
+        IActionDispatcher dispatcher,
+        JsonElement arguments,
+        TextWriter output,
+        CancellationToken cancellationToken)
+    {
+        if (_action.Kind == ActionKind.StreamQuery)
+        {
+            // JSON Lines: one result per line, written as it arrives.
+            var results = dispatcher.StreamAsync(_action.Name, arguments, _serializerOptions, cancellationToken);
+
+            await foreach (var item in results.ConfigureAwait(false))
+            {
+                await output.WriteLineAsync(JsonSerializer.Serialize(item, _serializerOptions)).ConfigureAwait(false);
+            }
+
+            return;
+        }
+
+        var result = await dispatcher.DispatchAsync(_action.Name, arguments, _serializerOptions, cancellationToken).ConfigureAwait(false);
+
+        if (_action.Kind != ActionKind.Command)
+        {
+            await output.WriteLineAsync(JsonSerializer.Serialize(result, _serializerOptions)).ConfigureAwait(false);
+        }
     }
 
     // Only messages known to be safe are printed. Invalid arguments and authorization failures go to the app's hook
