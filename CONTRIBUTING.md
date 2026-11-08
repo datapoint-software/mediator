@@ -58,6 +58,7 @@ Compare the `Allocated` column before and after your change.
 - Return `ValueTask` from asynchronous APIs ([ADR 0003](docs/adr/0003-valuetask-for-asynchronous-apis.md)).
 - Put registration extension methods in `Microsoft.Extensions.DependencyInjection`, and endpoint ones in `Microsoft.AspNetCore.Builder`, as Microsoft's packages do.
 - Manage package versions centrally in `Directory.Packages.props`. Adopt stable releases as soon as they're published, and never pre-releases ([ADR 0040](docs/adr/0040-stable-releases-are-adopted-immediately.md)).
+- Don't merge Dependabot pull requests. Apply each update on `main` with every lock file restored, then close the pull request and delete its branch. The `dependabot` skill for Claude Code, in [.claude/skills/dependabot/SKILL.md](.claude/skills/dependabot/SKILL.md), goes through the steps.
 - Pin GitHub Actions to a full commit SHA, with the version in a comment.
 
 ## Branches, commits and pull requests
