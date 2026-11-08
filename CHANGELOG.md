@@ -4,6 +4,12 @@ All notable changes to the Datapoint.Mediator packages are documented in this fi
 
 The format is based on [Keep a Changelog 1.1.0](https://keepachangelog.com/en/1.1.0/), and the packages follow [Semantic Versioning 2.0.0](https://semver.org/spec/v2.0.0.html).
 
+## [4.0.0-beta.8](https://github.com/datapoint-software/mediator/releases/tag/4.0.0-beta.8) - 2026-11-08
+
+### Changed
+
+- **model-context-protocol:** Require ModelContextProtocol 2.4.0 or later, which matches protocol property names case-sensitively ([0232fac](https://github.com/datapoint-software/mediator/commit/0232fac28d9a0bc9c0a3912f7b064554c0658ed0))
+
 ## [4.0.0-beta.7](https://github.com/datapoint-software/mediator/releases/tag/4.0.0-beta.7) - 2026-11-04
 
 ### Fixed
