@@ -59,6 +59,7 @@ Outside `src/`:
 - `tests/` has one test project per package, plus `DependencyInjection.Tests.Fixtures`, an assembly for scanning tests.
 - `benchmarks/` measures dispatch with BenchmarkDotNet.
 - `samples/` shows one business layer offered from three hosts.
+- `scripts/` holds the release scripts, used by the steps in CONTRIBUTING.md.
 
 ## Dispatch
 

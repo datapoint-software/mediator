@@ -92,12 +92,13 @@ Compare the `Allocated` column before and after your change.
 
 `CHANGELOG.md` follows [Keep a Changelog 1.1.0](https://keepachangelog.com/en/1.1.0/), and is generated from the commits by git-cliff, configured in `cliff.toml`. It lists `feat`, `fix`, `perf` and `docs` commits, and breaking changes of any type.
 
-1. Move the entries from each `PublicAPI.Unshipped.txt` to its `PublicAPI.Shipped.txt`, dropping `*REMOVED*` lines together with the shipped lines they remove.
-2. Add the version's section to the changelog, and review it. For a release candidate and for `4.0.0`, add a line saying which packages were used in production:
+1. On an up-to-date `main` with a clean working tree, run the release script. It checks the version and the repository, moves the entries from each `PublicAPI.Unshipped.txt` to its `PublicAPI.Shipped.txt` (dropping `*REMOVED*` lines together with the shipped lines they remove), and adds the version's section to the changelog with git-cliff:
 
    ```bash
-   git cliff --unreleased --tag <version> --prepend CHANGELOG.md
+   scripts/prepare-release.sh <version>
    ```
+
+2. Review the new section. Remove entries that only matter to contributors, and add a `Changed` entry for dependency changes users will notice, because git-cliff doesn't list `build(deps)` commits. For a release candidate and for `4.0.0`, add a line saying which packages were used in production.
 
 3. Commit both changes on `main`, and wait for CI to pass.
 4. Tag that commit and push the tag:
@@ -109,9 +110,15 @@ Compare the `Allocated` column before and after your change.
 
 5. The `Release` workflow builds, tests and packs, then waits for approval in the `nuget` environment. After approval, it publishes to nuget.org with Trusted Publishing, then waits, for up to an hour, until nuget.org lists every package and a new project referencing all of them restores. Only then does it create the GitHub release with the same notes, so announce the version only once the release exists: before that, consumers' restores can fail with NU1102, and NuGet's HTTP cache keeps that answer for about 30 minutes.
 
-6. After `4.0.0-rc.1` is published, set `PackageValidationBaselineVersion` to `4.0.0-rc.1` in `src/Directory.Build.props`, so CI fails any change that breaks binary compatibility. After `4.0.0` is published, set it to `4.0.0`.
+6. After `4.0.0-rc.1` is published, set `PackageValidationBaselineVersion` to `4.0.0-rc.1` in `src/Directory.Build.props`, so CI fails any change that breaks binary compatibility. After `4.0.0` is published, set it to `4.0.0`:
+
+   ```bash
+   scripts/set-validation-baseline.sh <version>
+   ```
 
 A published version is permanent: it can be unlisted, but never replaced.
+
+The `prepare-release` skill for Claude Code, in [.claude/skills/prepare-release/SKILL.md](.claude/skills/prepare-release/SKILL.md), goes through these steps.
 
 ## Adding a package
 
