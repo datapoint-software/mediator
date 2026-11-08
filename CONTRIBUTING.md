@@ -98,7 +98,7 @@ Compare the `Allocated` column before and after your change.
    scripts/prepare-release.sh <version>
    ```
 
-2. Review the new section. Remove entries that only matter to contributors, and add a `Changed` entry for dependency changes users will notice, because git-cliff doesn't list `build(deps)` commits. For a release candidate and for `4.0.0`, add a line saying which packages were used in production.
+2. Review the new section. Remove entries that only matter to contributors, and add a `Changed` entry for dependency changes users will notice, because git-cliff doesn't list `build(deps)` commits. For a release candidate and for `4.0.0`, add a line saying which packages were used in production. The `Release` workflow writes the GitHub release notes with git-cliff, so these edits appear only in `CHANGELOG.md`.
 
 3. Commit both changes on `main`, and wait for CI to pass.
 4. Tag that commit and push the tag:

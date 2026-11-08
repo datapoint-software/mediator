@@ -46,6 +46,8 @@ git-cliff lists only `feat`, `fix`, `perf` and `docs` commits, and breaking chan
 
 Never change earlier sections: they are the notes of published versions.
 
+The GitHub release notes are generated again by git-cliff in the `Release` workflow, not copied from `CHANGELOG.md`, so hand edits appear only in the changelog.
+
 ## 4. Commit and push
 
 1. Build and test. Commit only if both commands exit with code 0:
