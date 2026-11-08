@@ -90,6 +90,6 @@ A new host adapter needs a regression test proving it doesn't leak exception det
 ### Dependencies and CI
 
 - Package versions live in `Directory.Packages.props`. After changing one, restore and commit the updated `packages.lock.json` files, because CI restores in locked mode.
-- Choose dependency versions released at least two weeks ago.
+- Use stable dependency releases, as soon as they're published, and never pre-releases ([ADR 0040](docs/adr/0040-stable-releases-are-adopted-immediately.md)).
 - Pin GitHub Actions to a full commit SHA, with the version in a comment.
 - Treat secrets in workflows as environment variables, never interpolated into scripts, and give each job the least permissions it needs.

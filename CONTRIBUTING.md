@@ -57,7 +57,7 @@ Compare the `Allocated` column before and after your change.
 - Document every public member with XML docs, including the exceptions it throws.
 - Return `ValueTask` from asynchronous APIs ([ADR 0003](docs/adr/0003-valuetask-for-asynchronous-apis.md)).
 - Put registration extension methods in `Microsoft.Extensions.DependencyInjection`, and endpoint ones in `Microsoft.AspNetCore.Builder`, as Microsoft's packages do.
-- Manage package versions centrally in `Directory.Packages.props`. A new dependency version should be at least two weeks old.
+- Manage package versions centrally in `Directory.Packages.props`. Adopt stable releases as soon as they're published, and never pre-releases ([ADR 0040](docs/adr/0040-stable-releases-are-adopted-immediately.md)).
 - Pin GitHub Actions to a full commit SHA, with the version in a comment.
 
 ## Branches, commits and pull requests
